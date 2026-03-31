@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Monitora API
+  version: 1.0.0
+  description: API de autenticação e usuários do projeto Monitora.
+
+servers:
+  - url: http://127.0.0.1:5000
+    description: Servidor local Flask
+
+tags:
+  - name: Auth
+    description: Endpoints de autenticação
+  - name: Usuarios
+    description: Endpoints de usuários
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - matricula
+        - senha
+      properties:
+        matricula:
+          type: integer
+          example: 2024001
+        senha:
+          type: string
+          example: "123456"
+
+    Usuario:
+      type: object
+      properties:
+        matricula:
+          type: integer
+          example: 2024001
+        papel:
+          type: integer
+          example: 1
+      additionalProperties: false
+
+    JwtPayload:
+      type: object
+      properties:
+        sub:
+          type: string
+          example: "2024001"
+        matricula:
+          type: integer
+          example: 2024001
+        papel:
+          type: integer
+          example: 1
+        iat:
+          type: integer
+          example: 1774977629
+        exp:
+          type: integer
+          example: 1774981229
+
+    LoginResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Login realizado com sucesso.
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        usuario:
+          $ref: '#/components/schemas/Usuario'
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Matrícula ou senha inválidas.
+
+paths:
+  /api/login:
+    post:
+      tags:
+        - Auth
+      summary: Autenticar usuário
+      description: Valida matrícula e senha e retorna um JWT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login realizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Dados obrigatórios ausentes
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Matrícula ou senha inválidas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Erro interno ou de conexão com o banco
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/usuarios/{matricula}:
+    get:
+      tags:
+        - Usuarios
+      summary: Buscar usuário por matrícula
+      description: Exemplo de rota protegida para consultar um usuário autenticado via JWT.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: matricula
+          in: path
+          required: true
+          description: Matrícula do usuário
+          schema:
+            type: integer
+            example: 2024001
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '401':
+          description: Token ausente, inválido ou expirado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Usuário não encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

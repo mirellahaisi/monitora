@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Login</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <main class="page-shell">
+    <section class="auth-layout">
+      <section class="login-card" aria-labelledby="titulo-login">
+        <header class="brand">
+          <img src="/static/images/logomonitora.png" alt="Logo Monitora+" class="brand__logo">
+          <div>
+            <h1 id="titulo-login" class="brand__title">Monitora<span>+</span></h1>
+          </div>
+        </header>
+
+        <form class="login-form">
+          <label class="field-group">
+            <span class="field-group__label">Matrícula</span>
+            <span class="field">
+              <span class="field__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M6 4.5h9.5L19 8v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V6A1.5 1.5 0 0 1 6.5 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M15.5 4.5V8H19" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M8 10.25h6.5M8 13h6.5M8 15.75h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <input type="text" name="matricula" placeholder="Digite sua matrícula" autocomplete="username" inputmode="numeric">
+            </span>
+          </label>
+
+          <label class="field-group">
+            <span class="field-group__label">Senha</span>
+            <span class="field">
+              <span class="field__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M7.25 10V8.5a4.75 4.75 0 1 1 9.5 0V10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <rect x="5.5" y="10" width="13" height="10" rx="2.5" stroke="currentColor" stroke-width="1.8"/>
+                  <circle cx="12" cy="15" r="1.25" fill="currentColor"/>
+                </svg>
+              </span>
+              <input id="password" type="password" name="senha" placeholder="Digite sua senha" autocomplete="current-password">
+              <button class="field__toggle" type="button" data-toggle-password aria-label="Mostrar senha" aria-pressed="false">
+                <svg viewBox="0 0 24 24" fill="none">
+                  <path d="M2.75 12s3.25-5.75 9.25-5.75S21.25 12 21.25 12 18 17.75 12 17.75 2.75 12 2.75 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <circle cx="12" cy="12" r="2.75" stroke="currentColor" stroke-width="1.8"/>
+                </svg>
+              </button>
+            </span>
+          </label>
+
+          <button class="login-button" type="submit">Entrar</button>
+          <a class="forgot-link" href="#">Esqueceu a sua senha?</a>
+        </form>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/static/js/script.js"></script>
+</body>
+</html>

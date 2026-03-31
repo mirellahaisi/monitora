@@ -1,0 +1,12 @@
+{
+  "name": "monitora",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tela de login Monitora+ com backend Flask",
+  "main": "app.py",
+  "scripts": {
+    "start": "python app.py",
+    "dev": "python app.py",
+    "dev:node": "node server.js"
+  }
+}
