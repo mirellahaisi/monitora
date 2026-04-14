@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitora+ | Frequência</title>
+    <link rel="stylesheet" href="static/css/frequencia.css">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="static/images/logomonitora.png" alt="Monitora+">
+                <h1>Monitora+</h1>
+            </div>
+            
+            <nav>
+                <ul>
+                    <li><i class="ph ph-house"></i> Página Inicial</li>
+                    <li><i class="ph ph-users-three"></i> Turmas</li>
+                    <li><i class="ph ph-notebook"></i> Notas</li>
+                    <li><i class="ph ph-user-check"></i> Presença</li>
+                    <li><i class="ph ph-users"></i> Alunos</li>
+                    <li class="active"><i class="ph ph-chart-line-up"></i> Frequência</li>
+                    <li><i class="ph ph-activity"></i> Desempenho</li>
+                </ul>
+            </nav>
+
+            <div class="logout">
+                <i class="ph ph-sign-out"></i> Sair
+            </div>
+        </aside>
+
+        <main class="content">
+            <header>
+                <div class="search-bar">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" placeholder="Pesquisar">
+                </div>
+                <div class="user-profile">
+                    <span>Professora Marina</span>
+                    <img src="avatar.png" alt="User">
+                    <i class="ph ph-bell"></i>
+                </div>
+            </header>
+
+            <section class="filter-section">
+                <h2>Frequência do Aluno</h2>
+                <div class="filters">
+                    <select><option>Leonardo Stall</option></select>
+                    <select><option>Resolução de Problemas...</option></select>
+                    <select><option>5º período</option></select>
+                    <button class="btn-visualizar">Visualizar</button>
+                </div>
+            </section>
+
+            <section class="data-card">
+                <div class="info-stats">
+                    <h3>Leonardo Stall - 5º período</h3>
+                    <p class="subtitle">Resolução de Problemas Estruturados</p>
+                    
+                    <div class="stats-table">
+                        <div class="stat-row"><span>Total de Aulas</span> <strong>20</strong></div>
+                        <div class="stat-row"><span>Presenças</span> <strong>17</strong></div>
+                        <div class="stat-row"><span>Faltas</span> <strong>3</strong></div>
+                        <div class="stat-row highlight"><span>Frequência</span> <strong>85%</strong></div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="pie-chart">
+                        <span class="chart-label">85%<br><small>Presenças</small></span>
+                    </div>
+                    <div class="chart-legend">
+                        <div><span class="dot presence"></span> Presença</div>
+                        <div><span class="dot absence"></span> Faltas</div>
+                    </div>
+                    <button class="btn-report"><i class="ph ph-download-simple"></i> Baixar relatório</button>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

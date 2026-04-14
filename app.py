@@ -23,10 +23,10 @@ app = Flask(
 
 def get_db_connection():
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "127.0.0.1"),
+        host=os.getenv("DB_HOST", "localhost:3306"),
         port=int(os.getenv("DB_PORT", "3306")),
         user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
+        password=os.getenv("DB_PASSWORD", "548921"),
         database=os.getenv("DB_NAME", "monitora"),
     )
 
@@ -135,6 +135,10 @@ def login():
             },
         }
     )
+
+@app.route("/frequencia")
+def frequencia():
+    return render_template("pages/frequencia.html")
 
 
 if __name__ == "__main__":

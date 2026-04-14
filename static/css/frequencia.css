@@ -1,0 +1,271 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif; /* Ou Segoe UI */
+}
+
+body {
+    background-color: #f4f7f6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Layout Principal */
+.container {
+    display: flex;
+    width: 98vw;
+    height: 95vh;
+    background: white;
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+}
+
+.sidebar {
+    width: 260px;
+    min-width: 260px;
+    background-color: #61DBC3;
+    display: flex;
+    flex-direction: column;
+    color: white;
+}
+
+.logo {
+    display: flex;
+    flex-direction: column; /* Força a imagem em cima e o texto embaixo */
+    align-items: center;    /* Centraliza os dois horizontalmente */
+    justify-content: center;
+    width: 100%;            /* Ocupa a largura da sidebar */
+    padding: 20px;          /* Afasta das bordas */
+    margin-top: 20px;
+}
+
+.logo img {
+    max-width: 100%; /* Impede que a logo saia da sidebar */
+    height: auto;    /* Mantém a proporção */
+    object-fit: contain;
+}
+
+.logo h1 { font-size: 1.5rem; }
+
+.sidebar nav ul { list-style: none; }
+
+.sidebar nav li {
+    padding: 15px 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.3s;
+}
+
+.sidebar nav li.active {
+    background: white;
+    color: #61DBC3;
+    margin: 0 20px;
+    border-radius: 15px;
+}
+
+.logout {
+    margin-top: auto;
+    padding: 30px;
+    cursor: pointer;
+}
+
+/* Conteúdo Principal */
+.content {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Consertado */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.search-bar {
+    position: relative;
+    width: 350px;
+}
+
+.search-bar input {
+    width: 100%;
+    padding: 10px 20px 10px 40px;
+    border-radius: 20px;
+    border: 1px solid #eee;
+    background: #fdfdfd;
+}
+
+.search-bar i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #ccc;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-profile .avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    background-color: #eee; /* Círculo cinza */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+}
+
+.user-profile img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #eee;
+}
+
+/* Filtros */
+.filter-section h2 {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+.filters {
+    background-color: #61DBC3;
+    padding: 12px 20px;
+    border-radius: 25px; /* Deixa as pontas bem arredondadas como no Figma */
+    display: flex;
+    gap: 15px; /* Espaço entre os campos */
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.filters select {
+    flex: 1; /* Faz os selects dividirem o espaço igualmente */
+    background-color: white;
+    border: none;
+    outline: none;
+    padding: 12px 15px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    /* Remove a seta padrão chata do navegador em alguns sistemas */
+    appearance: none; 
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    background-size: 15px;
+}
+
+.btn-visualizar {
+   background-color: #3E4C59; /* Cor azul escuro/grafite do Figma */
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+/* Card Central - Onde estava o erro de organização */
+.data-card {
+    border: 1px solid #f0f0f0;
+    border-radius: 25px;
+    padding: 50px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    max-height: 500px;
+}
+
+.info-stats {
+    width: 45%;
+}
+
+.info-stats h3 { font-size: 1.4rem; margin-bottom: 5px; }
+.subtitle { color: #666; margin-bottom: 30px; }
+
+.stats-table { width: 100%; }
+
+.stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 0;
+    border-bottom: 1px solid #f9f9f9;
+}
+
+.highlight {
+    color: #61DBC3;
+    font-weight: bold;
+    font-size: 1.3rem;
+    border-bottom: none;
+}
+
+/* Gráfico e Legenda */
+.chart-container {
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.pie-chart {
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: conic-gradient(#61DBC3 0% 85%, #E8C3A4 85% 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pie-chart::after {
+    content: "";
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    background: white;
+    border-radius: 50%;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 25px;
+}
+
+.dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+.presence { background: #61DBC3; }
+.absence { background: #E8C3A4; }
+
+.btn-report {
+    padding: 12px 25px;
+    border: 1px solid #eee;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
