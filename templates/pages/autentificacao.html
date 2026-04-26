@@ -27,6 +27,7 @@
                   <path d="M4.75 7.25 12 13l7.25-5.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
+
               <input
                 type="email"
                 name="email"
@@ -141,13 +142,13 @@
           icon: "success",
           title: "Login realizado!",
           text: `Bem-vindo(a), ${dados.usuario.nome}!`,
-          timer: 1800,
+          timer: 1500,
           showConfirmButton: false
         });
 
-        console.log("Token gerado:", dados.token);
-        console.log("Usuário:", dados.usuario);
-        console.log("Sessão expira em:", dados.sessao.expiracao);
+        setTimeout(() => {
+          window.location.href = "/inicio";
+        }, 1500);
 
       } catch (erro) {
         console.error("Erro:", erro);
