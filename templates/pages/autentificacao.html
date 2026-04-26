@@ -19,16 +19,21 @@
 
         <form class="login-form">
           <label class="field-group">
-            <span class="field-group__label">Matrícula</span>
+            <span class="field-group__label">E-mail</span>
             <span class="field">
               <span class="field__icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none">
-                  <path d="M6 4.5h9.5L19 8v11a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 19V6A1.5 1.5 0 0 1 6.5 4.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                  <path d="M15.5 4.5V8H19" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
-                  <path d="M8 10.25h6.5M8 13h6.5M8 15.75h4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                  <path d="M4 6.5h16v11H4v-11Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+                  <path d="M4.75 7.25 12 13l7.25-5.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
               </span>
-              <input type="text" name="matricula" placeholder="Digite sua matrícula" autocomplete="username" inputmode="numeric">
+              <input
+                type="email"
+                name="email"
+                placeholder="Digite seu e-mail"
+                autocomplete="username"
+                required
+              >
             </span>
           </label>
 
@@ -42,7 +47,16 @@
                   <circle cx="12" cy="15" r="1.25" fill="currentColor"/>
                 </svg>
               </span>
-              <input id="password" type="password" name="senha" placeholder="Digite sua senha" autocomplete="current-password">
+
+              <input
+                id="password"
+                type="password"
+                name="senha"
+                placeholder="Digite sua senha"
+                autocomplete="current-password"
+                required
+              >
+
               <button class="field__toggle" type="button" data-toggle-password aria-label="Mostrar senha" aria-pressed="false">
                 <svg viewBox="0 0 24 24" fill="none">
                   <path d="M2.75 12s3.25-5.75 9.25-5.75S21.25 12 21.25 12 18 17.75 12 17.75 2.75 12 2.75 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
@@ -60,6 +74,91 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="/static/js/script.js"></script>
+
+  <script>
+    const form = document.querySelector(".login-form");
+    const passwordInput = document.querySelector("#password");
+    const togglePasswordButton = document.querySelector("[data-toggle-password]");
+
+    if (togglePasswordButton && passwordInput) {
+      togglePasswordButton.addEventListener("click", () => {
+        const estaOculta = passwordInput.type === "password";
+
+        passwordInput.type = estaOculta ? "text" : "password";
+        togglePasswordButton.setAttribute("aria-pressed", String(estaOculta));
+        togglePasswordButton.setAttribute(
+          "aria-label",
+          estaOculta ? "Ocultar senha" : "Mostrar senha"
+        );
+      });
+    }
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const email = form.email.value.trim();
+      const senha = form.senha.value.trim();
+
+      if (!email || !senha) {
+        Swal.fire({
+          icon: "warning",
+          title: "Campos obrigatórios",
+          text: "Informe seu e-mail e sua senha."
+        });
+
+        return;
+      }
+
+      try {
+        const resposta = await fetch("/api/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            email: email,
+            senha: senha
+          })
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire({
+            icon: "error",
+            title: "Erro no login",
+            text: dados.message || "E-mail ou senha inválidos."
+          });
+
+          return;
+        }
+
+        localStorage.setItem("token", dados.token);
+        localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+        localStorage.setItem("sessaoExpiracao", String(dados.sessao.expiracao));
+
+        Swal.fire({
+          icon: "success",
+          title: "Login realizado!",
+          text: `Bem-vindo(a), ${dados.usuario.nome}!`,
+          timer: 1800,
+          showConfirmButton: false
+        });
+
+        console.log("Token gerado:", dados.token);
+        console.log("Usuário:", dados.usuario);
+        console.log("Sessão expira em:", dados.sessao.expiracao);
+
+      } catch (erro) {
+        console.error("Erro:", erro);
+
+        Swal.fire({
+          icon: "error",
+          title: "Erro inesperado",
+          text: "Não foi possível conectar ao servidor."
+        });
+      }
+    });
+  </script>
 </body>
 </html>
