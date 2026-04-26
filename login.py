@@ -1,26 +1,21 @@
-import os
-import mysql.connector
 from flask import Blueprint, jsonify, render_template, request
+import mysql.connector
 
+from conexao import criar_conexao
 from gerador_token import gerar_token, TEMPO_SESSAO
 
 
 login_bp = Blueprint("login", __name__)
 
 
-def criar_conexao():
-    return mysql.connector.connect(
-        host=os.getenv("DB_HOST", "127.0.0.1"),
-        port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", ""),
-        database=os.getenv("DB_NAME", "monitora"),
-    )
-
-
 @login_bp.get("/")
 def tela_login():
     return render_template("pages/autentificacao.html")
+
+
+@login_bp.get("/inicio")
+def tela_inicio():
+    return render_template("pages/inicio.html")
 
 
 @login_bp.post("/api/login")
@@ -31,7 +26,9 @@ def login():
     senha = str(dados.get("senha", "")).strip()
 
     if not email or not senha:
-        return jsonify({"message": "Informe e-mail e senha."}), 400
+        return jsonify({
+            "message": "Informe e-mail e senha."
+        }), 400
 
     conexao = None
     cursor = None
@@ -62,7 +59,11 @@ def login():
 
     except mysql.connector.Error as erro:
         print("Erro no banco:", erro)
-        return jsonify({"message": "Erro ao conectar com o banco de dados."}), 500
+
+        return jsonify({
+            "message": "Erro ao conectar com o banco de dados.",
+            "erro": str(erro)
+        }), 500
 
     finally:
         if cursor:
@@ -72,7 +73,9 @@ def login():
             conexao.close()
 
     if not usuario:
-        return jsonify({"message": "E-mail ou senha inválidos."}), 401
+        return jsonify({
+            "message": "E-mail ou senha inválidos."
+        }), 401
 
     token, payload = gerar_token(usuario)
 

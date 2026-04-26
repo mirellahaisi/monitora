@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Página Inicial</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="inicio-body">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/images/logomonitora.png" alt="Logo Monitora+" class="sidebar-logo">
+      <h1>Monitora<span>+</span></h1>
+    </div>
+
+    <nav class="sidebar-menu">
+      <a href="/inicio" class="sidebar-link active">Página inicial</a>
+      <a href="#" class="sidebar-link">Turmas</a>
+      <a href="#" class="sidebar-link">Notas</a>
+      <a href="#" class="sidebar-link">Presença</a>
+      <a href="#" class="sidebar-link">Alunos</a>
+      <a href="#" class="sidebar-link">Frequência</a>
+      <a href="#" class="sidebar-link">Desempenho</a>
+    </nav>
+
+    <button class="logout-button" onclick="sair()">Sair</button>
+  </aside>
+
+  <main class="inicio-main">
+    <header class="inicio-header">
+      <div class="search-box">
+        <input type="text" placeholder="Pesquisar">
+      </div>
+
+      <div class="user-info">
+        <span id="papelUsuario"></span>
+        <strong id="nomeUsuarioTopo"></strong>
+      </div>
+    </header>
+
+    <section class="inicio-content">
+      <h2 id="saudacaoUsuario">Olá, Bem-vindo(a) ao Monitora+</h2>
+
+  </main>
+
+  <script>
+    const usuarioSalvo = localStorage.getItem("usuario");
+    const token = localStorage.getItem("token");
+    const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
+
+    if (!usuarioSalvo || !token || !sessaoExpiracao) {
+      window.location.href = "/";
+    }
+
+    const agora = Math.floor(Date.now() / 1000);
+
+    if (Number(sessaoExpiracao) < agora) {
+      localStorage.clear();
+      window.location.href = "/";
+    }
+
+    const usuario = JSON.parse(usuarioSalvo);
+
+    document.getElementById("saudacaoUsuario").textContent =
+      `Olá ${usuario.nome}, Bem-vindo(a) ao Monitora+`;
+
+    document.getElementById("nomeUsuarioTopo").textContent = usuario.nome;
+    document.getElementById("papelUsuario").textContent = usuario.papel;
+
+    function sair() {
+      localStorage.clear();
+      window.location.href = "/";
+    }
+
+    carregarAvisos();
+  </script>
+</body>
+</html>
