@@ -1,17 +1,10 @@
-import base64
-import hashlib
-import hmac
-import json
 import os
-import time
+from flask import Flask
 
-import mysql.connector
-from flask import Flask, jsonify, render_template, request
+from login import login_bp
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-JWT_SECRET = os.getenv("JWT_SECRET", "monitora-dev-secret")
-JWT_EXPIRES_IN = int(os.getenv("JWT_EXPIRES_IN", "3600"))
 
 app = Flask(
     __name__,
@@ -19,6 +12,8 @@ app = Flask(
     static_folder=os.path.join(BASE_DIR, "static"),
     static_url_path="/static",
 )
+
+app.register_blueprint(login_bp)
 
 
 def get_db_connection():
@@ -136,10 +131,11 @@ def login():
         }
     )
 
+
 @app.route("/frequencia")
 def frequencia():
     return render_template("pages/frequencia.html")
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")), debug=True)
+    app.run(debug=True)
