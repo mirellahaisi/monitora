@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Perfil</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="inicio-body">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/images/logomonitora.png" alt="Logo Monitora+" class="sidebar-logo">
+      <h1>Monitora<span>+</span></h1>
+    </div>
+
+    <nav class="sidebar-menu">
+      <a href="/inicio" class="sidebar-link">Página inicial</a>
+      <a href="#" class="sidebar-link">Turmas</a>
+      <a href="#" class="sidebar-link">Notas</a>
+      <a href="#" class="sidebar-link">Presença</a>
+      <a href="#" class="sidebar-link">Alunos</a>
+      <a href="#" class="sidebar-link">Frequência</a>
+      <a href="#" class="sidebar-link">Desempenho</a>
+    </nav>
+  </aside>
+
+  <main class="inicio-main">
+    <header class="inicio-header">
+      <div class="search-box">
+        <input type="text" placeholder="Pesquisar">
+      </div>
+
+      <div class="user-menu">
+        <button class="user-menu-button" id="botaoMenuUsuario">
+          <div class="user-avatar" id="avatarUsuario">U</div>
+
+          <div class="user-text">
+            <span id="papelUsuario"></span>
+            <strong id="nomeUsuarioTopo"></strong>
+          </div>
+
+          <span class="user-arrow">▾</span>
+        </button>
+
+        <div class="user-dropdown" id="menuUsuario">
+          <button type="button" id="btnEditarPerfil">Editar perfil</button>
+          <button type="button" id="btnSair">Sair</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="perfil-content">
+      <h2>Perfil</h2>
+
+      <form class="perfil-card" id="formPerfil" autocomplete="off">
+        <div class="perfil-row">
+          <label class="perfil-field perfil-field-full">
+            <span>Nome</span>
+            <input type="text" id="nome" required>
+          </label>
+        </div>
+
+        <div class="perfil-row">
+          <label class="perfil-field">
+            <span>E-mail</span>
+            <input type="email" id="email" required>
+          </label>
+
+          <label class="perfil-field">
+            <span>Telefone</span>
+            <input type="text" id="telefone" maxlength="14" required>
+          </label>
+        </div>
+
+        <div class="perfil-row">
+          <label class="perfil-field">
+            <span>Data de Nascimento</span>
+            <input type="date" id="dataNascimento" required>
+          </label>
+
+          <label class="perfil-field">
+            <span>CPF</span>
+            <input type="text" id="cpf" readonly>
+          </label>
+        </div>
+
+        <div class="perfil-row">
+          <label class="perfil-field">
+            <span>Nova senha</span>
+            <input 
+              type="password" 
+              id="novaSenha" 
+              name="novaSenhaPerfil"
+              autocomplete="new-password"
+              placeholder="Preencha apenas se quiser alterar a senha"
+            >
+          </label>
+        </div>
+
+        <div class="perfil-actions">
+          <button type="submit" class="perfil-save-button">Salvar alterações</button>
+          <button type="button" class="perfil-cancel-button" id="btnCancelar">Cancelar</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    const formPerfil = document.getElementById("formPerfil");
+
+    const nomeInput = document.getElementById("nome");
+    const emailInput = document.getElementById("email");
+    const telefoneInput = document.getElementById("telefone");
+    const dataNascimentoInput = document.getElementById("dataNascimento");
+    const cpfInput = document.getElementById("cpf");
+    const novaSenhaInput = document.getElementById("novaSenha");
+
+    const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
+    const papelUsuario = document.getElementById("papelUsuario");
+    const avatarUsuario = document.getElementById("avatarUsuario");
+
+    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+    const menuUsuario = document.getElementById("menuUsuario");
+    const btnSair = document.getElementById("btnSair");
+    const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+    const btnCancelar = document.getElementById("btnCancelar");
+
+    function formatarPapel(papel) {
+      const papelNormalizado = String(papel).toLowerCase();
+
+      if (
+        papelNormalizado === "admin" ||
+        papelNormalizado === "adm" ||
+        papelNormalizado === "coordenador"
+      ) {
+        return "Coordenador";
+      }
+
+      if (papelNormalizado === "professor") return "Professor";
+      if (papelNormalizado === "aluno") return "Aluno";
+
+      return papel;
+    }
+
+    function limparSessaoFront() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("sessaoExpiracao");
+    }
+
+    function obterToken() {
+      return localStorage.getItem("token");
+    }
+
+    function tokenExpirado(sessaoExpiracao) {
+      const agora = Math.floor(Date.now() / 1000);
+      return Number(sessaoExpiracao) < agora;
+    }
+
+    function verificarTokenFront() {
+      const token = obterToken();
+      const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
+
+      if (!token || !sessaoExpiracao || tokenExpirado(sessaoExpiracao)) {
+        limparSessaoFront();
+        window.location.href = "/";
+        return false;
+      }
+
+      return true;
+    }
+
+    function preencherTopo(usuario) {
+      nomeUsuarioTopo.textContent = usuario.nome;
+      papelUsuario.textContent = formatarPapel(usuario.papel);
+      avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+    }
+
+    function formatarTelefone(valor) {
+      let numeros = valor.replace(/\D/g, "").slice(0, 11);
+
+      if (numeros.length <= 2) {
+        return numeros;
+      }
+
+      if (numeros.length <= 6) {
+        return `(${numeros.slice(0, 2)})${numeros.slice(2)}`;
+      }
+
+      if (numeros.length <= 10) {
+        return `(${numeros.slice(0, 2)})${numeros.slice(2, 6)}-${numeros.slice(6)}`;
+      }
+
+      return `(${numeros.slice(0, 2)})${numeros.slice(2, 7)}-${numeros.slice(7)}`;
+    }
+
+    function telefoneValido(telefone) {
+      const numeros = telefone.replace(/\D/g, "");
+      return numeros.length === 10 || numeros.length === 11;
+    }
+
+    function emailValido(email) {
+      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return regex.test(email);
+    }
+
+    function validarCampos() {
+      const nome = nomeInput.value.trim();
+      const email = emailInput.value.trim();
+      const telefone = telefoneInput.value.trim();
+
+      if (nome.length < 3) {
+        Swal.fire({
+          icon: "warning",
+          title: "Nome inválido",
+          text: "O nome deve ter pelo menos 3 letras."
+        });
+
+        return false;
+      }
+
+      if (!emailValido(email)) {
+        Swal.fire({
+          icon: "warning",
+          title: "E-mail inválido",
+          text: "Digite um e-mail válido, contendo @ e domínio."
+        });
+
+        return false;
+      }
+
+      if (!telefoneValido(telefone)) {
+        Swal.fire({
+          icon: "warning",
+          title: "Telefone inválido",
+          text: "Digite um telefone com DDD, no formato (xx)xxxxx-xxxx."
+        });
+
+        return false;
+      }
+
+      if (!dataNascimentoInput.value) {
+        Swal.fire({
+          icon: "warning",
+          title: "Data obrigatória",
+          text: "Informe a data de nascimento."
+        });
+
+        return false;
+      }
+
+      return true;
+    }
+
+    telefoneInput.addEventListener("input", function() {
+      telefoneInput.value = formatarTelefone(telefoneInput.value);
+    });
+
+    async function carregarPerfil() {
+      if (!verificarTokenFront()) return;
+
+      const token = obterToken();
+
+      try {
+        const resposta = await fetch("/api/perfil", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!resposta.ok) {
+          limparSessaoFront();
+          window.location.href = "/";
+          return;
+        }
+
+        const dados = await resposta.json();
+        const usuario = dados.usuario;
+
+        preencherTopo(usuario);
+
+        nomeInput.value = usuario.nome || "";
+        emailInput.value = usuario.email || "";
+        telefoneInput.value = formatarTelefone(usuario.telefone || "");
+        cpfInput.value = usuario.cpf || "";
+        dataNascimentoInput.value = usuario.data_nascimento || "";
+        novaSenhaInput.value = "";
+
+      } catch (erro) {
+        console.error("Erro ao carregar perfil:", erro);
+
+        Swal.fire({
+          icon: "error",
+          title: "Erro",
+          text: "Não foi possível carregar os dados do perfil."
+        });
+      }
+    }
+
+    formPerfil.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      if (!verificarTokenFront()) return;
+
+      if (!validarCampos()) return;
+
+      let senhaAtual = "";
+      const novaSenha = novaSenhaInput.value.trim();
+
+      if (novaSenha) {
+        const respostaSenha = await Swal.fire({
+          title: "Confirme sua senha atual",
+          text: "Para alterar a senha, digite sua senha atual.",
+          input: "password",
+          inputPlaceholder: "Senha atual",
+          inputAttributes: {
+            autocapitalize: "off",
+            autocorrect: "off"
+          },
+          showCancelButton: true,
+          confirmButtonText: "Confirmar",
+          cancelButtonText: "Cancelar",
+          inputValidator: (value) => {
+            if (!value) {
+              return "Digite sua senha atual para continuar.";
+            }
+          }
+        });
+
+        if (!respostaSenha.isConfirmed) {
+          return;
+        }
+
+        senhaAtual = respostaSenha.value;
+      }
+
+      const confirmacao = await Swal.fire({
+        icon: "question",
+        title: "Salvar alterações?",
+        text: "Deseja realmente alterar os dados do perfil?",
+        showCancelButton: true,
+        confirmButtonText: "Sim, salvar",
+        cancelButtonText: "Cancelar"
+      });
+
+      if (!confirmacao.isConfirmed) {
+        return;
+      }
+
+      const token = obterToken();
+
+      const dadosPerfil = {
+        nome: nomeInput.value.trim(),
+        email: emailInput.value.trim(),
+        telefone: telefoneInput.value.trim(),
+        data_nascimento: dataNascimentoInput.value,
+        senha_atual: senhaAtual,
+        nova_senha: novaSenha
+      };
+
+      try {
+        const resposta = await fetch("/api/perfil", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(dadosPerfil)
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire({
+            icon: "error",
+            title: "Erro",
+            text: dados.message || "Não foi possível atualizar o perfil."
+          });
+
+          return;
+        }
+
+        localStorage.setItem("token", dados.token);
+        localStorage.setItem("usuario", JSON.stringify(dados.usuario));
+        localStorage.setItem("sessaoExpiracao", String(dados.sessao.expiracao));
+
+        novaSenhaInput.value = "";
+
+        preencherTopo(dados.usuario);
+
+        Swal.fire({
+          icon: "success",
+          title: "Perfil atualizado!",
+          text: dados.message,
+          timer: 1500,
+          showConfirmButton: false,
+          didClose: () => {
+            window.location.href = "/inicio";
+          }
+        });
+
+      } catch (erro) {
+        console.error("Erro ao atualizar perfil:", erro);
+
+        Swal.fire({
+          icon: "error",
+          title: "Erro inesperado",
+          text: "Não foi possível conectar ao servidor."
+        });
+      }
+    });
+
+    async function sair() {
+      const confirmacao = await Swal.fire({
+        icon: "question",
+        title: "Deseja sair?",
+        text: "Sua sessão será encerrada.",
+        showCancelButton: true,
+        confirmButtonText: "Sim, sair",
+        cancelButtonText: "Cancelar"
+      });
+
+      if (!confirmacao.isConfirmed) return;
+
+      const token = obterToken();
+
+      try {
+        if (token) {
+          await fetch("/api/logout", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+        }
+      } catch (erro) {
+        console.error("Erro ao chamar logout:", erro);
+      }
+
+      limparSessaoFront();
+      window.location.href = "/";
+    }
+
+    botaoMenuUsuario.addEventListener("click", function() {
+      menuUsuario.classList.toggle("show");
+    });
+
+    window.addEventListener("click", function(event) {
+      const clicouDentroMenu = event.target.closest(".user-menu");
+
+      if (!clicouDentroMenu) {
+        menuUsuario.classList.remove("show");
+      }
+    });
+
+    btnSair.addEventListener("click", sair);
+
+    btnEditarPerfil.addEventListener("click", function() {
+      menuUsuario.classList.remove("show");
+    });
+
+    btnCancelar.addEventListener("click", function() {
+      window.location.href = "/inicio";
+    });
+
+    window.addEventListener("pageshow", function() {
+      novaSenhaInput.value = "";
+    });
+
+    carregarPerfil();
+  </script>
+</body>
+</html>
