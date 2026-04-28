@@ -6,6 +6,7 @@
   <title>Monitora+ | Página Inicial</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body class="inicio-body">
   <aside class="sidebar">
     <div class="sidebar-brand">
@@ -22,8 +23,6 @@
       <a href="#" class="sidebar-link">Frequência</a>
       <a href="#" class="sidebar-link">Desempenho</a>
     </nav>
-
-    <button class="logout-button" onclick="sair()">Sair</button>
   </aside>
 
   <main class="inicio-main">
@@ -32,47 +31,172 @@
         <input type="text" placeholder="Pesquisar">
       </div>
 
-      <div class="user-info">
-        <span id="papelUsuario"></span>
-        <strong id="nomeUsuarioTopo"></strong>
+      <div class="user-menu">
+        <button class="user-menu-button" id="botaoMenuUsuario">
+          <div class="user-avatar" id="avatarUsuario">U</div>
+
+          <div class="user-text">
+            <span id="papelUsuario"></span>
+            <strong id="nomeUsuarioTopo"></strong>
+          </div>
+
+          <span class="user-arrow">▾</span>
+        </button>
+
+        <div class="user-dropdown" id="menuUsuario">
+          <button type="button" id="btnEditarPerfil">Editar perfil</button>
+          <button type="button" id="btnSair">Sair</button>
+        </div>
       </div>
     </header>
 
     <section class="inicio-content">
       <h2 id="saudacaoUsuario">Olá, Bem-vindo(a) ao Monitora+</h2>
-
+    </section>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
   <script>
-    const usuarioSalvo = localStorage.getItem("usuario");
-    const token = localStorage.getItem("token");
-    const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
+    const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
+    const papelUsuario = document.getElementById("papelUsuario");
+    const saudacaoUsuario = document.getElementById("saudacaoUsuario");
+    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+    const menuUsuario = document.getElementById("menuUsuario");
+    const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+    const btnSair = document.getElementById("btnSair");
+    const avatarUsuario = document.getElementById("avatarUsuario");
 
-    if (!usuarioSalvo || !token || !sessaoExpiracao) {
+    function formatarPapel(papel) {
+      const papelNormalizado = String(papel).toLowerCase();
+
+      if (
+        papelNormalizado === "admin" ||
+        papelNormalizado === "adm" ||
+        papelNormalizado === "coordenador"
+      ) {
+        return "Coordenador";
+      }
+
+      if (papelNormalizado === "professor") {
+        return "Professor";
+      }
+
+      if (papelNormalizado === "aluno") {
+        return "Aluno";
+      }
+
+      return papel;
+    }
+
+    function tokenExpirado(sessaoExpiracao) {
+      const agora = Math.floor(Date.now() / 1000);
+      return Number(sessaoExpiracao) < agora;
+    }
+
+    function limparSessaoFront() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("sessaoExpiracao");
+    }
+
+    async function verificarUsuarioLogado() {
+      const token = localStorage.getItem("token");
+      const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
+
+      if (!token || !sessaoExpiracao || tokenExpirado(sessaoExpiracao)) {
+        limparSessaoFront();
+        window.location.href = "/";
+        return;
+      }
+
+      try {
+        const resposta = await fetch("/api/usuario-logado", {
+          method: "GET",
+          headers: {
+            "Authorization": `Bearer ${token}`
+          }
+        });
+
+        if (!resposta.ok) {
+          limparSessaoFront();
+          window.location.href = "/";
+          return;
+        }
+
+        const dados = await resposta.json();
+        const usuario = dados.usuario;
+
+        localStorage.setItem("usuario", JSON.stringify(usuario));
+
+        nomeUsuarioTopo.textContent = usuario.nome;
+        papelUsuario.textContent = formatarPapel(usuario.papel);
+        avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+
+        saudacaoUsuario.textContent =
+          `Olá ${usuario.nome}, Bem-vindo(a) ao Monitora+`;
+
+      } catch (erro) {
+        console.error("Erro ao verificar usuário:", erro);
+        limparSessaoFront();
+        window.location.href = "/";
+      }
+    }
+
+    function abrirFecharMenuUsuario() {
+      menuUsuario.classList.toggle("show");
+    }
+
+    function editarPerfil() {
+      window.location.href = "/perfil";
+    }
+
+    async function sair() {
+      const confirmacao = await Swal.fire({
+        icon: "question",
+        title: "Deseja sair?",
+        text: "Sua sessão será encerrada.",
+        showCancelButton: true,
+        confirmButtonText: "Sim, sair",
+        cancelButtonText: "Cancelar"
+      });
+
+      if (!confirmacao.isConfirmed) {
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+
+      try {
+        if (token) {
+          await fetch("/api/logout", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
+        }
+      } catch (erro) {
+        console.error("Erro ao chamar logout:", erro);
+      }
+
+      limparSessaoFront();
       window.location.href = "/";
     }
 
-    const agora = Math.floor(Date.now() / 1000);
+    botaoMenuUsuario.addEventListener("click", abrirFecharMenuUsuario);
+    btnEditarPerfil.addEventListener("click", editarPerfil);
+    btnSair.addEventListener("click", sair);
 
-    if (Number(sessaoExpiracao) < agora) {
-      localStorage.clear();
-      window.location.href = "/";
-    }
+    window.addEventListener("click", function(event) {
+      const clicouDentroMenu = event.target.closest(".user-menu");
 
-    const usuario = JSON.parse(usuarioSalvo);
+      if (!clicouDentroMenu) {
+        menuUsuario.classList.remove("show");
+      }
+    });
 
-    document.getElementById("saudacaoUsuario").textContent =
-      `Olá ${usuario.nome}, Bem-vindo(a) ao Monitora+`;
-
-    document.getElementById("nomeUsuarioTopo").textContent = usuario.nome;
-    document.getElementById("papelUsuario").textContent = usuario.papel;
-
-    function sair() {
-      localStorage.clear();
-      window.location.href = "/";
-    }
-
-    carregarAvisos();
+    verificarUsuarioLogado();
   </script>
 </body>
 </html>
