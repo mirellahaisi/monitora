@@ -4,6 +4,7 @@ import csv
 import io
 
 from login import login_bp
+from gestao_usuarios import gestao_usuarios_bp
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,6 +17,7 @@ app = Flask(
 )
 
 app.register_blueprint(login_bp)
+app.register_blueprint(gestao_usuarios_bp)
 
 
 def get_db_connection():
