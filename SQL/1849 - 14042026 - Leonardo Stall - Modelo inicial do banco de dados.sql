@@ -86,14 +86,14 @@ CREATE TABLE nota (
     fk_materia_id INT,
     fk_usuario_id INT,
 
-    FOREIGN KEY (fk_materia_id)
-    REFERENCES materia(id)
-    ON DELETE CASCADE,
+        FOREIGN KEY (fk_materia_id)
+        REFERENCES materia(id)
+        ON DELETE CASCADE,
 
-    FOREIGN KEY (fk_usuario_id)
-    REFERENCES usuario(id)
-    ON DELETE CASCADE
-);
+        FOREIGN KEY (fk_usuario_id)
+        REFERENCES usuario(id)
+        ON DELETE CASCADE
+    );
 
 -- FREQUENCIA
 CREATE TABLE frequencia (

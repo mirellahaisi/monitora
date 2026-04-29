@@ -33,6 +33,16 @@ body {
     color: white;
 }
 
+.filters select:invalid,
+.filters select option[value=""] {
+    color: #999;
+}
+
+
+.filters select {
+    color: #333;
+}
+
 .logo {
     display: flex;
     flex-direction: column; /* Força a imagem em cima e o texto embaixo */
@@ -268,4 +278,31 @@ header {
     align-items: center;
     gap: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+}
+
+
+.btn-report {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+  padding: 12px 18px;
+
+  background: linear-gradient(90deg, #1fb7ac, #57bdc8);
+  color: white;
+
+  font-weight: 700;
+  font-size: 14px;
+
+  border-radius: 12px;
+  text-decoration: none;
+
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  transition: 0.2s ease;
+}
+
+.btn-report:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.18);
 }
