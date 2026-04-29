@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,7 +45,6 @@
 
         <div class="user-dropdown" id="menuUsuario">
           <button type="button" id="btnEditarPerfil">Editar perfil</button>
-          <button type="button" id="btnGestaoUsuarios">Gestão de usuários</button>
           <button type="button" id="btnSair">Sair</button>
         </div>
       </div>
@@ -68,8 +66,6 @@
     const btnEditarPerfil = document.getElementById("btnEditarPerfil");
     const btnSair = document.getElementById("btnSair");
     const avatarUsuario = document.getElementById("avatarUsuario");
-    const btnGestaoUsuarios = document.getElementById("btnGestaoUsuarios");
-
 
     function formatarPapel(papel) {
       const papelNormalizado = String(papel).toLowerCase();
@@ -155,10 +151,6 @@
       window.location.href = "/perfil";
     }
 
-    function gestaoUsuarios() {
-      window.location.href = "/gestao-usuarios";
-    }
-
     async function sair() {
       const confirmacao = await Swal.fire({
         icon: "question",
@@ -194,10 +186,9 @@
 
     botaoMenuUsuario.addEventListener("click", abrirFecharMenuUsuario);
     btnEditarPerfil.addEventListener("click", editarPerfil);
-    btnGestaoUsuarios.addEventListener("click", gestaoUsuarios);
     btnSair.addEventListener("click", sair);
 
-    window.addEventListener("click", function (event) {
+    window.addEventListener("click", function(event) {
       const clicouDentroMenu = event.target.closest(".user-menu");
 
       if (!clicouDentroMenu) {
@@ -208,5 +199,4 @@
     verificarUsuarioLogado();
   </script>
 </body>
-
 </html>
