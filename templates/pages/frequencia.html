@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitora+ | Frequência</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/frequencia.css') }}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logomonitora.png') }}" alt="Monitora+">
+            <h1>Monitora+</h1>
+        </div>
+
+        <nav>
+            <ul>
+                <li><i class="ph ph-house"></i> Página Inicial</li>
+                <li><i class="ph ph-users-three"></i> Turmas</li>
+                <li><i class="ph ph-notebook"></i> Notas</li>
+                <li><i class="ph ph-user-check"></i> Presença</li>
+                <li><i class="ph ph-users"></i> Alunos</li>
+                <li class="active"><i class="ph ph-chart-line-up"></i> Frequência</li>
+                <li><i class="ph ph-activity"></i> Desempenho</li>
+            </ul>
+        </nav>
+
+        <div class="logout">
+            <i class="ph ph-sign-out"></i> Sair
+        </div>
+
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="content">
+
+        <header>
+            <div class="search-bar">
+                <i class="ph ph-magnifying-glass"></i>
+                <input type="text" placeholder="Pesquisar">
+            </div>
+
+            <div class="user-profile">
+                <span>Professora Marina</span>
+                <div class="avatar-placeholder">
+                    <i class="ph ph-user"></i>
+                </div>
+                <i class="ph ph-bell"></i>
+            </div>
+        </header>
+
+        <!-- FILTROS -->
+        <section class="filter-section">
+
+            <h2>Frequência do Aluno</h2>
+
+            <form action="/frequencia" method="GET">
+
+                <div class="filters">
+
+                   <select name="aluno" required>
+                    <option value="" disabled selected>Selecione o aluno</option>
+
+                    {% for a in alunos %}
+                        <option value="{{ a.id }}">{{ a.nome }}</option>
+                    {% endfor %}
+
+                </select>
+
+                    <select name="materia" required>
+                        <option value="" disabled selected>Selecione a matéria</option>
+                        <option value="1">Banco de Dados</option>
+                        <option value="2">Algoritmos</option>
+                        <option value="3">Estrutura de Dados</option>
+                    </select>
+
+                    <select name="periodo" required>
+                        <option value="" disabled selected>Selecione o período</option>
+                        <option value="5">5º período</option>
+                        <option value="6">6º período</option>
+                    </select>
+
+                    <button type="submit" class="btn-visualizar">
+                        Visualizar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </section>
+
+        
+        {% if mostrar %}
+
+        <section class="data-card">
+
+            <div class="info-stats">
+
+                <h3>{{ aluno.nome }} - {{ periodo }}</h3>
+                <p class="subtitle">{{ materia }}</p>
+
+                <div class="stats-table">
+
+                    <div class="stat-row">
+                        <span>Total de Aulas</span>
+                        <strong>{{ aluno.total }}</strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Presenças</span>
+                        <strong>{{ aluno.presencas }}</strong>
+                    </div>
+
+                    <div class="stat-row">
+                        <span>Faltas</span>
+                        <strong>{{ aluno.faltas }}</strong>
+                    </div>
+
+                    <div class="stat-row highlight">
+                        <span>Frequência</span>
+                        <strong>{{ aluno.presenca }}</strong>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="chart-container">
+
+                <div class="pie-chart">
+                    <span class="chart-label">
+                        {{ aluno.presenca }}<br>
+                        <small>Frequência</small>
+                    </span>
+                </div>
+
+                <div class="chart-legend">
+                    <div><span class="dot presence"></span> Presença</div>
+                    <div><span class="dot absence"></span> Faltas</div>
+                </div>
+
+                <a class="btn-report"
+                   href="/frequencia/relatorio?aluno={{ request.args.get('aluno') }}&materia={{ request.args.get('materia') }}&periodo={{ request.args.get('periodo') }}">
+                    <i class="ph ph-download-simple"></i> Baixar relatório
+                </a>
+
+            </div>
+
+        </section>
+
+        {% else %}
+
+        <div style="text-align:center; color:#999; margin-top:80px;">
+            <i class="ph ph-magnifying-glass" style="font-size:4rem; opacity:0.3;"></i>
+            <p>Selecione aluno, matéria e período para visualizar a frequência.</p>
+        </div>
+
+        {% endif %}
+
+    </main>
+
+</div>
+
+</body>
+</html>
