@@ -222,38 +222,32 @@ def relatorio_frequencia():
     connection = get_db_connection()
     cursor = connection.cursor(dictionary=True)
 
-    aluno = None
+    aluno_nome = None
+    total = presencas = faltas = 0
 
-    if aluno_id and materia_id:
+    # 1. pega aluno SEM depender de frequência
+    cursor.execute("SELECT nome FROM usuario WHERE id = %s", (aluno_id,))
+    aluno_row = cursor.fetchone()
 
-        cursor.execute("""
-            SELECT 
-                u.nome,
-                COUNT(f.id) AS total,
-                SUM(f.presente = 1) AS presencas,
-                SUM(f.presente = 0) AS faltas
-            FROM frequencia f
-            JOIN usuario u ON u.id = f.fk_usuario_id
-            JOIN materia m ON m.id = f.fk_materia_id
-            WHERE u.id = %s AND m.id = %s
-        """, (aluno_id, materia_id))
+    if aluno_row:
+        aluno_nome = aluno_row["nome"]
 
-        result = cursor.fetchone()
+    # 2. pega frequência
+    cursor.execute("""
+        SELECT 
+            COUNT(id) AS total,
+            COALESCE(SUM(presente = 1), 0) AS presencas,
+            COALESCE(SUM(presente = 0), 0) AS faltas
+        FROM frequencia
+        WHERE fk_usuario_id = %s AND fk_materia_id = %s
+    """, (aluno_id, materia_id))
 
-        if result:
-            total = result["total"] or 0
-            presencas = result["presencas"] or 0
-            faltas = result["faltas"] or 0
+    freq = cursor.fetchone()
 
-            percentual = f"{round((presencas / total) * 100)}%" if total > 0 else "0%"
-
-            aluno = {
-                "nome": result["nome"],
-                "total": total,
-                "presencas": presencas,
-                "faltas": faltas,
-                "presenca": percentual
-            }
+    if freq:
+        total = freq["total"] or 0
+        presencas = freq["presencas"] or 0
+        faltas = freq["faltas"] or 0
 
     cursor.close()
     connection.close()
@@ -272,17 +266,19 @@ def relatorio_frequencia():
     materia = nomes_materias.get(materia_id)
     periodo = nomes_periodos.get(periodo_id)
 
+    percentual = f"{round((presencas / total) * 100)}%" if total > 0 else "0%"
+
     conteudo = f"""
 RELATÓRIO DE FREQUÊNCIA
 
-Aluno: {aluno['nome'] if aluno else 'N/A'}
+Aluno: {aluno_nome}
 Matéria: {materia}
 Período: {periodo}
 
-Total de aulas: {aluno['total'] if aluno else 0}
-Presenças: {aluno['presencas'] if aluno else 0}
-Faltas: {aluno['faltas'] if aluno else 0}
-Frequência: {aluno['presenca'] if aluno else '0%'}
+Total de aulas: {total}
+Presenças: {presencas}
+Faltas: {faltas}
+Frequência: {percentual}
 """
 
     return Response(
