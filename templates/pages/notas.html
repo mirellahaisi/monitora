@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Notas</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="inicio-body">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/images/logomonitora.png" alt="Logo Monitora+" class="sidebar-logo">
+      <h1>Monitora<span>+</span></h1>
+    </div>
+
+    <nav class="sidebar-menu">
+      <a href="/inicio" class="sidebar-link">Página inicial</a>
+      <a href="#" class="sidebar-link">Turmas</a>
+      <a href="/notas" class="sidebar-link active">Notas</a>
+      <a href="#" class="sidebar-link">Presença</a>
+      <a href="#" class="sidebar-link">Alunos</a>
+      <a href="/frequencia" class="sidebar-link">Frequência</a>
+      <a href="#" class="sidebar-link">Desempenho</a>
+    </nav>
+  </aside>
+
+  <main class="inicio-main">
+    <header class="inicio-header">
+      <div class="search-box">
+        <input type="text" placeholder="Pesquisar">
+      </div>
+
+      <div class="user-menu">
+        <button class="user-menu-button" id="botaoMenuUsuario">
+          <div class="user-avatar" id="avatarUsuario">U</div>
+
+          <div class="user-text">
+            <span id="papelUsuario"></span>
+            <strong id="nomeUsuarioTopo"></strong>
+          </div>
+
+          <span class="user-arrow">▾</span>
+        </button>
+
+        <div class="user-dropdown" id="menuUsuario">
+          <button type="button" id="btnEditarPerfil">Editar perfil</button>
+          <button type="button" id="btnSair">Sair</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="notas-content">
+      <h2>Lançamento de notas</h2>
+
+      <div class="notas-filtros">
+        <select id="selectMateria">
+          <option value="">Selecione a matéria</option>
+        </select>
+
+        <select id="selectTurma" disabled>
+          <option value="">Selecione a turma</option>
+        </select>
+      </div>
+
+      <div class="notas-tabela-area">
+        <div class="notas-card">
+          <table class="notas-table">
+            <thead>
+              <tr>
+                <th>Aluno(a)</th>
+                <th>Nota 1</th>
+                <th>Nota 2</th>
+                <th>Média</th>
+              </tr>
+            </thead>
+
+            <tbody id="tabelaNotas">
+              <tr>
+                <td colspan="4" class="notas-vazio">
+                  Selecione uma matéria e uma turma para carregar os alunos.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="notas-actions">
+          <button type="button" class="btn-rascunho" id="btnSalvarRascunho">
+            Salvar rascunho
+          </button>
+
+          <button type="button" class="btn-publicar" id="btnPublicarNotas">
+            Publicar notas
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    const selectMateria = document.getElementById("selectMateria");
+    const selectTurma = document.getElementById("selectTurma");
+    const tabelaNotas = document.getElementById("tabelaNotas");
+    const btnSalvarRascunho = document.getElementById("btnSalvarRascunho");
+    const btnPublicarNotas = document.getElementById("btnPublicarNotas");
+
+    const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
+    const papelUsuario = document.getElementById("papelUsuario");
+    const avatarUsuario = document.getElementById("avatarUsuario");
+    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+    const menuUsuario = document.getElementById("menuUsuario");
+    const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+    const btnSair = document.getElementById("btnSair");
+
+    function getToken() {
+      return localStorage.getItem("token");
+    }
+
+    function limparSessao() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("sessaoExpiracao");
+    }
+
+    function formatarPapel(papel) {
+      const p = String(papel).toLowerCase();
+
+      if (p === "admin" || p === "adm" || p === "coordenador") {
+        return "Coordenador";
+      }
+
+      if (p === "professor") return "Professor";
+      if (p === "aluno") return "Aluno";
+
+      return papel;
+    }
+
+    function tokenExpirado(sessaoExpiracao) {
+      const agora = Math.floor(Date.now() / 1000);
+      return Number(sessaoExpiracao) < agora;
+    }
+
+    function verificarTokenFront() {
+      const token = getToken();
+      const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
+
+      if (!token || !sessaoExpiracao || tokenExpirado(sessaoExpiracao)) {
+        limparSessao();
+        window.location.href = "/";
+        return false;
+      }
+
+      return true;
+    }
+
+    function chaveRascunhoAtual() {
+      const materiaId = selectMateria.value;
+      const turmaId = selectTurma.value;
+      return `rascunho_notas_${materiaId}_${turmaId}`;
+    }
+
+    async function carregarUsuarioLogado() {
+      if (!verificarTokenFront()) return;
+
+      try {
+        const resposta = await fetch("/api/usuario-logado", {
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+          }
+        });
+
+        if (!resposta.ok) {
+          limparSessao();
+          window.location.href = "/";
+          return;
+        }
+
+        const dados = await resposta.json();
+        const usuario = dados.usuario;
+
+        nomeUsuarioTopo.textContent = usuario.nome;
+        papelUsuario.textContent = formatarPapel(usuario.papel);
+        avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+
+      } catch (erro) {
+        limparSessao();
+        window.location.href = "/";
+      }
+    }
+
+    async function carregarMaterias() {
+      if (!verificarTokenFront()) return;
+
+      try {
+        const resposta = await fetch("/api/notas/materias", {
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+          }
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error");
+          return;
+        }
+
+        selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+
+        dados.materias.forEach(materia => {
+          selectMateria.innerHTML += `
+            <option value="${materia.id}">${materia.nome}</option>
+          `;
+        });
+
+      } catch (erro) {
+        Swal.fire("Erro", "Falha na conexão com o servidor.", "error");
+      }
+    }
+
+    async function carregarTurmas() {
+      const materiaId = selectMateria.value;
+
+      selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      selectTurma.disabled = true;
+      limparTabela();
+
+      if (!materiaId) return;
+
+      try {
+        const resposta = await fetch(`/api/notas/turmas?materia_id=${materiaId}`, {
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+          }
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error");
+          return;
+        }
+
+        dados.turmas.forEach(turma => {
+          const periodo = turma.periodo ? ` - ${turma.periodo}` : "";
+
+          selectTurma.innerHTML += `
+            <option value="${turma.id}">${turma.nome}${periodo}</option>
+          `;
+        });
+
+        selectTurma.disabled = false;
+
+      } catch (erro) {
+        Swal.fire("Erro", "Falha ao buscar turmas.", "error");
+      }
+    }
+
+    async function carregarAlunos() {
+      const materiaId = selectMateria.value;
+      const turmaId = selectTurma.value;
+
+      if (!materiaId || !turmaId) {
+        limparTabela();
+        return;
+      }
+
+      tabelaNotas.innerHTML = `
+        <tr>
+          <td colspan="4" class="notas-vazio">Carregando alunos...</td>
+        </tr>
+      `;
+
+      try {
+        const resposta = await fetch(`/api/notas/alunos?materia_id=${materiaId}&turma_id=${turmaId}`, {
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+          }
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao carregar alunos.", "error");
+          limparTabela();
+          return;
+        }
+
+        if (!dados.alunos || dados.alunos.length === 0) {
+          tabelaNotas.innerHTML = `
+            <tr>
+              <td colspan="4" class="notas-vazio">Nenhum aluno encontrado para essa turma.</td>
+            </tr>
+          `;
+          return;
+        }
+
+        const rascunhoSalvo = JSON.parse(localStorage.getItem(chaveRascunhoAtual()) || "[]");
+
+        tabelaNotas.innerHTML = dados.alunos.map(aluno => {
+          const rascunhoAluno = rascunhoSalvo.find(r => String(r.aluno_id) === String(aluno.id));
+
+          const nota1 = rascunhoAluno ? rascunhoAluno.nota1 : aluno.nota1;
+          const nota2 = rascunhoAluno ? rascunhoAluno.nota2 : aluno.nota2;
+
+          let media = "-";
+
+          if (
+            nota1 !== "" && nota1 !== null && nota1 !== undefined &&
+            nota2 !== "" && nota2 !== null && nota2 !== undefined
+          ) {
+            media = ((Number(nota1) + Number(nota2)) / 2).toFixed(2);
+          }
+
+          return `
+            <tr data-aluno-id="${aluno.id}">
+              <td>${aluno.nome}</td>
+
+              <td>
+                <input 
+                  type="number" 
+                  class="nota-input nota1" 
+                  min="0" 
+                  max="10" 
+                  step="0.1"
+                  value="${nota1 ?? ""}"
+                >
+              </td>
+
+              <td>
+                <input 
+                  type="number" 
+                  class="nota-input nota2" 
+                  min="0" 
+                  max="10" 
+                  step="0.1"
+                  value="${nota2 ?? ""}"
+                >
+              </td>
+
+              <td>
+                <span class="media-badge ${classeMedia(media)}">
+                  ${media === "-" ? "-" : media.replace(".", ",")}
+                </span>
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+        document.querySelectorAll(".nota-input").forEach(input => {
+          input.addEventListener("input", atualizarMediaLinha);
+        });
+
+      } catch (erro) {
+        Swal.fire("Erro", "Falha ao buscar alunos.", "error");
+        limparTabela();
+      }
+    }
+
+    function limparTabela() {
+      tabelaNotas.innerHTML = `
+        <tr>
+          <td colspan="4" class="notas-vazio">
+            Selecione uma matéria e uma turma para carregar os alunos.
+          </td>
+        </tr>
+      `;
+    }
+
+    function classeMedia(media) {
+      if (media === null || media === undefined || media === "-") return "media-neutra";
+      return Number(media) >= 6 ? "media-aprovada" : "media-baixa";
+    }
+
+    function atualizarMediaLinha(event) {
+      const linha = event.target.closest("tr");
+
+      const nota1 = linha.querySelector(".nota1").value;
+      const nota2 = linha.querySelector(".nota2").value;
+      const mediaSpan = linha.querySelector(".media-badge");
+
+      if (nota1 === "" || nota2 === "") {
+        mediaSpan.textContent = "-";
+        mediaSpan.className = "media-badge media-neutra";
+        return;
+      }
+
+      const media = ((Number(nota1) + Number(nota2)) / 2).toFixed(2);
+
+      mediaSpan.textContent = media.replace(".", ",");
+      mediaSpan.className = `media-badge ${classeMedia(media)}`;
+    }
+
+    function coletarNotas() {
+      const linhas = document.querySelectorAll("#tabelaNotas tr[data-aluno-id]");
+      const alunos = [];
+
+      for (const linha of linhas) {
+        const alunoId = linha.dataset.alunoId;
+        const nota1 = linha.querySelector(".nota1").value;
+        const nota2 = linha.querySelector(".nota2").value;
+
+        if ((nota1 && (nota1 < 0 || nota1 > 10)) || (nota2 && (nota2 < 0 || nota2 > 10))) {
+          Swal.fire("Atenção", "As notas devem estar entre 0 e 10.", "warning");
+          return null;
+        }
+
+        alunos.push({
+          aluno_id: alunoId,
+          nota1: nota1,
+          nota2: nota2
+        });
+      }
+
+      return alunos;
+    }
+
+    async function salvarNotas(tipo) {
+      const materiaId = selectMateria.value;
+      const turmaId = selectTurma.value;
+
+      if (!materiaId || !turmaId) {
+        Swal.fire("Atenção", "Selecione a matéria e a turma.", "warning");
+        return;
+      }
+
+      const alunos = coletarNotas();
+
+      if (!alunos) return;
+
+      if (tipo === "rascunho") {
+        localStorage.setItem(chaveRascunhoAtual(), JSON.stringify(alunos));
+
+        Swal.fire({
+          icon: "success",
+          title: "Rascunho salvo",
+          text: "As notas foram salvas apenas neste navegador."
+        });
+
+        return;
+      }
+
+      const confirmacao = await Swal.fire({
+        icon: "question",
+        title: "Publicar notas?",
+        text: "As notas serão registradas no banco de dados.",
+        showCancelButton: true,
+        confirmButtonText: "Sim, publicar",
+        cancelButtonText: "Cancelar"
+      });
+
+      if (!confirmacao.isConfirmed) return;
+
+      try {
+        const resposta = await fetch("/api/notas/salvar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${getToken()}`
+          },
+          body: JSON.stringify({
+            materia_id: materiaId,
+            turma_id: turmaId,
+            tipo: "publicar",
+            alunos: alunos
+          })
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao publicar notas.", "error");
+          return;
+        }
+
+        localStorage.removeItem(chaveRascunhoAtual());
+
+        Swal.fire("Sucesso", "Notas publicadas com sucesso.", "success");
+
+      } catch (erro) {
+        Swal.fire("Erro", "Falha na conexão com o servidor.", "error");
+      }
+    }
+
+    async function sair() {
+      const confirmacao = await Swal.fire({
+        icon: "question",
+        title: "Deseja sair?",
+        text: "Sua sessão será encerrada.",
+        showCancelButton: true,
+        confirmButtonText: "Sim, sair",
+        cancelButtonText: "Cancelar"
+      });
+
+      if (!confirmacao.isConfirmed) return;
+
+      limparSessao();
+      window.location.href = "/";
+    }
+
+    selectMateria.addEventListener("change", carregarTurmas);
+    selectTurma.addEventListener("change", carregarAlunos);
+
+    btnSalvarRascunho.addEventListener("click", () => salvarNotas("rascunho"));
+    btnPublicarNotas.addEventListener("click", () => salvarNotas("publicar"));
+
+    botaoMenuUsuario.addEventListener("click", () => {
+      menuUsuario.classList.toggle("show");
+    });
+
+    btnEditarPerfil.addEventListener("click", () => {
+      window.location.href = "/perfil";
+    });
+
+    btnSair.addEventListener("click", sair);
+
+    carregarUsuarioLogado();
+    carregarMaterias();
+  </script>
+</body>
+</html>
