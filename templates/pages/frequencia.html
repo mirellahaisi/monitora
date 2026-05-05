@@ -1,149 +1,145 @@
-    <!DOCTYPE html>
-    <html lang="pt-br">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Monitora+ | Frequência</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/frequencia.css') }}">
-        <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    </head>
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitora+ | Frequência</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/frequencia.css') }}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
 
-    <body class="inicio-body">
+<body>
 
-    {% include 'components/sidebar.html' %}
+    <div class="container"> 
+
+    {% include "pages/menu.html" %}
 
     <main class="content">
 
-    {% include 'components/header.html' %}
+            <header>
+                <div class="search-bar">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" placeholder="Pesquisar">
+                </div>
 
-            <!-- FILTROS -->
-            <section class="filter-section">
+                <div class="user-profile">
+                    <span>Professora Marina</span>
+                    <div class="avatar-placeholder">
+                        <i class="ph ph-user"></i>
+                    </div>
+                    <i class="ph ph-bell"></i>
+                </div>
+            </header>
 
-                <h2>Frequência do Aluno</h2>
+        <!-- FILTROS -->
+        <section class="filter-section">
 
-                <form action="/frequencia" method="GET">
+            <h2>Frequência do Aluno</h2>
 
-                    <div class="filters">
+            <form action="/frequencia" method="GET">
+
+                <div class="filters">
 
                     <select name="aluno" required>
                         <option value="" disabled selected>Selecione o aluno</option>
-
                         {% for a in alunos %}
                             <option value="{{ a.id }}">{{ a.nome }}</option>
                         {% endfor %}
-
                     </select>
 
-                        <select name="materia" required>
-                            <option value="" disabled selected>Selecione a matéria</option>
-                            <option value="1">Banco de Dados</option>
-                            <option value="2">Algoritmos</option>
-                            <option value="3">Estrutura de Dados</option>
-                        </select>
+                    <select name="materia" required>
+                        <option value="" disabled selected>Selecione a matéria</option>
+                        <option value="1">Banco de Dados</option>
+                        <option value="2">Algoritmos</option>
+                        <option value="3">Estrutura de Dados</option>
+                    </select>
 
-                        <select name="periodo" required>
-                            <option value="" disabled selected>Selecione o período</option>
-                            <option value="5">5º período</option>
-                            <option value="6">6º período</option>
-                        </select>
+                    <select name="periodo" required>
+                        <option value="" disabled selected>Selecione o período</option>
+                        <option value="5">5º período</option>
+                        <option value="6">6º período</option>
+                    </select>
 
-                        <button type="submit" class="btn-visualizar">
-                            Visualizar
-                        </button>
+                    <button type="submit" class="btn-visualizar">
+                        Visualizar
+                    </button>
 
+                </div>
+
+            </form>
+
+        </section>
+
+        {% if mostrar %}
+
+        <section class="data-card">
+
+            <div class="info-stats">
+
+                <h3>{{ aluno.nome }} - {{ periodo }}</h3>
+                <p class="subtitle">{{ materia }}</p>
+
+                <div class="stats-table">
+
+                    <div class="stat-row">
+                        <span>Total de Aulas</span>
+                        <strong>{{ aluno.total }}</strong>
                     </div>
 
-                </form>
+                    <div class="stat-row">
+                        <span>Presenças</span>
+                        <strong>{{ aluno.presencas }}</strong>
+                    </div>
 
-            </section>
+                    <div class="stat-row">
+                        <span>Faltas</span>
+                        <strong>{{ aluno.faltas }}</strong>
+                    </div>
 
-            
-            {% if mostrar %}
-
-            <section class="data-card">
-
-                <div class="info-stats">
-
-                    <h3>{{ aluno.nome }} - {{ periodo }}</h3>
-                    <p class="subtitle">{{ materia }}</p>
-
-                    <div class="stats-table">
-
-                        <div class="stat-row">
-                            <span>Total de Aulas</span>
-                            <strong>{{ aluno.total }}</strong>
-                        </div>
-
-                        <div class="stat-row">
-                            <span>Presenças</span>
-                            <strong>{{ aluno.presencas }}</strong>
-                        </div>
-
-                        <div class="stat-row">
-                            <span>Faltas</span>
-                            <strong>{{ aluno.faltas }}</strong>
-                        </div>
-
-                        <div class="stat-row highlight">
-                            <span>Frequência</span>
-                            <strong>{{ aluno.presenca }}</strong>
-                        </div>
-
+                    <div class="stat-row highlight">
+                        <span>Frequência</span>
+                        <strong>{{ aluno.presenca }}</strong>
                     </div>
 
                 </div>
 
-                <div class="chart-container">
-
-                    <div class="pie-chart">
-                        <span class="chart-label">
-                            {{ aluno.presenca }}<br>
-                            <small>Frequência</small>
-                        </span>
-                    </div>
-
-                    <div class="chart-legend">
-                        <div><span class="dot presence"></span> Presença</div>
-                        <div><span class="dot absence"></span> Faltas</div>
-                    </div>
-
-                    <a class="btn-report"
-                    href="/frequencia/relatorio?aluno={{ request.args.get('aluno') }}&materia={{ request.args.get('materia') }}&periodo={{ request.args.get('periodo') }}">
-                        <i class="ph ph-download-simple"></i> Baixar relatório
-                    </a>
-
-                </div>
-
-            </section>
-
-            {% else %}
-
-            <div style="text-align:center; color:#999; margin-top:80px;">
-                <i class="ph ph-magnifying-glass" style="font-size:4rem; opacity:0.3;"></i>
-                <p>Selecione aluno, matéria e período para visualizar a frequência.</p>
             </div>
 
-            {% endif %}
+            <div class="chart-container">
 
-        </main>
+                <div class="pie-chart">
+                    <span class="chart-label">
+                        {{ aluno.presenca }}<br>
+                        <small>Frequência</small>
+                    </span>
+                </div>
 
-    <script>
-        // Verificar usuário logado e mostrar botão gestão se for coordenador
-        const usuarioSalvo = localStorage.getItem("usuario");
-        if (usuarioSalvo) {
-            try {
-                const u = JSON.parse(usuarioSalvo);
-                document.getElementById("nomeUsuarioTopo").textContent = u.nome;
-                document.getElementById("papelUsuario").textContent = u.papel;
-                document.getElementById("avatarUsuario").textContent = u.nome.charAt(0).toUpperCase();
+                <div class="chart-legend">
+                    <div><span class="dot presence"></span> Presença</div>
+                    <div><span class="dot absence"></span> Faltas</div>
+                </div>
 
-                // Mostrar botão Gestão de usuários apenas para coordenadores
-                if (u.papel && (u.papel.toLowerCase() === 'coordenador' || u.papel.toLowerCase() === 'admin' || u.papel.toLowerCase() === 'adm')) {
-                  document.getElementById("btnGestaoUsuarios").style.display = "block";
-                }
-            } catch (e) { }
-        }
-    </script>
+                <a class="btn-report"
+                   href="/frequencia/relatorio?aluno={{ request.args.get('aluno') }}&materia={{ request.args.get('materia') }}&periodo={{ request.args.get('periodo') }}">
+                    <i class="ph ph-download-simple"></i> Baixar relatório
+                </a>
 
-    </body>
-    </html>
+            </div>
+
+        </section>
+
+        {% else %}
+
+        <div style="text-align:center; color:#999; margin-top:80px;">
+            <i class="ph ph-magnifying-glass" style="font-size:4rem; opacity:0.3;"></i>
+            <p>Selecione aluno, matéria e período para visualizar a frequência.</p>
+        </div>
+
+        {% endif %}
+
+    </main>
+
+    </div>
+
+</body>
+</html>
