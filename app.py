@@ -213,7 +213,8 @@ def frequencia():
         mostrar=mostrar,
         aluno=aluno,
         materia=materia,
-        periodo=periodo
+        periodo=periodo,
+        active_page='frequencia'
     )
 
 

@@ -10,26 +10,11 @@
 
     <body class="inicio-body">
 
-    <div class="container"> 
-
-    {% include "pages/menu.html" %}
+    {% include 'components/sidebar.html' %}
 
     <main class="content">
 
-            <header>
-                <div class="search-bar">
-                    <i class="ph ph-magnifying-glass"></i>
-                    <input type="text" placeholder="Pesquisar">
-                </div>
-
-                <div class="user-profile">
-                    <span>Professora Marina</span>
-                    <div class="avatar-placeholder">
-                        <i class="ph ph-user"></i>
-                    </div>
-                    <i class="ph ph-bell"></i>
-                </div>
-            </header>
+    {% include 'components/header.html' %}
 
             <!-- FILTROS -->
             <section class="filter-section">
@@ -142,7 +127,23 @@
 
         </main>
 
-    </div>
+    <script>
+        // Verificar usuário logado e mostrar botão gestão se for coordenador
+        const usuarioSalvo = localStorage.getItem("usuario");
+        if (usuarioSalvo) {
+            try {
+                const u = JSON.parse(usuarioSalvo);
+                document.getElementById("nomeUsuarioTopo").textContent = u.nome;
+                document.getElementById("papelUsuario").textContent = u.papel;
+                document.getElementById("avatarUsuario").textContent = u.nome.charAt(0).toUpperCase();
+
+                // Mostrar botão Gestão de usuários apenas para coordenadores
+                if (u.papel && (u.papel.toLowerCase() === 'coordenador' || u.papel.toLowerCase() === 'admin' || u.papel.toLowerCase() === 'adm')) {
+                  document.getElementById("btnGestaoUsuarios").style.display = "block";
+                }
+            } catch (e) { }
+        }
+    </script>
 
     </body>
     </html>
