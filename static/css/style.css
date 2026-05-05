@@ -13,6 +13,10 @@ body {
   min-height: 100vh;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: var(--text);
+  background: #ffffff;
+}
+
+.auth-body {
   background: linear-gradient(rgba(255, 255, 255, 0.28), rgba(210, 229, 247, 0.18)),
     url("/static/images/fundopaginaautentificacao.png") center / cover no-repeat;
 }
@@ -482,7 +486,8 @@ body {
 }
 
 .perfil-content {
-  padding: 30px 40px 80px;
+  padding: 0 40px 80px;
+  margin-top: -50px;
 }
 
 .perfil-content h2 {
