@@ -9,7 +9,7 @@ notas_bp = Blueprint("notas", __name__)
 
 @notas_bp.get("/notas")
 def tela_notas():
-    return render_template("pages/notas.html")
+    return render_template("pages/notas.html", active_page='notas')
 
 
 @notas_bp.get("/api/notas/materias")

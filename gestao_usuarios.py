@@ -71,7 +71,7 @@ def _listar_usuarios_por_papel(papeis: list):
 
 @gestao_usuarios_bp.get("/gestao-usuarios")
 def tela_gestao_usuarios():
-    return render_template("pages/gestao_usuarios.html")
+    return render_template("pages/gestao_usuarios.html", active_page='gestao_usuarios')
 
 
 @gestao_usuarios_bp.get("/api/usuarios/alunos")

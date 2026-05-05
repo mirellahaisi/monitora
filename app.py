@@ -187,7 +187,8 @@ def frequencia():
         mostrar=mostrar,
         aluno=aluno,
         materia=materia_map.get(materia_id),
-        periodo=periodo_map.get(periodo_id)
+        periodo=periodo,
+        active_page='frequencia'_map.get(periodo_id)
     )
 
 
