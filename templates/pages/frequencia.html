@@ -12,7 +12,7 @@
 
 <div class="container">
 
-    <!-- SIDEBAR -->
+    <!-- SIDEBAR ORIGINAL -->
     <aside class="sidebar">
 
         <div class="logo">
@@ -38,7 +38,7 @@
 
     </aside>
 
-    <!-- CONTENT -->
+    <!-- CONTEÚDO -->
     <main class="content">
 
         <header>
@@ -65,14 +65,12 @@
 
                 <div class="filters">
 
-                   <select name="aluno" required>
-                    <option value="" disabled selected>Selecione o aluno</option>
-
-                    {% for a in alunos %}
-                        <option value="{{ a.id }}">{{ a.nome }}</option>
-                    {% endfor %}
-
-                </select>
+                    <select name="aluno" required>
+                        <option value="" disabled selected>Selecione o aluno</option>
+                        {% for a in alunos %}
+                            <option value="{{ a.id }}">{{ a.nome }}</option>
+                        {% endfor %}
+                    </select>
 
                     <select name="materia" required>
                         <option value="" disabled selected>Selecione a matéria</option>
@@ -97,7 +95,6 @@
 
         </section>
 
-        
         {% if mostrar %}
 
         <section class="data-card">
