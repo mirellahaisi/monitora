@@ -1327,3 +1327,197 @@ body {
 .btn-publicar:hover {
   opacity: 0.9;
 }
+
++
+/* ══════════════════════════════════════════
+   FREQUÊNCIA — adicionar ao final de style.css
+   ══════════════════════════════════════════ */
+
+.frequencia-content {
+  width: 100%;
+  max-width: 1100px;
+  margin-top: 55px;
+  margin-left: 35px;
+  padding: 0;
+}
+
+/* Reutiliza .notas-filtros e .btn-publicar do padrão */
+.frequencia-content .notas-filtros {
+  width: 100%;
+  max-width: 920px;
+  margin-bottom: 36px;
+}
+
+.frequencia-content .notas-filtros select:first-child {
+  width: 220px;
+}
+
+.frequencia-content .notas-filtros select:nth-child(2) {
+  width: 260px;
+}
+
+.frequencia-content .notas-filtros select:nth-child(3) {
+  width: 180px;
+}
+
+/* ── Card principal ── */
+.freq-card {
+  width: 100%;
+  max-width: 920px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 40px 48px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 48px;
+  box-shadow: 0 4px 16px rgba(40, 60, 90, 0.07);
+}
+
+/* ── Coluna esquerda ── */
+.freq-info {
+  flex: 1;
+}
+
+.freq-nome {
+  margin: 0 0 4px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #34445c;
+}
+
+.freq-sub {
+  margin: 0 0 28px;
+  font-size: 0.9rem;
+  color: #8d98a7;
+}
+
+.freq-stats {
+  width: 100%;
+  border-top: 1.5px solid #f0f4f8;
+}
+
+.freq-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px 0;
+  border-bottom: 1px solid #f0f4f8;
+  font-size: 0.92rem;
+  color: #4e5d72;
+}
+
+.freq-stat-highlight {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #2da985;
+  border-bottom: none;
+}
+
+.freq-val-green {
+  color: #2da985;
+}
+
+.freq-val-red {
+  color: #ef4444;
+}
+
+/* ── Coluna direita ── */
+.freq-chart-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+/* Donut via conic-gradient + CSS custom prop */
+.freq-donut {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: conic-gradient(#57dbbd 0% calc(var(--pct, 85) * 1%),
+      #f4a96a calc(var(--pct, 85) * 1%) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.freq-donut-inner {
+  width: 142px;
+  height: 142px;
+  background: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.freq-donut-pct {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #34445c;
+  line-height: 1;
+}
+
+.freq-donut-label {
+  font-size: 0.75rem;
+  color: #8d98a7;
+  margin-top: 4px;
+}
+
+/* Legenda */
+.freq-legend {
+  display: flex;
+  gap: 20px;
+  font-size: 0.85rem;
+  color: #4e5d72;
+}
+
+.freq-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.freq-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.freq-dot-green {
+  background: #57dbbd;
+}
+
+.freq-dot-orange {
+  background: #f4a96a;
+}
+
+/* Botão relatório */
+.freq-btn-report {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  text-decoration: none;
+  padding: 10px 20px;
+}
+
+/* ── Estado vazio ── */
+.freq-empty {
+  margin-top: 80px;
+  text-align: center;
+  color: #94a3b8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.92rem;
+}
