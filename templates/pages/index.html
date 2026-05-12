@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitora+ | Sistema de Monitoramento Acadêmico</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --accent: #4caebe;
+            --teal: #57dbbd;
+            --teal-light: #93d7df;
+            --dark: #173c4a;
+            --mid: #34445c;
+            --text: #436077;
+            --muted: #7a96a8;
+            --bg: #f5fafa;
+            --white: #ffffff;
+            --grad: linear-gradient(135deg, #93d7df 0%, #57dbbd 55%, #4caebe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: "DM Sans", "Segoe UI", sans-serif;
+            background: var(--white);
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 60px;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(76, 190, 190, 0.12);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .nav-logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: var(--grad);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-logo svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .nav-title {
+            font-family: "Sora", sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--mid);
+            letter-spacing: -0.02em;
+        }
+
+        .nav-title span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 36px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text);
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent);
+        }
+
+        .nav-cta {
+            background: var(--grad);
+            color: var(--white) !important;
+            padding: 10px 24px;
+            border-radius: 50px;
+            font-weight: 700 !important;
+            font-size: 0.88rem !important;
+            transition: opacity 0.2s, transform 0.2s !important;
+            box-shadow: 0 4px 16px rgba(87, 219, 189, 0.35);
+        }
+
+        .nav-cta:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        /* ── HERO ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 120px 60px 80px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* blob decorativo */
+        .hero::before {
+            content: "";
+            position: absolute;
+            top: -120px;
+            right: -180px;
+            width: 700px;
+            height: 700px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(147, 215, 223, 0.35) 0%, rgba(87, 219, 189, 0.12) 60%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            bottom: -80px;
+            left: -120px;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(76, 190, 190, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-inner {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(87, 219, 189, 0.12);
+            border: 1px solid rgba(87, 219, 189, 0.3);
+            color: #2da985;
+            font-size: 0.8rem;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 50px;
+            margin-bottom: 24px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero-tag::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #57dbbd;
+        }
+
+        .hero-title {
+            font-family: "Sora", sans-serif;
+            font-size: clamp(2.4rem, 4.5vw, 3.8rem);
+            font-weight: 800;
+            line-height: 1.08;
+            letter-spacing: -0.03em;
+            color: var(--dark);
+            margin-bottom: 22px;
+        }
+
+        .hero-title em {
+            font-style: normal;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-desc {
+            font-size: 1.05rem;
+            line-height: 1.7;
+            color: var(--muted);
+            max-width: 480px;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .btn-primary {
+            background: var(--grad);
+            color: #fff;
+            text-decoration: none;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            box-shadow: 0 8px 24px rgba(87, 219, 189, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            font-family: "Sora", sans-serif;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(87, 219, 189, 0.5);
+        }
+
+        .btn-secondary {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: gap 0.2s;
+        }
+
+        .btn-secondary:hover {
+            gap: 10px;
+        }
+
+        /* Hero visual — dashboard mockup */
+        .hero-visual {
+            position: relative;
+        }
+
+        .dashboard-mockup {
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 24px 64px rgba(52, 68, 92, 0.14), 0 4px 16px rgba(52, 68, 92, 0.06);
+            overflow: hidden;
+            border: 1px solid rgba(76, 190, 190, 0.15);
+            transform: perspective(1000px) rotateY(-4deg) rotateX(2deg);
+            transition: transform 0.4s ease;
+        }
+
+        .dashboard-mockup:hover {
+            transform: perspective(1000px) rotateY(-1deg) rotateX(1deg);
+        }
+
+        .mock-topbar {
+            background: var(--grad);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mock-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .mock-title {
+            color: white;
+            font-family: "Sora", sans-serif;
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-left: 6px;
+        }
+
+        .mock-body {
+            display: grid;
+            grid-template-columns: 80px 1fr;
+            min-height: 260px;
+        }
+
+        .mock-sidebar {
+            background: linear-gradient(180deg, #93d7df, #57dbbd);
+            padding: 16px 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .mock-nav-item {
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        .mock-nav-item.active {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .mock-main {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .mock-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .mock-card {
+            height: 52px;
+            border-radius: 8px;
+            background: #f5fafa;
+            border: 1px solid rgba(76, 190, 190, 0.15);
+        }
+
+        .mock-card.accent {
+            background: rgba(87, 219, 189, 0.15);
+        }
+
+        .mock-bar-area {
+            display: flex;
+            gap: 5px;
+            align-items: flex-end;
+            height: 60px;
+            padding: 0 4px;
+        }
+
+        .mock-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            background: linear-gradient(180deg, #93d7df, #57dbbd);
+            opacity: 0.7;
+        }
+
+        /* ── STATS ── */
+        .stats {
+            background: var(--dark);
+            padding: 60px;
+        }
+
+        .stats-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 40px 20px;
+            position: relative;
+        }
+
+        .stat-item+.stat-item::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 20%;
+            bottom: 20%;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .stat-number {
+            font-family: "Sora", sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            background: var(--grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.88rem;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        /* ── FEATURES ── */
+        .features {
+            padding: 100px 60px;
+            background: var(--bg);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 64px;
+        }
+
+        .section-tag {
+            display: inline-block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-family: "Sora", sans-serif;
+            font-size: clamp(1.8rem, 3vw, 2.6rem);
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            color: var(--muted);
+            font-size: 0.98rem;
+            line-height: 1.7;
+            font-weight: 300;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #fff;
+            border-radius: 18px;
+            padding: 36px 32px;
+            border: 1px solid rgba(76, 190, 190, 0.1);
+            transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--grad);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px rgba(52, 68, 92, 0.1);
+            border-color: rgba(76, 190, 190, 0.25);
+        }
+
+        .feature-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: rgba(87, 219, 189, 0.12);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon svg {
+            width: 24px;
+            height: 24px;
+            color: #2da985;
+        }
+
+        .feature-title {
+            font-family: "Sora", sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.65;
+            font-weight: 300;
+        }
+
+        /* ── EQUIPE ── */
+        .team {
+            padding: 100px 60px;
+            background: #fff;
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .team-card {
+            text-align: center;
+            padding: 40px 24px 32px;
+            border-radius: 20px;
+            border: 1px solid rgba(76, 190, 190, 0.12);
+            background: var(--bg);
+            transition: transform 0.25s, box-shadow 0.25s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 48px rgba(52, 68, 92, 0.1);
+        }
+
+        .team-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--grad);
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: "Sora", sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #fff;
+            box-shadow: 0 8px 24px rgba(87, 219, 189, 0.35);
+            position: relative;
+        }
+
+        .team-avatar::after {
+            content: "";
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid rgba(87, 219, 189, 0.4);
+        }
+
+        .team-name {
+            font-family: "Sora", sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+        }
+
+        .team-role {
+            font-size: 0.82rem;
+            color: var(--accent);
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        /* ── CTA FINAL ── */
+        .cta-section {
+            padding: 100px 60px;
+            background: var(--dark);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-section::before {
+            content: "";
+            position: absolute;
+            top: -200px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 600px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(87, 219, 189, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-title {
+            font-family: "Sora", sans-serif;
+            font-size: clamp(1.8rem, 3.5vw, 3rem);
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.02em;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .cta-desc {
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 1rem;
+            margin-bottom: 40px;
+            font-weight: 300;
+            position: relative;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--grad);
+            color: #fff;
+            text-decoration: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-family: "Sora", sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            box-shadow: 0 8px 32px rgba(87, 219, 189, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 16px 48px rgba(87, 219, 189, 0.5);
+        }
+
+        /* ── FOOTER ── */
+        footer {
+            background: #0f2530;
+            padding: 28px 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .footer-brand {
+            font-family: "Sora", sans-serif;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.35);
+            font-size: 0.88rem;
+        }
+
+        .footer-brand span {
+            color: var(--teal);
+        }
+
+        .footer-copy {
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* ── ANIMAÇÕES ── */
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(28px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-tag {
+            animation: fadeUp 0.5s ease both;
+        }
+
+        .hero-title {
+            animation: fadeUp 0.55s 0.08s ease both;
+        }
+
+        .hero-desc {
+            animation: fadeUp 0.55s 0.16s ease both;
+        }
+
+        .hero-actions {
+            animation: fadeUp 0.55s 0.24s ease both;
+        }
+
+        .hero-visual {
+            animation: fadeUp 0.65s 0.1s ease both;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            nav {
+                padding: 16px 24px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 100px 24px 60px;
+            }
+
+            .hero-inner {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-visual {
+                display: none;
+            }
+
+            .stats {
+                padding: 40px 24px;
+            }
+
+            .stats-inner {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-item+.stat-item::before {
+                display: none;
+            }
+
+            .features,
+            .team,
+            .cta-section {
+                padding: 64px 24px;
+            }
+
+            .features-grid,
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a href="#" class="nav-brand">
+            <div class="nav-logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M3 3v18h18" />
+                    <path d="M7 16l4-4 4 4 4-8" />
+                </svg>
+            </div>
+            <span class="nav-title">Monitora<span>+</span></span>
+        </a>
+
+        <ul class="nav-links">
+            <li><a href="#funcionalidades">Funcionalidades</a></li>
+            <li><a href="#equipe">Equipe</a></li>
+            <li><a href="/autentificacao" class="nav-cta">Acessar sistema →</a></li>
+        </ul>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="hero-inner">
+            <div class="hero-text">
+                <div class="hero-tag">Sistema Acadêmico</div>
+                <h1 class="hero-title">
+                    Monitore o<br>
+                    desempenho<br>
+                    <em>acadêmico</em><br>
+                    com precisão
+                </h1>
+                <p class="hero-desc">
+                    O Monitora+ centraliza frequências, notas e avisos em uma plataforma
+                    intuitiva para professores, coordenadores e alunos.
+                </p>
+                <div class="hero-actions">
+                    <a href="/autentificacao" class="btn-primary">Acessar o sistema →</a>
+                    <a href="#funcionalidades" class="btn-secondary">
+                        Ver funcionalidades
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-visual">
+                <div class="dashboard-mockup">
+                    <div class="mock-topbar">
+                        <div class="mock-dot"></div>
+                        <div class="mock-dot"></div>
+                        <div class="mock-dot"></div>
+                        <span class="mock-title">Monitora+ Dashboard</span>
+                    </div>
+                    <div class="mock-body">
+                        <div class="mock-sidebar">
+                            <div class="mock-nav-item active"></div>
+                            <div class="mock-nav-item"></div>
+                            <div class="mock-nav-item"></div>
+                            <div class="mock-nav-item"></div>
+                        </div>
+                        <div class="mock-main">
+                            <div class="mock-row">
+                                <div class="mock-card accent"></div>
+                                <div class="mock-card"></div>
+                                <div class="mock-card accent"></div>
+                            </div>
+                            <div class="mock-bar-area">
+                                <div class="mock-bar" style="height:40%"></div>
+                                <div class="mock-bar" style="height:70%"></div>
+                                <div class="mock-bar" style="height:55%"></div>
+                                <div class="mock-bar" style="height:90%"></div>
+                                <div class="mock-bar" style="height:65%"></div>
+                                <div class="mock-bar" style="height:80%"></div>
+                                <div class="mock-bar" style="height:50%"></div>
+                                <div class="mock-bar" style="height:75%"></div>
+                            </div>
+                            <div class="mock-row">
+                                <div class="mock-card" style="height:36px"></div>
+                                <div class="mock-card" style="height:36px; grid-column:span 2"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stats-inner">
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Web — acesso de qualquer lugar</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Perfis de acesso — aluno, professor e coordenação</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">Real‑time</div>
+                <div class="stat-label">Frequências e notas sempre atualizadas</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FUNCIONALIDADES -->
+    <section class="features" id="funcionalidades">
+        <div class="section-header">
+            <span class="section-tag">Funcionalidades</span>
+            <h2 class="section-title">Tudo que você precisa em um só lugar</h2>
+            <p class="section-desc">Ferramentas projetadas para simplificar a gestão acadêmica do início ao fim.</p>
+        </div>
+
+        <div class="features-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                </div>
+                <div class="feature-title">Gestão de Usuários</div>
+                <p class="feature-desc">Cadastre e gerencie alunos, professores e coordenadores com controle de acesso
+                    por papel.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" />
+                        <path d="M16 2v4M8 2v4M3 10h18" />
+                        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+                    </svg>
+                </div>
+                <div class="feature-title">Controle de Frequência</div>
+                <p class="feature-desc">Registre presenças e faltas por matéria e turma, com visualização gráfica do
+                    percentual de frequência.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 3v18h18" />
+                        <path d="M18 9l-5 5-4-4-3 3" />
+                    </svg>
+                </div>
+                <div class="feature-title">Lançamento de Notas</div>
+                <p class="feature-desc">Professores lançam e publicam notas por avaliação. Médias calculadas
+                    automaticamente com indicação de aprovação.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                </div>
+                <div class="feature-title">Avisos e Comunicados</div>
+                <p class="feature-desc">Publique avisos vinculados às matérias para que alunos sejam notificados
+                    diretamente em suas turmas.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                    </svg>
+                </div>
+                <div class="feature-title">Acesso por Perfil</div>
+                <p class="feature-desc">Cada usuário vê apenas o que é relevante para seu papel — coordenador, professor
+                    ou aluno.</p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                </div>
+                <div class="feature-title">Relatórios para Download</div>
+                <p class="feature-desc">Exporte relatórios de frequência individuais por aluno, matéria e período com um
+                    clique.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- EQUIPE -->
+    <section class="team" id="equipe">
+        <div class="section-header">
+            <span class="section-tag">Equipe</span>
+            <h2 class="section-title">Quem desenvolveu o Monitora+</h2>
+            <p class="section-desc">Projeto desenvolvido por estudantes comprometidos com a inovação na educação.</p>
+        </div>
+
+        <div class="team-grid">
+
+            <div class="team-card">
+                <div class="team-avatar">M</div>
+                <div class="team-name">Mirella Haisi</div>
+                <div class="team-role">Desenvolvedora</div>
+            </div>
+
+            <div class="team-card">
+                <div class="team-avatar">L</div>
+                <div class="team-name">Leonardo Stall</div>
+                <div class="team-role">Desenvolvedor</div>
+            </div>
+
+            <div class="team-card">
+                <div class="team-avatar">G</div>
+                <div class="team-name">Giovanna Daniel</div>
+                <div class="team-role">Desenvolvedora</div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- CTA FINAL -->
+    <section class="cta-section">
+        <h2 class="cta-title">Pronto para começar?</h2>
+        <p class="cta-desc">Acesse o sistema com suas credenciais institucionais.</p>
+        <a href="/autentificacao" class="cta-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            Fazer login
+        </a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-brand">Monitora<span>+</span></div>
+        <div class="footer-copy">© 2026 · Todos os direitos reservados</div>
+    </footer>
+
+</body>
+
+</html>

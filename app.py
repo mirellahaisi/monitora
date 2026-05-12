@@ -1,5 +1,5 @@
 import os, json, time, base64, hmac, hashlib, mysql.connector
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, redirect, render_template, request, jsonify
 
 from login import login_bp
 from gestao_usuarios import gestao_usuarios_bp
@@ -73,9 +73,13 @@ def decode_jwt_payload(token):
 # ========================
 # ROTAS
 # ========================
+@app.get("/login")
+def serve_login():
+    return render_template("pages/autentificacao.html")
+
 @app.get("/")
 def serve_index():
-    return render_template("pages/autentificacao.html")
+    return redirect("/login") 
 
 
 @app.post("/api/login")
