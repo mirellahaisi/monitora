@@ -604,6 +604,9 @@ body {
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
+  height: calc(100vh - 24px);
+  min-height: auto;
+  flex-shrink: 0;
 }
 
 .sidebar-brand {
@@ -1328,7 +1331,6 @@ body {
   opacity: 0.9;
 }
 
-+
 /* ══════════════════════════════════════════
    FREQUÊNCIA — adicionar ao final de style.css
    ══════════════════════════════════════════ */

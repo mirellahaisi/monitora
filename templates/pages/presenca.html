@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Presença</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+
+  <style>
+    :root {
+      --accent: #4caebe;
+      --teal: #57dbbd;
+      --teal-light: #93d7df;
+      --dark: #173c4a;
+      --mid: #34445c;
+      --text: #436077;
+      --muted: #7a96a8;
+      --bg: #f5fafa;
+      --white: #ffffff;
+      --grad: linear-gradient(135deg, #93d7df 0%, #57dbbd 55%, #4caebe 100%);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "DM Sans", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .inicio-body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg);
+      align-items: flex-start;
+    }
+
+    .sidebar {
+      height: calc(100vh - 24px);
+      min-height: auto;
+      flex-shrink: 0;
+    }
+
+    .inicio-main {
+      flex: 1;
+      padding: 28px 36px;
+      min-width: 0;
+    }
+
+    .presenca-content {
+      max-width: 960px;
+    }
+
+    .page-heading {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+
+    .page-heading-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 14px rgba(87,219,189,0.3);
+      flex-shrink: 0;
+    }
+
+    .page-heading-icon svg {
+      width: 22px;
+      height: 22px;
+      color: white;
+    }
+
+    .page-heading h2 {
+      font-family: "Sora", sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--dark);
+      letter-spacing: -0.025em;
+    }
+
+    .page-heading p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .presenca-filtros {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.3);
+      border-radius: 16px;
+      padding: 18px 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.07);
+    }
+
+    .filtro-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .filtro-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .presenca-filtros select,
+    .presenca-filtros input {
+      height: 44px;
+      border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--mid);
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 500;
+      padding: 0 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .presenca-filtros select:focus,
+    .presenca-filtros input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+    }
+
+    .presenca-filtros select:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .presenca-tabela-area {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .presenca-card {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.08);
+    }
+
+    .presenca-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .presenca-table thead {
+      background: linear-gradient(90deg, rgba(147,215,223,0.15) 0%, rgba(87,219,189,0.1) 100%);
+    }
+
+    .presenca-table th {
+      height: 48px;
+      padding: 0 20px;
+      color: var(--mid);
+      font-family: "Sora", sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: left;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-bottom: 1.5px solid rgba(147,215,223,0.25);
+    }
+
+    .presenca-table th:not(:first-child) {
+      text-align: center;
+    }
+
+    .presenca-table td {
+      height: 56px;
+      padding: 0 20px;
+      color: var(--text);
+      font-size: 0.92rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(147,215,223,0.15);
+      vertical-align: middle;
+    }
+
+    .presenca-table td:not(:first-child) {
+      text-align: center;
+    }
+
+    .presenca-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .presenca-table tbody tr:hover {
+      background: rgba(147,215,223,0.06);
+    }
+
+    .presenca-vazio {
+      text-align: center !important;
+      padding: 40px 20px !important;
+      color: var(--muted) !important;
+      font-size: 0.92rem;
+    }
+
+    .radio-presenca {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .observacao-presenca {
+      width: 100%;
+      min-height: 105px;
+      border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 14px;
+      padding: 14px 16px;
+      background: var(--white);
+      color: var(--mid);
+      font: inherit;
+      resize: vertical;
+      outline: none;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.06);
+    }
+
+    .observacao-presenca:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+    }
+
+    .presenca-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-salvar-presenca {
+      height: 46px;
+      padding: 0 28px;
+      border: none;
+      border-radius: 10px;
+      background: var(--grad);
+      color: white;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(87,219,189,0.3);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-salvar-presenca:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    @media (max-width: 800px) {
+      .inicio-body {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: auto;
+        height: auto;
+        min-height: auto;
+      }
+
+      .inicio-main {
+        padding: 20px 16px;
+      }
+
+      .presenca-filtros {
+        flex-direction: column;
+      }
+
+      .presenca-actions {
+        flex-direction: column;
+      }
+
+      .btn-salvar-presenca {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body class="inicio-body">
+
+  {% include 'components/sidebar.html' %}
+
+  <main class="inicio-main">
+    {% include 'components/header.html' %}
+
+    <section class="presenca-content">
+
+      <div class="page-heading">
+        <div class="page-heading-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M9 11l3 3L22 4"/>
+            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Presença</h2>
+          <p>Selecione a matéria, turma e data para registrar a chamada</p>
+        </div>
+      </div>
+
+      <div class="presenca-filtros">
+        <div class="filtro-group">
+          <label for="selectMateria">Matéria</label>
+          <select id="selectMateria">
+            <option value="">Selecione a matéria</option>
+          </select>
+        </div>
+
+        <div class="filtro-group">
+          <label for="selectTurma">Turma</label>
+          <select id="selectTurma" disabled>
+            <option value="">Selecione a turma</option>
+          </select>
+        </div>
+
+        <div class="filtro-group">
+          <label for="dataAula">Data da aula</label>
+          <input type="date" id="dataAula">
+        </div>
+      </div>
+
+      <div class="presenca-tabela-area">
+        <div class="presenca-card">
+          <table class="presenca-table">
+            <thead>
+              <tr>
+                <th>Aluno(a)</th>
+                <th>Presente</th>
+                <th>Ausente</th>
+              </tr>
+            </thead>
+
+            <tbody id="tabelaPresenca">
+              <tr>
+                <td colspan="3" class="presenca-vazio">
+                  Selecione matéria, turma e data para carregar os alunos.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <textarea
+          id="justificativa"
+          class="observacao-presenca"
+          placeholder="Observações: professor, utilize este campo para justificar uma falta específica"
+        ></textarea>
+
+        <div class="presenca-actions">
+          <button type="button" class="btn-salvar-presenca" id="btnSalvarPresenca">
+            Salvar chamada
+          </button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <script>
+    const selectMateria = document.getElementById("selectMateria");
+    const selectTurma = document.getElementById("selectTurma");
+    const dataAula = document.getElementById("dataAula");
+    const tabelaPresenca = document.getElementById("tabelaPresenca");
+    const justificativa = document.getElementById("justificativa");
+    const btnSalvarPresenca = document.getElementById("btnSalvarPresenca");
+
+    const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
+    const papelUsuario     = document.getElementById("papelUsuario");
+    const avatarUsuario    = document.getElementById("avatarUsuario");
+    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+    const menuUsuario      = document.getElementById("menuUsuario");
+    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
+    const btnSair          = document.getElementById("btnSair");
+
+    function getToken() {
+      return localStorage.getItem("token");
+    }
+
+    function limparSessao() {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      localStorage.removeItem("sessaoExpiracao");
+    }
+
+    function formatarPapel(papel) {
+      const p = String(papel).toLowerCase();
+
+      if (p === "admin" || p === "adm" || p === "coordenador") return "Coordenador";
+      if (p === "professor") return "Professor";
+      if (p === "aluno") return "Aluno";
+
+      return papel;
+    }
+
+    async function carregarUsuarioLogado() {
+      try {
+        const resposta = await fetch("/api/usuario-logado", {
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+          }
+        });
+
+        if (!resposta.ok) {
+          limparSessao();
+          window.location.href = "/";
+          return;
+        }
+
+        const dados = await resposta.json();
+        const usuario = dados.usuario;
+
+        if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+        if (papelUsuario) papelUsuario.textContent = formatarPapel(usuario.papel);
+        if (avatarUsuario) avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+
+        const btnGestao = document.getElementById("btnGestaoUsuarios");
+
+        if (btnGestao && ["coordenador", "admin", "adm"].includes(usuario.papel.toLowerCase())) {
+          btnGestao.style.display = "block";
+        }
+
+      } catch {
+        limparSessao();
+        window.location.href = "/";
+      }
+    }
+
+    async function sair() {
+      const confirmacao = await Swal.fire({
+        icon: "question",
+        title: "Deseja sair?",
+        text: "Sua sessão será encerrada.",
+        showCancelButton: true,
+        confirmButtonText: "Sim, sair",
+        cancelButtonText: "Cancelar"
+      });
+
+      if (!confirmacao.isConfirmed) return;
+
+      limparSessao();
+      window.location.href = "/";
+    }
+
+    function limparTabela() {
+      tabelaPresenca.innerHTML = `
+        <tr>
+          <td colspan="3" class="presenca-vazio">
+            Selecione matéria, turma e data para carregar os alunos.
+          </td>
+        </tr>
+      `;
+    }
+
+    function limparCamposPresenca() {
+      selectMateria.value = "";
+      selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      selectTurma.disabled = true;
+      dataAula.value = "";
+      justificativa.value = "";
+      limparTabela();
+    }
+
+    async function carregarMaterias() {
+      try {
+        const resposta = await fetch("/api/presenca/materias", {
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+          }
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error");
+          return;
+        }
+
+        selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+
+        dados.materias.forEach(materia => {
+          selectMateria.innerHTML += `
+            <option value="${materia.id}">${materia.nome}</option>
+          `;
+        });
+
+      } catch {
+        Swal.fire("Erro", "Falha na conexão com o servidor.", "error");
+      }
+    }
+
+    async function carregarTurmas() {
+      selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      selectTurma.disabled = true;
+      limparTabela();
+
+      if (!selectMateria.value) return;
+
+      try {
+        const resposta = await fetch(`/api/presenca/turmas?materia_id=${selectMateria.value}`, {
+          headers: {
+            "Authorization": `Bearer ${getToken()}`
+          }
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error");
+          return;
+        }
+
+        dados.turmas.forEach(turma => {
+          const periodo = turma.periodo ? ` - ${turma.periodo}` : "";
+
+          selectTurma.innerHTML += `
+            <option value="${turma.id}">${turma.nome}${periodo}</option>
+          `;
+        });
+
+        selectTurma.disabled = false;
+
+      } catch {
+        Swal.fire("Erro", "Falha ao buscar turmas.", "error");
+      }
+    }
+
+    async function carregarAlunos() {
+      if (!selectMateria.value || !selectTurma.value || !dataAula.value) {
+        limparTabela();
+        return;
+      }
+
+      tabelaPresenca.innerHTML = `
+        <tr>
+          <td colspan="3" class="presenca-vazio">
+            Carregando alunos...
+          </td>
+        </tr>
+      `;
+
+      try {
+        const resposta = await fetch(
+          `/api/presenca/alunos?materia_id=${selectMateria.value}&turma_id=${selectTurma.value}&data_aula=${dataAula.value}`,
+          {
+            headers: {
+              "Authorization": `Bearer ${getToken()}`
+            }
+          }
+        );
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao carregar alunos.", "error");
+          limparTabela();
+          return;
+        }
+
+        if (!dados.alunos || dados.alunos.length === 0) {
+          tabelaPresenca.innerHTML = `
+            <tr>
+              <td colspan="3" class="presenca-vazio">
+                Nenhum aluno encontrado para essa turma.
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        tabelaPresenca.innerHTML = dados.alunos.map(aluno => {
+          const presenteMarcado = aluno.presente === 1 || aluno.presente === true;
+          const ausenteMarcado = aluno.presente === 0;
+
+          return `
+            <tr data-aluno-id="${aluno.id}">
+              <td>${aluno.nome}</td>
+
+              <td>
+                <input
+                  type="radio"
+                  class="radio-presenca"
+                  name="presenca_${aluno.id}"
+                  value="1"
+                  ${presenteMarcado ? "checked" : ""}
+                >
+              </td>
+
+              <td>
+                <input
+                  type="radio"
+                  class="radio-presenca"
+                  name="presenca_${aluno.id}"
+                  value="0"
+                  ${ausenteMarcado ? "checked" : ""}
+                >
+              </td>
+            </tr>
+          `;
+        }).join("");
+
+      } catch {
+        Swal.fire("Erro", "Falha ao buscar alunos.", "error");
+        limparTabela();
+      }
+    }
+
+    function coletarPresenca() {
+      const linhas = document.querySelectorAll("#tabelaPresenca tr[data-aluno-id]");
+      const alunos = [];
+
+      for (const linha of linhas) {
+        const alunoId = linha.dataset.alunoId;
+        const nomeAluno = linha.querySelector("td").textContent.trim();
+        const radioSelecionado = linha.querySelector(`input[name="presenca_${alunoId}"]:checked`);
+
+        if (!radioSelecionado) {
+          Swal.fire(
+            "Atenção",
+            `Marque presença ou ausência para o(a) aluno(a) ${nomeAluno}.`,
+            "warning"
+          );
+          return null;
+        }
+
+        alunos.push({
+          aluno_id: alunoId,
+          presente: Number(radioSelecionado.value)
+        });
+      }
+
+      return alunos;
+    }
+
+    async function salvarPresenca() {
+      if (!selectMateria.value) {
+        Swal.fire("Atenção", "Selecione a matéria.", "warning");
+        return;
+      }
+
+      if (!selectTurma.value) {
+        Swal.fire("Atenção", "Selecione a turma.", "warning");
+        return;
+      }
+
+      if (!dataAula.value) {
+        Swal.fire("Atenção", "Selecione a data da aula.", "warning");
+        return;
+      }
+
+      const alunos = coletarPresenca();
+
+      if (!alunos) return;
+
+      if (alunos.length === 0) {
+        Swal.fire("Atenção", "Nenhum aluno foi carregado para salvar a chamada.", "warning");
+        return;
+      }
+
+      try {
+        const resposta = await fetch("/api/presenca/salvar", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${getToken()}`
+          },
+          body: JSON.stringify({
+            materia_id: selectMateria.value,
+            turma_id: selectTurma.value,
+            data_aula: dataAula.value,
+            justificativa: justificativa.value,
+            alunos: alunos
+          })
+        });
+
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+          Swal.fire("Erro", dados.message || "Erro ao salvar presença.", "error");
+          return;
+        }
+
+        await Swal.fire("Sucesso", "Chamada salva com sucesso.", "success");
+
+        limparCamposPresenca();
+
+      } catch {
+        Swal.fire("Erro", "Falha na conexão com o servidor.", "error");
+      }
+    }
+
+    selectMateria.addEventListener("change", carregarTurmas);
+    selectTurma.addEventListener("change", carregarAlunos);
+    dataAula.addEventListener("change", carregarAlunos);
+    btnSalvarPresenca.addEventListener("click", salvarPresenca);
+
+    if (botaoMenuUsuario) {
+      botaoMenuUsuario.addEventListener("click", () => {
+        menuUsuario.classList.toggle("show");
+      });
+    }
+
+    if (btnEditarPerfil) {
+      btnEditarPerfil.addEventListener("click", () => {
+        window.location.href = "/perfil";
+      });
+    }
+
+    if (btnSair) {
+      btnSair.addEventListener("click", sair);
+    }
+
+    carregarUsuarioLogado();
+    carregarMaterias();
+  </script>
+
+</body>
+</html>
