@@ -5,65 +5,558 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitora+ | Frequência</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+
+    <style>
+        :root {
+            --accent: #4caebe;
+            --teal: #57dbbd;
+            --teal-light: #93d7df;
+            --dark: #173c4a;
+            --mid: #34445c;
+            --text: #436077;
+            --muted: #7a96a8;
+            --bg: #f5fafa;
+            --white: #ffffff;
+            --grad: linear-gradient(135deg, #93d7df 0%, #57dbbd 55%, #4caebe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "DM Sans", "Segoe UI", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        .inicio-body {
+            display: flex;
+            min-height: 100vh;
+            background: var(--bg);
+        }
+
+        .inicio-main {
+            flex: 1;
+            padding: 28px 36px;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .inicio-main .inicio-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px !important;
+            padding-bottom: 18px;
+            border-bottom: 1.5px solid rgba(147, 215, 223, 0.2);
+        }
+
+        .frequencia-content {
+            width: 100%;
+            max-width: 1180px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .frequencia-content form {
+            width: 100%;
+        }
+
+        .page-heading {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .page-heading-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--grad);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(87, 219, 189, 0.3);
+            flex-shrink: 0;
+        }
+
+        .page-heading-icon svg {
+            width: 22px;
+            height: 22px;
+            color: white;
+        }
+
+        .page-heading h2 {
+            font-family: "Sora", sans-serif;
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .page-heading p {
+            font-size: 0.85rem;
+            color: var(--muted);
+            margin-top: 2px;
+        }
+
+        /* Agora NÃO usa mais .notas-filtros para não brigar com o style.css */
+        .freq-filtros {
+            width: 100%;
+            background: var(--white);
+            border: 1.5px solid rgba(147, 215, 223, 0.3);
+            border-radius: 16px;
+            padding: 22px 28px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 12px rgba(76, 190, 190, 0.07);
+
+            display: grid;
+            grid-template-columns: minmax(190px, 1fr) minmax(260px, 1.2fr) minmax(210px, 1fr) 150px;
+            gap: 18px;
+            align-items: end;
+        }
+
+        .filtro-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 0;
+        }
+
+        .filtro-group label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .freq-filtros select {
+            width: 100%;
+            min-width: 0;
+            height: 44px;
+            border: 1.5px solid rgba(147, 215, 223, 0.4);
+            border-radius: 10px;
+            background: var(--bg);
+            color: var(--mid);
+            font: inherit;
+            font-size: 0.92rem;
+            font-weight: 500;
+            padding: 0 14px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .freq-filtros select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(76, 190, 190, 0.1);
+        }
+
+        .freq-filtros select:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .filtro-actions {
+            width: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: flex-end;
+        }
+
+        .btn-visualizar {
+            width: 100%;
+            height: 44px;
+            border: none;
+            border-radius: 12px;
+            background: var(--grad);
+            color: white;
+            font: inherit;
+            font-size: 0.92rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s ease;
+            box-shadow: 0 4px 14px rgba(87, 219, 189, 0.25);
+            white-space: nowrap;
+        }
+
+        .btn-visualizar:hover {
+            transform: translateY(-1px);
+            opacity: 0.92;
+        }
+
+        .btn-visualizar:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-visualizar svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .freq-card {
+            background: var(--white);
+            border: 1.5px solid rgba(147, 215, 223, 0.25);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(76, 190, 190, 0.08);
+            display: flex;
+            margin-top: 8px;
+        }
+
+        .freq-info {
+            flex: 1;
+            padding: 32px 36px;
+            border-right: 1.5px solid rgba(147, 215, 223, 0.2);
+        }
+
+        .freq-nome {
+            font-family: "Sora", sans-serif;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .freq-sub {
+            font-size: 0.85rem;
+            color: var(--muted);
+            font-weight: 500;
+            margin-bottom: 28px;
+        }
+
+        .freq-stats {
+            display: flex;
+            flex-direction: column;
+            border: 1.5px solid rgba(147, 215, 223, 0.3);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .freq-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-height: 52px;
+            padding: 0 20px;
+            border-bottom: 1px solid rgba(147, 215, 223, 0.2);
+            font-size: 0.92rem;
+        }
+
+        .freq-stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .freq-stat-row span {
+            color: var(--muted);
+            font-weight: 500;
+        }
+
+        .freq-stat-row strong {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--mid);
+        }
+
+        .freq-stat-highlight {
+            background: rgba(147, 215, 223, 0.07);
+        }
+
+        .freq-stat-highlight strong {
+            font-family: "Sora", sans-serif;
+            font-size: 1.1rem;
+            color: var(--accent);
+        }
+
+        .freq-val-green {
+            color: #1a8c6e !important;
+        }
+
+        .freq-val-red {
+            color: #c0392b !important;
+        }
+
+        .freq-chart-col {
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 32px 28px;
+            background: linear-gradient(160deg, rgba(147, 215, 223, 0.07) 0%, rgba(87, 219, 189, 0.05) 100%);
+        }
+
+        .freq-donut {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--teal) 0% calc(var(--pct, 100) * 1%),
+                rgba(244, 169, 106, 0.85) calc(var(--pct, 100) * 1%) 100%
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 24px rgba(87, 219, 189, 0.25);
+        }
+
+        .freq-donut-inner {
+            width: 124px;
+            height: 124px;
+            background: var(--white);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(76, 190, 190, 0.1);
+        }
+
+        .freq-donut-pct {
+            font-family: "Sora", sans-serif;
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--dark);
+            line-height: 1;
+        }
+
+        .freq-donut-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 3px;
+        }
+
+        .freq-legend {
+            display: flex;
+            gap: 18px;
+        }
+
+        .freq-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.82rem;
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .freq-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .freq-dot-green {
+            background: var(--teal);
+        }
+
+        .freq-dot-orange {
+            background: #f4a96a;
+        }
+
+        .btn-rascunho {
+            height: 44px;
+            padding: 0 22px;
+            border-radius: 10px;
+            font: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg);
+            color: var(--mid);
+            border: 1.5px solid rgba(147, 215, 223, 0.4);
+            text-decoration: none;
+        }
+
+        .btn-rascunho:hover {
+            background: rgba(147, 215, 223, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-rascunho svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .freq-empty {
+            background: var(--white);
+            border: 1.5px solid rgba(147, 215, 223, 0.25);
+            border-radius: 16px;
+            min-height: 240px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            color: var(--muted);
+            font-size: 0.92rem;
+            box-shadow: 0 4px 20px rgba(76, 190, 190, 0.08);
+        }
+
+        .freq-empty p {
+            text-align: center;
+            max-width: 340px;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 1180px) {
+            .freq-filtros {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .filtro-actions {
+                grid-column: 1 / -1;
+                justify-content: flex-start;
+            }
+
+            .btn-visualizar {
+                width: 160px;
+            }
+        }
+
+        @media (max-width: 860px) {
+            .inicio-body {
+                flex-direction: column;
+            }
+
+            .inicio-main {
+                padding: 20px 16px;
+            }
+
+            .inicio-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 14px;
+                margin-bottom: 24px;
+            }
+
+            .freq-filtros {
+                grid-template-columns: 1fr;
+                padding: 20px;
+            }
+
+            .btn-visualizar {
+                width: 100%;
+            }
+
+            .freq-card {
+                flex-direction: column;
+            }
+
+            .freq-chart-col {
+                width: 100%;
+                border-top: 1.5px solid rgba(147, 215, 223, 0.2);
+            }
+
+            .freq-info {
+                border-right: none;
+            }
+        }
+    </style>
 </head>
 
-<body class="usuarios-body">
+<body class="inicio-body">
 
     {% include 'components/sidebar.html' %}
 
-    <main class="usuarios-main">
+    <main class="inicio-main">
 
         {% include 'components/header.html' %}
 
         <section class="frequencia-content">
 
-            <h1 class="page-title">Frequência do Aluno</h1>
+            <div class="page-heading">
+                <div class="page-heading-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>
+                    </svg>
+                </div>
 
-            <!-- FILTROS -->
+                <div>
+                    <h2>Frequência do Aluno</h2>
+                    <p>Selecione o aluno, período e matéria para visualizar a frequência</p>
+                </div>
+            </div>
+
             <form action="/frequencia" method="GET">
-                <div class="notas-filtros">
+                <div class="freq-filtros">
 
-                    <!-- 1. Aluno -->
-                    <select name="aluno" id="sel-aluno" required>
-                        <option value="" disabled selected>Selecione o aluno</option>
-                        {% for a in alunos %}
-                        <option value="{{ a.id }}" {% if request.args.get('aluno')|string==a.id|string %}selected{%
-                            endif %}>
-                            {{ a.nome }}
-                        </option>
-                        {% endfor %}
-                    </select>
+                    <div class="filtro-group">
+                        <label for="sel-aluno">Aluno</label>
+                        <select name="aluno" id="sel-aluno" required>
+                            <option value="" disabled selected>Selecione o aluno</option>
+                            {% for a in alunos %}
+                            <option value="{{ a.id }}" {% if request.args.get('aluno')|string == a.id|string %}selected{% endif %}>
+                                {{ a.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
 
-                    <!-- 2. Turma / Período (populado via JS) -->
-                    <select name="turma" id="sel-turma" required disabled>
-                        <option value="" disabled selected>Selecione o período</option>
-                    </select>
+                    <div class="filtro-group">
+                        <label for="sel-turma">Período</label>
+                        <select name="turma" id="sel-turma" required disabled>
+                            <option value="" disabled selected>Selecione o período</option>
+                        </select>
+                    </div>
 
-                    <!-- 3. Matéria (populado via JS) -->
-                    <select name="materia" id="sel-materia" required disabled>
-                        <option value="" disabled selected>Selecione a matéria</option>
-                    </select>
+                    <div class="filtro-group">
+                        <label for="sel-materia">Matéria</label>
+                        <select name="materia" id="sel-materia" required disabled>
+                            <option value="" disabled selected>Selecione a matéria</option>
+                        </select>
+                    </div>
 
-                    <button type="submit" id="btn-visualizar" class="btn-publicar" style="white-space:nowrap;" disabled>
-                        Visualizar
-                    </button>
+                    <div class="filtro-actions">
+                        <button type="submit" id="btn-visualizar" class="btn-visualizar" disabled>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <circle cx="11" cy="11" r="8"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            Visualizar
+                        </button>
+                    </div>
 
                 </div>
             </form>
 
             {% if mostrar %}
 
-            <!-- CARD DE DADOS -->
             <div class="freq-card">
 
-                <!-- Coluna esquerda: stats -->
                 <div class="freq-info">
                     <h2 class="freq-nome">{{ aluno.nome }}</h2>
                     <p class="freq-sub">{{ materia }} &nbsp;·&nbsp; {{ periodo }}</p>
 
                     <div class="freq-stats">
-
                         <div class="freq-stat-row">
                             <span>Total de Aulas</span>
                             <strong>{{ aluno.total }}</strong>
@@ -83,11 +576,9 @@
                             <span>Frequência</span>
                             <strong>{{ aluno.presenca }}</strong>
                         </div>
-
                     </div>
                 </div>
 
-                <!-- Coluna direita: gráfico -->
                 <div class="freq-chart-col">
 
                     <div class="freq-donut" style="--pct: {{ aluno.presenca_raw }}">
@@ -99,43 +590,45 @@
 
                     <div class="freq-legend">
                         <div class="freq-legend-item">
-                            <span class="freq-dot freq-dot-green"></span> Presença
+                            <span class="freq-dot freq-dot-green"></span>
+                            Presença
                         </div>
+
                         <div class="freq-legend-item">
-                            <span class="freq-dot freq-dot-orange"></span> Faltas
+                            <span class="freq-dot freq-dot-orange"></span>
+                            Faltas
                         </div>
                     </div>
 
-                    <a class="btn-rascunho freq-btn-report"
-                        href="/frequencia/relatorio?aluno={{ request.args.get('aluno') }}&materia={{ request.args.get('materia') }}&turma={{ request.args.get('turma') }}">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="7 10 12 15 17 10" />
-                            <line x1="12" y1="15" x2="12" y2="3" />
+                    <a class="btn-rascunho"
+                       href="/frequencia/relatorio?aluno={{ request.args.get('aluno') }}&materia={{ request.args.get('materia') }}&turma={{ request.args.get('turma') }}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
                         </svg>
                         Baixar relatório
                     </a>
 
                 </div>
-
             </div>
 
             {% else %}
 
             <div class="freq-empty">
-                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                    opacity="0.25">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
+
                 <p>Selecione o aluno, o período e a matéria para visualizar a frequência.</p>
             </div>
 
             {% endif %}
 
         </section>
-
     </main>
 
     <script>
@@ -144,17 +637,126 @@
         const selMateria = document.getElementById("sel-materia");
         const btnVis = document.getElementById("btn-visualizar");
 
-        // Valores já selecionados (vêm da URL após submit)
+        const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
+        const papelUsuario = document.getElementById("papelUsuario");
+        const avatarUsuario = document.getElementById("avatarUsuario");
+        const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+        const menuUsuario = document.getElementById("menuUsuario");
+        const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+        const btnGestaoUsuarios = document.getElementById("btnGestaoUsuarios");
+        const btnSair = document.getElementById("btnSair");
+
         const alunoAtual = "{{ request.args.get('aluno') or '' }}";
         const turmaAtual = "{{ request.args.get('turma') or '' }}";
         const materiaAtual = "{{ request.args.get('materia') or '' }}";
+
+        function getToken() {
+            return localStorage.getItem("token");
+        }
+
+        function limparSessao() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("usuario");
+            localStorage.removeItem("sessaoExpiracao");
+        }
+
+        function formatarPapel(papel) {
+            const papelNormalizado = String(papel).toLowerCase();
+
+            if (["admin", "adm", "coordenador"].includes(papelNormalizado)) {
+                return "Coordenador";
+            }
+
+            if (papelNormalizado === "professor") {
+                return "Professor";
+            }
+
+            if (papelNormalizado === "aluno") {
+                return "Aluno";
+            }
+
+            return papel;
+        }
+
+        function tokenExpirado(sessaoExpiracao) {
+            return Number(sessaoExpiracao) < Math.floor(Date.now() / 1000);
+        }
+
+        function verificarTokenFront() {
+            const token = getToken();
+            const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
+
+            if (!token || !sessaoExpiracao || tokenExpirado(sessaoExpiracao)) {
+                limparSessao();
+                window.location.href = "/";
+                return false;
+            }
+
+            return true;
+        }
+
+        async function carregarUsuarioLogado() {
+            if (!verificarTokenFront()) return;
+
+            try {
+                const resposta = await fetch("/api/usuario-logado", {
+                    headers: {
+                        "Authorization": `Bearer ${getToken()}`
+                    }
+                });
+
+                if (!resposta.ok) {
+                    limparSessao();
+                    window.location.href = "/";
+                    return;
+                }
+
+                const dados = await resposta.json();
+                const usuario = dados.usuario;
+
+                if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+                if (papelUsuario) papelUsuario.textContent = formatarPapel(usuario.papel);
+                if (avatarUsuario) avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+
+                if (btnGestaoUsuarios && ["coordenador", "admin", "adm"].includes(usuario.papel.toLowerCase())) {
+                    btnGestaoUsuarios.style.display = "block";
+                }
+            } catch (erro) {
+                console.error("Erro ao carregar usuario logado:", erro);
+                limparSessao();
+                window.location.href = "/";
+            }
+        }
+
+        async function sair() {
+            const confirmarSaida = window.confirm("Deseja sair? Sua sessao sera encerrada.");
+
+            if (!confirmarSaida) return;
+
+            try {
+                const token = getToken();
+
+                if (token) {
+                    await fetch("/api/logout", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer ${token}`
+                        }
+                    });
+                }
+            } catch (erro) {
+                console.error("Erro ao fazer logout:", erro);
+            }
+
+            limparSessao();
+            window.location.href = "/";
+        }
 
         function resetSelect(sel, placeholder) {
             sel.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
             sel.disabled = true;
         }
 
-        // ── 1. Aluno selecionado → carrega turmas ──
         async function carregarTurmas(alunoId, turmaParaSelecionar = "") {
             resetSelect(selTurma, "Selecione o período");
             resetSelect(selMateria, "Selecione a matéria");
@@ -162,66 +764,103 @@
 
             if (!alunoId) return;
 
-            const resp = await fetch(`/api/frequencia/turmas?aluno_id=${alunoId}`);
-            const turmas = await resp.json();
+            try {
+                const resposta = await fetch(`/api/frequencia/turmas?aluno_id=${alunoId}`);
+                const turmas = await resposta.json();
 
-            turmas.forEach(t => {
-                const opt = document.createElement("option");
-                opt.value = t.id;
-                opt.textContent = `${t.nome} — ${t.periodo}º Período`;
-                if (String(t.id) === turmaParaSelecionar) opt.selected = true;
-                selTurma.appendChild(opt);
-            });
+                turmas.forEach((turma) => {
+                    const option = document.createElement("option");
+                    option.value = turma.id;
+                    option.textContent = `${turma.nome} - ${turma.periodo}º Período`;
 
-            selTurma.disabled = turmas.length === 0;
+                    if (String(turma.id) === turmaParaSelecionar) {
+                        option.selected = true;
+                    }
 
-            if (turmaParaSelecionar && selTurma.value) {
-                await carregarMaterias(turmaParaSelecionar, materiaAtual);
+                    selTurma.appendChild(option);
+                });
+
+                selTurma.disabled = turmas.length === 0;
+
+                if (turmaParaSelecionar && selTurma.value) {
+                    await carregarMaterias(turmaParaSelecionar, materiaAtual);
+                }
+            } catch (erro) {
+                console.error("Erro ao carregar turmas:", erro);
+                resetSelect(selTurma, "Selecione o período");
             }
         }
 
-        // ── 2. Turma selecionada → carrega matérias ──
         async function carregarMaterias(turmaId, materiaParaSelecionar = "") {
             resetSelect(selMateria, "Selecione a matéria");
             btnVis.disabled = true;
 
             if (!turmaId) return;
 
-            const resp = await fetch(`/api/frequencia/materias?turma_id=${turmaId}`);
-            const materias = await resp.json();
+            try {
+                const resposta = await fetch(`/api/frequencia/materias?turma_id=${turmaId}`);
+                const materias = await resposta.json();
 
-            materias.forEach(m => {
-                const opt = document.createElement("option");
-                opt.value = m.id;
-                opt.textContent = m.nome;
-                if (String(m.id) === materiaParaSelecionar) opt.selected = true;
-                selMateria.appendChild(opt);
-            });
+                materias.forEach((materia) => {
+                    const option = document.createElement("option");
+                    option.value = materia.id;
+                    option.textContent = materia.nome;
 
-            selMateria.disabled = materias.length === 0;
+                    if (String(materia.id) === materiaParaSelecionar) {
+                        option.selected = true;
+                    }
 
-            if (selMateria.value) btnVis.disabled = false;
+                    selMateria.appendChild(option);
+                });
+
+                selMateria.disabled = materias.length === 0;
+                btnVis.disabled = !selMateria.value;
+            } catch (erro) {
+                console.error("Erro ao carregar matérias:", erro);
+                resetSelect(selMateria, "Selecione a matéria");
+            }
         }
 
-        // ── Eventos ──
-        selAluno.addEventListener("change", () => {
-            carregarTurmas(selAluno.value);
-        });
-
-        selTurma.addEventListener("change", () => {
-            carregarMaterias(selTurma.value);
-        });
-
+        selAluno.addEventListener("change", () => carregarTurmas(selAluno.value));
+        selTurma.addEventListener("change", () => carregarMaterias(selTurma.value));
         selMateria.addEventListener("change", () => {
             btnVis.disabled = !selMateria.value;
         });
 
-        // ── Restaurar estado após submit ──
+        if (botaoMenuUsuario) {
+            botaoMenuUsuario.addEventListener("click", () => {
+                menuUsuario.classList.toggle("show");
+            });
+        }
+
+        if (btnEditarPerfil) {
+            btnEditarPerfil.addEventListener("click", () => {
+                window.location.href = "/perfil";
+            });
+        }
+
+        if (btnGestaoUsuarios) {
+            btnGestaoUsuarios.addEventListener("click", () => {
+                window.location.href = "/gestao-usuarios";
+            });
+        }
+
+        if (btnSair) {
+            btnSair.addEventListener("click", sair);
+        }
+
+        window.addEventListener("click", (event) => {
+            if (!event.target.closest(".user-menu") && menuUsuario) {
+                menuUsuario.classList.remove("show");
+            }
+        });
+
+        carregarUsuarioLogado();
+
         if (alunoAtual) {
             carregarTurmas(alunoAtual, turmaAtual);
         }
     </script>
 
 </body>
-
 </html>

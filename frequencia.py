@@ -69,7 +69,7 @@ def frequencia():
             total     = result["total"]
             presencas = result["presencas"]
             faltas    = result["faltas"]
-            pct_raw   = round((presencas / total) * 100) if total else 0
+            pct_raw = max(0, 100 - (faltas * 2))
 
             aluno = {
                 "nome":         result["nome"],
