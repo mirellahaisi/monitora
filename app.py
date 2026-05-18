@@ -5,6 +5,7 @@ from login import login_bp
 from gestao_usuarios import gestao_usuarios_bp
 from notas import notas_bp
 from frequencia import frequencia_bp
+from presenca import presenca_bp
 
 # ========================
 # CONFIGS JWT
@@ -28,6 +29,7 @@ app.register_blueprint(login_bp)
 app.register_blueprint(gestao_usuarios_bp)
 app.register_blueprint(notas_bp)
 app.register_blueprint(frequencia_bp)
+app.register_blueprint(presenca_bp)
 
 # ========================
 # BANCO
@@ -79,8 +81,7 @@ def serve_login():
 
 @app.get("/")
 def serve_index():
-    return redirect("/login") 
-
+    return render_template("pages/index.html") 
 
 @app.post("/api/login")
 def login():

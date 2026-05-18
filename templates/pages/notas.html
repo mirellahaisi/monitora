@@ -4,29 +4,530 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitora+ | Notas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* ── Design tokens (mesmos da index.html) ── */
+    :root {
+      --accent:     #4caebe;
+      --teal:       #57dbbd;
+      --teal-light: #93d7df;
+      --dark:       #173c4a;
+      --mid:        #34445c;
+      --text:       #436077;
+      --muted:      #7a96a8;
+      --bg:         #f5fafa;
+      --white:      #ffffff;
+      --grad:       linear-gradient(135deg, #93d7df 0%, #57dbbd 55%, #4caebe 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "DM Sans", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ══════════════════════════════════════
+       LAYOUT PRINCIPAL
+    ══════════════════════════════════════ */
+    .inicio-body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg);
+    }
+
+    /* ══════════════════════════════════════
+       SIDEBAR
+    ══════════════════════════════════════ */
+    .sidebar {
+      width: 200px;
+      min-height: calc(100vh - 24px);
+      margin: 12px;
+      padding: 24px 14px;
+      border-radius: 20px;
+      background: var(--grad);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      box-shadow: 0 8px 32px rgba(87,219,189,0.25);
+    }
+
+    .sidebar-brand {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .sidebar-logo {
+      width: 72px; height: 72px;
+      object-fit: contain;
+    }
+
+    .sidebar-brand h1 {
+      margin: 6px 0 0;
+      font-family: "Sora", sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--dark);
+      letter-spacing: -0.02em;
+    }
+    .sidebar-brand h1 span { color: rgba(23,60,74,0.55); }
+
+    .sidebar-menu {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-link {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.85);
+      font-size: 0.86rem;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.18s, color 0.18s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-link svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+    .sidebar-link.active,
+    .sidebar-link:hover {
+      background: rgba(255,255,255,0.92);
+      color: var(--mid);
+    }
+
+    .logout-button {
+      margin-top: auto;
+      width: 100%;
+      padding: 10px 14px;
+      border: 0;
+      background: transparent;
+      color: rgba(255,255,255,0.7);
+      font: inherit;
+      font-size: 0.86rem;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.18s, color 0.18s;
+    }
+    .logout-button svg { width: 16px; height: 16px; }
+    .logout-button:hover { background: rgba(255,255,255,0.15); color: white; }
+
+    /* ══════════════════════════════════════
+       MAIN
+    ══════════════════════════════════════ */
+    .inicio-main {
+      flex: 1;
+      padding: 28px 36px;
+      min-width: 0;
+    }
+
+    /* ── Header ── */
+    .inicio-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 40px;
+    }
+
+    .header-title {
+      font-family: "Sora", sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .search-box input {
+      width: 260px;
+      height: 38px;
+      border: 1.5px solid rgba(147,215,223,0.35);
+      border-radius: 50px;
+      padding: 0 18px;
+      background: var(--white);
+      outline: none;
+      font: inherit;
+      font-size: 0.88rem;
+      color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-box input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+    }
+    .search-box input::placeholder { color: #a8bfcc; }
+
+    /* user menu */
+    .user-menu { position: relative; display: flex; align-items: center; }
+
+    .user-menu-button {
+      border: none;
+      background: var(--white);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 14px 7px 7px;
+      border-radius: 999px;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.15);
+      color: var(--mid);
+      transition: box-shadow 0.2s;
+    }
+    .user-menu-button:hover { box-shadow: 0 4px 18px rgba(76,190,190,0.22); }
+
+    .user-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--grad);
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-family: "Sora", sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .user-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+    .user-text span { font-size: 0.72rem; font-weight: 600; color: var(--accent); }
+    .user-text strong { font-size: 0.88rem; font-weight: 700; color: var(--mid); }
+    .user-arrow { font-size: 12px; color: var(--muted); }
+
+    .user-dropdown {
+      display: none;
+      position: absolute;
+      top: 48px; right: 0;
+      min-width: 180px;
+      background: var(--white);
+      border-radius: 14px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.12);
+      padding: 8px;
+      z-index: 100;
+    }
+    .user-dropdown.show { display: block; }
+    .user-dropdown button {
+      width: 100%; border: none; background: transparent;
+      padding: 10px 12px; text-align: left; border-radius: 8px;
+      cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--text);
+    }
+    .user-dropdown button:hover { background: var(--bg); color: var(--accent); }
+
+    /* ══════════════════════════════════════
+       NOTAS CONTENT
+    ══════════════════════════════════════ */
+    .notas-content { max-width: 960px; }
+
+    .page-heading {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .page-heading-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: var(--grad);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(87,219,189,0.3);
+      flex-shrink: 0;
+    }
+    .page-heading-icon svg { width: 22px; height: 22px; color: white; }
+
+    .page-heading h2 {
+      font-family: "Sora", sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--dark);
+      letter-spacing: -0.025em;
+    }
+    .page-heading p {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── Filtros ── */
+    .notas-filtros {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.3);
+      border-radius: 16px;
+      padding: 18px 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.07);
+    }
+
+    .filtro-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+    .filtro-group label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .notas-filtros select {
+      height: 44px;
+      border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--mid);
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 500;
+      padding: 0 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .notas-filtros select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+    }
+    .notas-filtros select:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* ── Tabela area ── */
+    .notas-tabela-area { display: flex; flex-direction: column; gap: 18px; }
+
+    .notas-card {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.08);
+    }
+
+    .notas-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .notas-table thead {
+      background: linear-gradient(90deg, rgba(147,215,223,0.15) 0%, rgba(87,219,189,0.1) 100%);
+    }
+
+    .notas-table th {
+      height: 48px;
+      padding: 0 20px;
+      color: var(--mid);
+      font-family: "Sora", sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-align: left;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border-bottom: 1.5px solid rgba(147,215,223,0.25);
+    }
+    .notas-table th:not(:first-child) { text-align: center; }
+
+    .notas-table td {
+      height: 56px;
+      padding: 0 20px;
+      color: var(--text);
+      font-size: 0.92rem;
+      text-align: left;
+      border-bottom: 1px solid rgba(147,215,223,0.15);
+      vertical-align: middle;
+    }
+    .notas-table td:not(:first-child) { text-align: center; }
+    .notas-table tr:last-child td { border-bottom: none; }
+
+    .notas-table tbody tr {
+      transition: background 0.15s;
+    }
+    .notas-table tbody tr:hover { background: rgba(147,215,223,0.06); }
+
+    /* Inputs de nota */
+    .nota-input {
+      width: 88px;
+      height: 36px;
+      border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 8px;
+      text-align: center;
+      color: var(--mid);
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 600;
+      outline: none;
+      background: var(--bg);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .nota-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,190,190,0.12);
+      background: var(--white);
+    }
+
+    /* badges de média */
+    .media-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      height: 32px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+    .media-aprovada { background: rgba(87,219,189,0.15); color: #1a8c6e; border: 1px solid rgba(87,219,189,0.3); }
+    .media-baixa    { background: rgba(255,107,107,0.1);  color: #c0392b; border: 1px solid rgba(255,107,107,0.25); }
+    .media-neutra   { background: rgba(147,215,223,0.12); color: var(--muted); border: 1px solid rgba(147,215,223,0.25); }
+
+    .notas-vazio {
+      text-align: center !important;
+      padding: 40px 20px !important;
+      color: var(--muted) !important;
+      font-size: 0.92rem;
+    }
+
+    /* ── Actions ── */
+    .notas-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    .btn-rascunho,
+    .btn-publicar {
+      height: 46px;
+      padding: 0 24px;
+      border: none;
+      border-radius: 10px;
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-rascunho {
+      background: var(--bg);
+      color: var(--mid);
+      border: 1.5px solid rgba(147,215,223,0.4);
+    }
+    .btn-publicar {
+      background: var(--grad);
+      color: white;
+      box-shadow: 0 4px 16px rgba(87,219,189,0.3);
+    }
+    .btn-rascunho:hover { background: rgba(147,215,223,0.15); transform: translateY(-1px); }
+    .btn-publicar:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .btn-rascunho svg,
+    .btn-publicar svg { width: 16px; height: 16px; }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 800px) {
+      .inicio-body { flex-direction: column; }
+      .sidebar { width: auto; min-height: auto; margin: 10px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .inicio-main { padding: 20px 16px; }
+      .inicio-header { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+      .search-box input { width: 100%; }
+      .notas-filtros { flex-direction: column; }
+      .notas-actions { flex-direction: column; }
+      .btn-rascunho, .btn-publicar { width: 100%; justify-content: center; }
+    }
+  </style>
 </head>
 
 <body class="inicio-body">
 
 {% include 'components/sidebar.html' %}
 
+  <!-- Sidebar inline (fallback visual / referência) -->
+  <!--
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <img src="/static/images/logomonitora.png" alt="Logo" class="sidebar-logo">
+      <h1>Monitora<span>+</span></h1>
+    </div>
+    <nav class="sidebar-menu">
+      <a href="/inicio" class="sidebar-link">...</a>
+      <a href="/notas" class="sidebar-link active">Notas</a>
+    </nav>
+  </aside>
+  -->
+
   <main class="inicio-main">
     {% include 'components/header.html' %}
 
+    <!-- Header inline (fallback visual / referência) -->
+    <!--
+    <header class="inicio-header">
+      <span class="header-title">Monitora+</span>
+      <div style="display:flex;gap:16px;align-items:center">
+        <div class="search-box"><input type="text" placeholder="Buscar..."></div>
+        <div class="user-menu">
+          <button class="user-menu-button" id="botaoMenuUsuario">
+            <div class="user-avatar" id="avatarUsuario">A</div>
+            <div class="user-text">
+              <span id="papelUsuario">Professor</span>
+              <strong id="nomeUsuarioTopo">Nome</strong>
+            </div>
+            <span class="user-arrow">▾</span>
+          </button>
+          <div class="user-dropdown" id="menuUsuario">
+            <button id="btnEditarPerfil">Editar perfil</button>
+            <button id="btnSair">Sair</button>
+          </div>
+        </div>
+      </div>
+    </header>
+    -->
+
     <section class="notas-content">
-      <h2>Lançamento de notas</h2>
 
-      <div class="notas-filtros">
-        <select id="selectMateria">
-          <option value="">Selecione a matéria</option>
-        </select>
-
-        <select id="selectTurma" disabled>
-          <option value="">Selecione a turma</option>
-        </select>
+      <!-- Cabeçalho da seção -->
+      <div class="page-heading">
+        <div class="page-heading-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-3 3"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Lançamento de notas</h2>
+          <p>Selecione a matéria e turma para registrar as notas</p>
+        </div>
       </div>
 
+      <!-- Filtros -->
+      <div class="notas-filtros">
+        <div class="filtro-group">
+          <label for="selectMateria">Matéria</label>
+          <select id="selectMateria">
+            <option value="">Selecione a matéria</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label for="selectTurma">Turma</label>
+          <select id="selectTurma" disabled>
+            <option value="">Selecione a turma</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabela -->
       <div class="notas-tabela-area">
         <div class="notas-card">
           <table class="notas-table">
@@ -38,7 +539,6 @@
                 <th>Média</th>
               </tr>
             </thead>
-
             <tbody id="tabelaNotas">
               <tr>
                 <td colspan="4" class="notas-vazio">
@@ -51,37 +551,43 @@
 
         <div class="notas-actions">
           <button type="button" class="btn-rascunho" id="btnSalvarRascunho">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+              <polyline points="17 21 17 13 7 13 7 21"/>
+              <polyline points="7 3 7 8 15 8"/>
+            </svg>
             Salvar rascunho
           </button>
-
           <button type="button" class="btn-publicar" id="btnPublicarNotas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
             Publicar notas
           </button>
         </div>
       </div>
+
     </section>
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
   <script>
-    const selectMateria = document.getElementById("selectMateria");
-    const selectTurma = document.getElementById("selectTurma");
-    const tabelaNotas = document.getElementById("tabelaNotas");
+    const selectMateria    = document.getElementById("selectMateria");
+    const selectTurma      = document.getElementById("selectTurma");
+    const tabelaNotas      = document.getElementById("tabelaNotas");
     const btnSalvarRascunho = document.getElementById("btnSalvarRascunho");
-    const btnPublicarNotas = document.getElementById("btnPublicarNotas");
+    const btnPublicarNotas  = document.getElementById("btnPublicarNotas");
 
-    const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
-    const papelUsuario = document.getElementById("papelUsuario");
-    const avatarUsuario = document.getElementById("avatarUsuario");
+    // Referências do header — geradas pelo include, podem não existir neste arquivo isolado
+    const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
+    const papelUsuario     = document.getElementById("papelUsuario");
+    const avatarUsuario    = document.getElementById("avatarUsuario");
     const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-    const menuUsuario = document.getElementById("menuUsuario");
-    const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-    const btnSair = document.getElementById("btnSair");
+    const menuUsuario      = document.getElementById("menuUsuario");
+    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
+    const btnSair          = document.getElementById("btnSair");
 
-    function getToken() {
-      return localStorage.getItem("token");
-    }
+    function getToken() { return localStorage.getItem("token"); }
 
     function limparSessao() {
       localStorage.removeItem("token");
@@ -91,252 +597,125 @@
 
     function formatarPapel(papel) {
       const p = String(papel).toLowerCase();
-
-      if (p === "admin" || p === "adm" || p === "coordenador") {
-        return "Coordenador";
-      }
-
+      if (p === "admin" || p === "adm" || p === "coordenador") return "Coordenador";
       if (p === "professor") return "Professor";
       if (p === "aluno") return "Aluno";
-
       return papel;
     }
 
     function tokenExpirado(sessaoExpiracao) {
-      const agora = Math.floor(Date.now() / 1000);
-      return Number(sessaoExpiracao) < agora;
+      return Number(sessaoExpiracao) < Math.floor(Date.now() / 1000);
     }
 
     function verificarTokenFront() {
       const token = getToken();
       const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
-
       if (!token || !sessaoExpiracao || tokenExpirado(sessaoExpiracao)) {
         limparSessao();
         window.location.href = "/";
         return false;
       }
-
       return true;
     }
 
     function chaveRascunhoAtual() {
-      const materiaId = selectMateria.value;
-      const turmaId = selectTurma.value;
-      return `rascunho_notas_${materiaId}_${turmaId}`;
+      return `rascunho_notas_${selectMateria.value}_${selectTurma.value}`;
     }
 
     async function carregarUsuarioLogado() {
       if (!verificarTokenFront()) return;
-
       try {
         const resposta = await fetch("/api/usuario-logado", {
-          headers: {
-            "Authorization": `Bearer ${getToken()}`
-          }
+          headers: { "Authorization": `Bearer ${getToken()}` }
         });
-
-        if (!resposta.ok) {
-          limparSessao();
-          window.location.href = "/";
-          return;
-        }
-
+        if (!resposta.ok) { limparSessao(); window.location.href = "/"; return; }
         const dados = await resposta.json();
         const usuario = dados.usuario;
-
-        nomeUsuarioTopo.textContent = usuario.nome;
-        papelUsuario.textContent = formatarPapel(usuario.papel);
-        avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
-
-        // Mostrar botão Gestão de usuários apenas para coordenadores
-        if (usuario.papel.toLowerCase() === 'coordenador' || usuario.papel.toLowerCase() === 'admin' || usuario.papel.toLowerCase() === 'adm') {
-          document.getElementById("btnGestaoUsuarios").style.display = "block";
+        if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+        if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+        if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+        const btnGestao = document.getElementById("btnGestaoUsuarios");
+        if (btnGestao && ["coordenador","admin","adm"].includes(usuario.papel.toLowerCase())) {
+          btnGestao.style.display = "block";
         }
-
-      } catch (erro) {
-        limparSessao();
-        window.location.href = "/";
-      }
+      } catch { limparSessao(); window.location.href = "/"; }
     }
 
     async function carregarMaterias() {
       if (!verificarTokenFront()) return;
-
       try {
         const resposta = await fetch("/api/notas/materias", {
-          headers: {
-            "Authorization": `Bearer ${getToken()}`
-          }
+          headers: { "Authorization": `Bearer ${getToken()}` }
         });
-
         const dados = await resposta.json();
-
-        if (!resposta.ok) {
-          Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error");
-          return;
-        }
-
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error"); return; }
         selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
-
-        dados.materias.forEach(materia => {
-          selectMateria.innerHTML += `
-            <option value="${materia.id}">${materia.nome}</option>
-          `;
+        dados.materias.forEach(m => {
+          selectMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
         });
-
-      } catch (erro) {
-        Swal.fire("Erro", "Falha na conexão com o servidor.", "error");
-      }
+      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     }
 
     async function carregarTurmas() {
       const materiaId = selectMateria.value;
-
       selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
       selectTurma.disabled = true;
       limparTabela();
-
       if (!materiaId) return;
-
       try {
         const resposta = await fetch(`/api/notas/turmas?materia_id=${materiaId}`, {
-          headers: {
-            "Authorization": `Bearer ${getToken()}`
-          }
+          headers: { "Authorization": `Bearer ${getToken()}` }
         });
-
         const dados = await resposta.json();
-
-        if (!resposta.ok) {
-          Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error");
-          return;
-        }
-
-        dados.turmas.forEach(turma => {
-          const periodo = turma.periodo ? ` - ${turma.periodo}` : "";
-
-          selectTurma.innerHTML += `
-            <option value="${turma.id}">${turma.nome}${periodo}</option>
-          `;
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error"); return; }
+        dados.turmas.forEach(t => {
+          const periodo = t.periodo ? ` - ${t.periodo}` : "";
+          selectTurma.innerHTML += `<option value="${t.id}">${t.nome}${periodo}</option>`;
         });
-
         selectTurma.disabled = false;
-
-      } catch (erro) {
-        Swal.fire("Erro", "Falha ao buscar turmas.", "error");
-      }
+      } catch { Swal.fire("Erro", "Falha ao buscar turmas.", "error"); }
     }
 
     async function carregarAlunos() {
       const materiaId = selectMateria.value;
-      const turmaId = selectTurma.value;
+      const turmaId   = selectTurma.value;
+      if (!materiaId || !turmaId) { limparTabela(); return; }
 
-      if (!materiaId || !turmaId) {
-        limparTabela();
-        return;
-      }
-
-      tabelaNotas.innerHTML = `
-        <tr>
-          <td colspan="4" class="notas-vazio">Carregando alunos...</td>
-        </tr>
-      `;
+      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Carregando alunos...</td></tr>`;
 
       try {
         const resposta = await fetch(`/api/notas/alunos?materia_id=${materiaId}&turma_id=${turmaId}`, {
-          headers: {
-            "Authorization": `Bearer ${getToken()}`
-          }
+          headers: { "Authorization": `Bearer ${getToken()}` }
         });
-
         const dados = await resposta.json();
-
-        if (!resposta.ok) {
-          Swal.fire("Erro", dados.message || "Erro ao carregar alunos.", "error");
-          limparTabela();
-          return;
-        }
-
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar alunos.", "error"); limparTabela(); return; }
         if (!dados.alunos || dados.alunos.length === 0) {
-          tabelaNotas.innerHTML = `
-            <tr>
-              <td colspan="4" class="notas-vazio">Nenhum aluno encontrado para essa turma.</td>
-            </tr>
-          `;
+          tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Nenhum aluno encontrado para essa turma.</td></tr>`;
           return;
         }
-
         const rascunhoSalvo = JSON.parse(localStorage.getItem(chaveRascunhoAtual()) || "[]");
-
         tabelaNotas.innerHTML = dados.alunos.map(aluno => {
-          const rascunhoAluno = rascunhoSalvo.find(r => String(r.aluno_id) === String(aluno.id));
-
-          const nota1 = rascunhoAluno ? rascunhoAluno.nota1 : aluno.nota1;
-          const nota2 = rascunhoAluno ? rascunhoAluno.nota2 : aluno.nota2;
-
+          const r = rascunhoSalvo.find(x => String(x.aluno_id) === String(aluno.id));
+          const nota1 = r ? r.nota1 : aluno.nota1;
+          const nota2 = r ? r.nota2 : aluno.nota2;
           let media = "-";
-
-          if (
-            nota1 !== "" && nota1 !== null && nota1 !== undefined &&
-            nota2 !== "" && nota2 !== null && nota2 !== undefined
-          ) {
+          if (nota1 !== "" && nota1 != null && nota2 !== "" && nota2 != null) {
             media = ((Number(nota1) + Number(nota2)) / 2).toFixed(2);
           }
-
           return `
             <tr data-aluno-id="${aluno.id}">
               <td>${aluno.nome}</td>
-
-              <td>
-                <input 
-                  type="number" 
-                  class="nota-input nota1" 
-                  min="0" 
-                  max="10" 
-                  step="0.1"
-                  value="${nota1 ?? ""}"
-                >
-              </td>
-
-              <td>
-                <input 
-                  type="number" 
-                  class="nota-input nota2" 
-                  min="0" 
-                  max="10" 
-                  step="0.1"
-                  value="${nota2 ?? ""}"
-                >
-              </td>
-
-              <td>
-                <span class="media-badge ${classeMedia(media)}">
-                  ${media === "-" ? "-" : media.replace(".", ",")}
-                </span>
-              </td>
-            </tr>
-          `;
+              <td><input type="number" class="nota-input nota1" min="0" max="10" step="0.1" value="${nota1 ?? ""}"></td>
+              <td><input type="number" class="nota-input nota2" min="0" max="10" step="0.1" value="${nota2 ?? ""}"></td>
+              <td><span class="media-badge ${classeMedia(media)}">${media === "-" ? "-" : media.replace(".", ",")}</span></td>
+            </tr>`;
         }).join("");
-
-        document.querySelectorAll(".nota-input").forEach(input => {
-          input.addEventListener("input", atualizarMediaLinha);
-        });
-
-      } catch (erro) {
-        Swal.fire("Erro", "Falha ao buscar alunos.", "error");
-        limparTabela();
-      }
+        document.querySelectorAll(".nota-input").forEach(i => i.addEventListener("input", atualizarMediaLinha));
+      } catch { Swal.fire("Erro", "Falha ao buscar alunos.", "error"); limparTabela(); }
     }
 
     function limparTabela() {
-      tabelaNotas.innerHTML = `
-        <tr>
-          <td colspan="4" class="notas-vazio">
-            Selecione uma matéria e uma turma para carregar os alunos.
-          </td>
-        </tr>
-      `;
+      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Selecione uma matéria e uma turma para carregar os alunos.</td></tr>`;
     }
 
     function classeMedia(media) {
@@ -346,19 +725,13 @@
 
     function atualizarMediaLinha(event) {
       const linha = event.target.closest("tr");
-
       const nota1 = linha.querySelector(".nota1").value;
       const nota2 = linha.querySelector(".nota2").value;
       const mediaSpan = linha.querySelector(".media-badge");
-
       if (nota1 === "" || nota2 === "") {
-        mediaSpan.textContent = "-";
-        mediaSpan.className = "media-badge media-neutra";
-        return;
+        mediaSpan.textContent = "-"; mediaSpan.className = "media-badge media-neutra"; return;
       }
-
       const media = ((Number(nota1) + Number(nota2)) / 2).toFixed(2);
-
       mediaSpan.textContent = media.replace(".", ",");
       mediaSpan.className = `media-badge ${classeMedia(media)}`;
     }
@@ -366,125 +739,68 @@
     function coletarNotas() {
       const linhas = document.querySelectorAll("#tabelaNotas tr[data-aluno-id]");
       const alunos = [];
-
       for (const linha of linhas) {
-        const alunoId = linha.dataset.alunoId;
         const nota1 = linha.querySelector(".nota1").value;
         const nota2 = linha.querySelector(".nota2").value;
-
         if ((nota1 && (nota1 < 0 || nota1 > 10)) || (nota2 && (nota2 < 0 || nota2 > 10))) {
-          Swal.fire("Atenção", "As notas devem estar entre 0 e 10.", "warning");
-          return null;
+          Swal.fire("Atenção", "As notas devem estar entre 0 e 10.", "warning"); return null;
         }
-
-        alunos.push({
-          aluno_id: alunoId,
-          nota1: nota1,
-          nota2: nota2
-        });
+        alunos.push({ aluno_id: linha.dataset.alunoId, nota1, nota2 });
       }
-
       return alunos;
     }
 
     async function salvarNotas(tipo) {
-      const materiaId = selectMateria.value;
-      const turmaId = selectTurma.value;
-
-      if (!materiaId || !turmaId) {
-        Swal.fire("Atenção", "Selecione a matéria e a turma.", "warning");
-        return;
+      if (!selectMateria.value || !selectTurma.value) {
+        Swal.fire("Atenção", "Selecione a matéria e a turma.", "warning"); return;
       }
-
       const alunos = coletarNotas();
-
       if (!alunos) return;
 
       if (tipo === "rascunho") {
         localStorage.setItem(chaveRascunhoAtual(), JSON.stringify(alunos));
-
-        Swal.fire({
-          icon: "success",
-          title: "Rascunho salvo",
-          text: "As notas foram salvas apenas neste navegador."
-        });
-
+        Swal.fire({ icon: "success", title: "Rascunho salvo", text: "As notas foram salvas apenas neste navegador." });
         return;
       }
 
       const confirmacao = await Swal.fire({
-        icon: "question",
-        title: "Publicar notas?",
+        icon: "question", title: "Publicar notas?",
         text: "As notas serão registradas no banco de dados.",
-        showCancelButton: true,
-        confirmButtonText: "Sim, publicar",
-        cancelButtonText: "Cancelar"
+        showCancelButton: true, confirmButtonText: "Sim, publicar", cancelButtonText: "Cancelar"
       });
-
       if (!confirmacao.isConfirmed) return;
 
       try {
         const resposta = await fetch("/api/notas/salvar", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getToken()}`
-          },
-          body: JSON.stringify({
-            materia_id: materiaId,
-            turma_id: turmaId,
-            tipo: "publicar",
-            alunos: alunos
-          })
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
+          body: JSON.stringify({ materia_id: selectMateria.value, turma_id: selectTurma.value, tipo: "publicar", alunos })
         });
-
         const dados = await resposta.json();
-
-        if (!resposta.ok) {
-          Swal.fire("Erro", dados.message || "Erro ao publicar notas.", "error");
-          return;
-        }
-
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao publicar notas.", "error"); return; }
         localStorage.removeItem(chaveRascunhoAtual());
-
         Swal.fire("Sucesso", "Notas publicadas com sucesso.", "success");
-
-      } catch (erro) {
-        Swal.fire("Erro", "Falha na conexão com o servidor.", "error");
-      }
+      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     }
 
     async function sair() {
       const confirmacao = await Swal.fire({
-        icon: "question",
-        title: "Deseja sair?",
-        text: "Sua sessão será encerrada.",
-        showCancelButton: true,
-        confirmButtonText: "Sim, sair",
-        cancelButtonText: "Cancelar"
+        icon: "question", title: "Deseja sair?", text: "Sua sessão será encerrada.",
+        showCancelButton: true, confirmButtonText: "Sim, sair", cancelButtonText: "Cancelar"
       });
-
       if (!confirmacao.isConfirmed) return;
-
       limparSessao();
       window.location.href = "/";
     }
 
     selectMateria.addEventListener("change", carregarTurmas);
     selectTurma.addEventListener("change", carregarAlunos);
-
     btnSalvarRascunho.addEventListener("click", () => salvarNotas("rascunho"));
-    btnPublicarNotas.addEventListener("click", () => salvarNotas("publicar"));
+    btnPublicarNotas.addEventListener("click",  () => salvarNotas("publicar"));
 
-    botaoMenuUsuario.addEventListener("click", () => {
-      menuUsuario.classList.toggle("show");
-    });
-
-    btnEditarPerfil.addEventListener("click", () => {
-      window.location.href = "/perfil";
-    });
-
-    btnSair.addEventListener("click", sair);
+    if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
+    if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");
+    if (btnSair)          btnSair.addEventListener("click", sair);
 
     carregarUsuarioLogado();
     carregarMaterias();
