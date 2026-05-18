@@ -1,7 +1,16 @@
-import os
-from flask import Flask
+import os, json, time, base64, hmac, hashlib, mysql.connector
+from flask import Flask, redirect, render_template, request, jsonify
 
 from login import login_bp
+from gestao_usuarios import gestao_usuarios_bp
+from notas import notas_bp
+from frequencia import frequencia_bp
+
+# ========================
+# CONFIGS JWT
+# ========================
+JWT_SECRET    = "monitora_chave_mlg_2026"
+JWT_EXPIRES_IN = 3600
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -12,6 +21,9 @@ app = Flask(
     static_url_path="/static",
 )
 
+# ========================
+# BLUEPRINTS
+# ========================
 app.register_blueprint(login_bp)
 app.register_blueprint(gestao_usuarios_bp)
 app.register_blueprint(notas_bp)

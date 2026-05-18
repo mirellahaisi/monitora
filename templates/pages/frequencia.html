@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitora+ | Frequência</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body class="usuarios-body">
+
+    {% include 'components/sidebar.html' %}
+
+    <main class="usuarios-main">
+
+        {% include 'components/header.html' %}
+
+        <section class="frequencia-content">
+
+            <h1 class="page-title">Frequência do Aluno</h1>
+
+            <!-- FILTROS -->
+            <form action="/frequencia" method="GET">
+                <div class="notas-filtros">
+
+                    <!-- 1. Aluno -->
+                    <select name="aluno" id="sel-aluno" required>
+                        <option value="" disabled selected>Selecione o aluno</option>
+                        {% for a in alunos %}
+                        <option value="{{ a.id }}" {% if request.args.get('aluno')|string==a.id|string %}selected{%
+                            endif %}>
+                            {{ a.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- 2. Turma / Período (populado via JS) -->
+                    <select name="turma" id="sel-turma" required disabled>
+                        <option value="" disabled selected>Selecione o período</option>
+                    </select>
+
+                    <!-- 3. Matéria (populado via JS) -->
+                    <select name="materia" id="sel-materia" required disabled>
+                        <option value="" disabled selected>Selecione a matéria</option>
+                    </select>
+
+                    <button type="submit" id="btn-visualizar" class="btn-publicar" style="white-space:nowrap;" disabled>
+                        Visualizar
+                    </button>
+
+                </div>
+            </form>
+
+            {% if mostrar %}
+
+            <!-- CARD DE DADOS -->
+            <div class="freq-card">
+
+                <!-- Coluna esquerda: stats -->
+                <div class="freq-info">
+                    <h2 class="freq-nome">{{ aluno.nome }}</h2>
+                    <p class="freq-sub">{{ materia }} &nbsp;·&nbsp; {{ periodo }}</p>
+
+                    <div class="freq-stats">
+
+                        <div class="freq-stat-row">
+                            <span>Total de Aulas</span>
+                            <strong>{{ aluno.total }}</strong>
+                        </div>
+
+                        <div class="freq-stat-row">
+                            <span>Presenças</span>
+                            <strong class="freq-val-green">{{ aluno.presencas }}</strong>
+                        </div>
+
+                        <div class="freq-stat-row">
+                            <span>Faltas</span>
+                            <strong class="freq-val-red">{{ aluno.faltas }}</strong>
+                        </div>
+
+                        <div class="freq-stat-row freq-stat-highlight">
+                            <span>Frequência</span>
+                            <strong>{{ aluno.presenca }}</strong>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Coluna direita: gráfico -->
+                <div class="freq-chart-col">
+
+                    <div class="freq-donut" style="--pct: {{ aluno.presenca_raw }}">
+                        <div class="freq-donut-inner">
+                            <span class="freq-donut-pct">{{ aluno.presenca }}</span>
+                            <span class="freq-donut-label">Frequência</span>
+                        </div>
+                    </div>
+
+                    <div class="freq-legend">
+                        <div class="freq-legend-item">
+                            <span class="freq-dot freq-dot-green"></span> Presença
+                        </div>
+                        <div class="freq-legend-item">
+                            <span class="freq-dot freq-dot-orange"></span> Faltas
+                        </div>
+                    </div>
+
+                    <a class="btn-rascunho freq-btn-report"
+                        href="/frequencia/relatorio?aluno={{ request.args.get('aluno') }}&materia={{ request.args.get('materia') }}&turma={{ request.args.get('turma') }}">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Baixar relatório
+                    </a>
+
+                </div>
+
+            </div>
+
+            {% else %}
+
+            <div class="freq-empty">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    opacity="0.25">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <p>Selecione o aluno, o período e a matéria para visualizar a frequência.</p>
+            </div>
+
+            {% endif %}
+
+        </section>
+
+    </main>
+
+    <script>
+        const selAluno = document.getElementById("sel-aluno");
+        const selTurma = document.getElementById("sel-turma");
+        const selMateria = document.getElementById("sel-materia");
+        const btnVis = document.getElementById("btn-visualizar");
+
+        // Valores já selecionados (vêm da URL após submit)
+        const alunoAtual = "{{ request.args.get('aluno') or '' }}";
+        const turmaAtual = "{{ request.args.get('turma') or '' }}";
+        const materiaAtual = "{{ request.args.get('materia') or '' }}";
+
+        function resetSelect(sel, placeholder) {
+            sel.innerHTML = `<option value="" disabled selected>${placeholder}</option>`;
+            sel.disabled = true;
+        }
+
+        // ── 1. Aluno selecionado → carrega turmas ──
+        async function carregarTurmas(alunoId, turmaParaSelecionar = "") {
+            resetSelect(selTurma, "Selecione o período");
+            resetSelect(selMateria, "Selecione a matéria");
+            btnVis.disabled = true;
+
+            if (!alunoId) return;
+
+            const resp = await fetch(`/api/frequencia/turmas?aluno_id=${alunoId}`);
+            const turmas = await resp.json();
+
+            turmas.forEach(t => {
+                const opt = document.createElement("option");
+                opt.value = t.id;
+                opt.textContent = `${t.nome} — ${t.periodo}º Período`;
+                if (String(t.id) === turmaParaSelecionar) opt.selected = true;
+                selTurma.appendChild(opt);
+            });
+
+            selTurma.disabled = turmas.length === 0;
+
+            if (turmaParaSelecionar && selTurma.value) {
+                await carregarMaterias(turmaParaSelecionar, materiaAtual);
+            }
+        }
+
+        // ── 2. Turma selecionada → carrega matérias ──
+        async function carregarMaterias(turmaId, materiaParaSelecionar = "") {
+            resetSelect(selMateria, "Selecione a matéria");
+            btnVis.disabled = true;
+
+            if (!turmaId) return;
+
+            const resp = await fetch(`/api/frequencia/materias?turma_id=${turmaId}`);
+            const materias = await resp.json();
+
+            materias.forEach(m => {
+                const opt = document.createElement("option");
+                opt.value = m.id;
+                opt.textContent = m.nome;
+                if (String(m.id) === materiaParaSelecionar) opt.selected = true;
+                selMateria.appendChild(opt);
+            });
+
+            selMateria.disabled = materias.length === 0;
+
+            if (selMateria.value) btnVis.disabled = false;
+        }
+
+        // ── Eventos ──
+        selAluno.addEventListener("change", () => {
+            carregarTurmas(selAluno.value);
+        });
+
+        selTurma.addEventListener("change", () => {
+            carregarMaterias(selTurma.value);
+        });
+
+        selMateria.addEventListener("change", () => {
+            btnVis.disabled = !selMateria.value;
+        });
+
+        // ── Restaurar estado após submit ──
+        if (alunoAtual) {
+            carregarTurmas(alunoAtual, turmaAtual);
+        }
+    </script>
+
+</body>
+
+</html>

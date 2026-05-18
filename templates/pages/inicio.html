@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,47 +9,11 @@
 </head>
 
 <body class="inicio-body">
-  <aside class="sidebar">
-    <div class="sidebar-brand">
-      <img src="/static/images/logomonitora.png" alt="Logo Monitora+" class="sidebar-logo">
-      <h1>Monitora<span>+</span></h1>
-    </div>
 
-    <nav class="sidebar-menu">
-      <a href="/inicio" class="sidebar-link active">Página inicial</a>
-      <a href="#" class="sidebar-link">Turmas</a>
-      <a href="#" class="sidebar-link">Notas</a>
-      <a href="#" class="sidebar-link">Presença</a>
-      <a href="#" class="sidebar-link">Alunos</a>
-      <a href="#" class="sidebar-link">Frequência</a>
-      <a href="#" class="sidebar-link">Desempenho</a>
-    </nav>
-  </aside>
+{% include 'components/sidebar.html' %}
 
   <main class="inicio-main">
-    <header class="inicio-header">
-      <div class="search-box">
-        <input type="text" placeholder="Pesquisar">
-      </div>
-
-      <div class="user-menu">
-        <button class="user-menu-button" id="botaoMenuUsuario">
-          <div class="user-avatar" id="avatarUsuario">U</div>
-
-          <div class="user-text">
-            <span id="papelUsuario"></span>
-            <strong id="nomeUsuarioTopo"></strong>
-          </div>
-
-          <span class="user-arrow">▾</span>
-        </button>
-
-        <div class="user-dropdown" id="menuUsuario">
-          <button type="button" id="btnEditarPerfil">Editar perfil</button>
-          <button type="button" id="btnSair">Sair</button>
-        </div>
-      </div>
-    </header>
+    {% include 'components/header.html' %}
 
     <section class="inicio-content">
       <h2 id="saudacaoUsuario">Olá, Bem-vindo(a) ao Monitora+</h2>
@@ -66,6 +31,8 @@
     const btnEditarPerfil = document.getElementById("btnEditarPerfil");
     const btnSair = document.getElementById("btnSair");
     const avatarUsuario = document.getElementById("avatarUsuario");
+    const btnGestaoUsuarios = document.getElementById("btnGestaoUsuarios");
+
 
     function formatarPapel(papel) {
       const papelNormalizado = String(papel).toLowerCase();
@@ -133,6 +100,11 @@
         papelUsuario.textContent = formatarPapel(usuario.papel);
         avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
 
+        // Mostrar botão Gestão de usuários apenas para coordenadores
+        if (usuario.papel.toLowerCase() === 'coordenador' || usuario.papel.toLowerCase() === 'admin' || usuario.papel.toLowerCase() === 'adm') {
+          document.getElementById("btnGestaoUsuarios").style.display = "block";
+        }
+
         saudacaoUsuario.textContent =
           `Olá ${usuario.nome}, Bem-vindo(a) ao Monitora+`;
 
@@ -149,6 +121,10 @@
 
     function editarPerfil() {
       window.location.href = "/perfil";
+    }
+
+    function gestaoUsuarios() {
+      window.location.href = "/gestao-usuarios";
     }
 
     async function sair() {
@@ -186,9 +162,10 @@
 
     botaoMenuUsuario.addEventListener("click", abrirFecharMenuUsuario);
     btnEditarPerfil.addEventListener("click", editarPerfil);
+    btnGestaoUsuarios.addEventListener("click", gestaoUsuarios);
     btnSair.addEventListener("click", sair);
 
-    window.addEventListener("click", function(event) {
+    window.addEventListener("click", function (event) {
       const clicouDentroMenu = event.target.closest(".user-menu");
 
       if (!clicouDentroMenu) {
@@ -199,4 +176,5 @@
     verificarUsuarioLogado();
   </script>
 </body>
+
 </html>

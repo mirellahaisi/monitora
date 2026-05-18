@@ -74,12 +74,12 @@ def tela_login():
 
 @login_bp.get("/inicio")
 def tela_inicio():
-    return render_template("pages/inicio.html")
+    return render_template("pages/inicio.html", active_page='inicio')
 
 
 @login_bp.get("/perfil")
 def tela_perfil():
-    return render_template("pages/perfil.html")
+    return render_template("pages/perfil.html", active_page='perfil')
 
 
 @login_bp.post("/api/login")

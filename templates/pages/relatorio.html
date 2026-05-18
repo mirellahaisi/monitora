@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Frequência</title>
+</head>
+<body>
+
+    <h1>Relatório de Frequência</h1>
+
+    {% if aluno %}
+        <p><strong>Aluno:</strong> {{ aluno.nome }}</p>
+        <p><strong>Matéria:</strong> {{ materia }}</p>
+        <p><strong>Período:</strong> {{ periodo }}</p>
+
+        <hr>
+
+        <p><strong>Total de aulas:</strong> {{ aluno.total }}</p>
+        <p><strong>Presenças:</strong> {{ aluno.presencas }}</p>
+        <p><strong>Faltas:</strong> {{ aluno.faltas }}</p>
+        <p><strong>Frequência:</strong> {{ aluno.presenca }}</p>
+    {% else %}
+        <p>Nenhum dado encontrado.</p>
+    {% endif %}
+
+</body>
+</html> 
