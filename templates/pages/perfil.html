@@ -126,6 +126,7 @@
     const menuUsuario = document.getElementById("menuUsuario");
     const btnSair = document.getElementById("btnSair");
     const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+    const btnGestaoUsuarios = document.getElementById("btnGestaoUsuarios");
     const btnCancelar = document.getElementById("btnCancelar");
 
     function formatarPapel(papel) {
@@ -177,6 +178,28 @@
       nomeUsuarioTopo.textContent = usuario.nome;
       papelUsuario.textContent = formatarPapel(usuario.papel);
       avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+    }
+
+    function somenteNumeros(valor) {
+      return valor.replace(/\D/g, "");
+    }
+
+    function formatarCpf(valor) {
+      const numeros = somenteNumeros(valor).slice(0, 11);
+
+      if (numeros.length <= 3) {
+        return numeros;
+      }
+
+      if (numeros.length <= 6) {
+        return `${numeros.slice(0, 3)}.${numeros.slice(3)}`;
+      }
+
+      if (numeros.length <= 9) {
+        return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6)}`;
+      }
+
+      return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9)}`;
     }
 
     function formatarTelefone(valor) {
@@ -286,7 +309,7 @@
         nomeInput.value = usuario.nome || "";
         emailInput.value = usuario.email || "";
         telefoneInput.value = formatarTelefone(usuario.telefone || "");
-        cpfInput.value = usuario.cpf || "";
+        cpfInput.value = formatarCpf(usuario.cpf || "");
         dataNascimentoInput.value = usuario.data_nascimento || "";
         novaSenhaInput.value = "";
 
@@ -356,7 +379,7 @@
       const dadosPerfil = {
         nome: nomeInput.value.trim(),
         email: emailInput.value.trim(),
-        telefone: telefoneInput.value.trim(),
+        telefone: somenteNumeros(telefoneInput.value),
         data_nascimento: dataNascimentoInput.value,
         senha_atual: senhaAtual,
         nova_senha: novaSenha
@@ -461,6 +484,12 @@
 
     btnEditarPerfil.addEventListener("click", function() {
       menuUsuario.classList.remove("show");
+      window.location.href = "/perfil";
+    });
+
+    btnGestaoUsuarios.addEventListener("click", function() {
+      menuUsuario.classList.remove("show");
+      window.location.href = "/gestao-usuarios";
     });
 
     btnCancelar.addEventListener("click", function() {
