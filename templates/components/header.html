@@ -1,23 +1,25 @@
-    <header class="inicio-header">
-      <div class="search-box">
-        <input type="text" placeholder="Pesquisar">
+<header class="inicio-header">
+  <div class="search-box">
+    <input type="text" placeholder="Pesquisar">
+  </div>
+  
+  <button class="btn-dark-mode" id="btnDarkMode" title="Alternar tema">
+    <i class="ph ph-moon" id="iconeDarkMode"></i>
+  </button>
+
+  <div class="user-menu">
+    <button class="user-menu-button" id="botaoMenuUsuario">
+      <div class="user-avatar" id="avatarUsuario">U</div>
+      <div class="user-text">
+        <span id="papelUsuario"></span>
+        <strong id="nomeUsuarioTopo"></strong>
       </div>
+      <span class="user-arrow">▾</span>
+    </button>
 
-      <div class="user-menu">
-        <button class="user-menu-button" id="botaoMenuUsuario">
-          <div class="user-avatar" id="avatarUsuario">U</div>
-
-          <div class="user-text">
-            <span id="papelUsuario"></span>
-            <strong id="nomeUsuarioTopo"></strong>
-          </div>
-
-          <span class="user-arrow">▾</span>
-        </button>
-
-        <div class="user-dropdown" id="menuUsuario">
-          <button type="button" id="btnEditarPerfil">Editar perfil</button>
-          <button type="button" id="btnGestaoUsuarios" style="display: none;">Gestão de usuários</button>
-        </div>
-      </div>
-    </header>
+    <div class="user-dropdown" id="menuUsuario">
+      <button type="button" id="btnEditarPerfil">Editar perfil</button>
+      <button type="button" id="btnGestaoUsuarios" style="display: none;">Gestão de usuários</button>
+    </div>
+  </div>
+</header>
