@@ -1,15 +1,29 @@
-import os, json, time, base64, hmac, hashlib, mysql.connector
+import os
+import json
+import time
+import base64
+import hmac
+import hashlib
+import mysql.connector
+
 from flask import Flask, render_template, request, jsonify
+
+from flask import Flask, redirect, render_template, request, jsonify
+
 
 from login import login_bp
 from gestao_usuarios import gestao_usuarios_bp
 from notas import notas_bp
 from frequencia import frequencia_bp
 
+
+from presenca import presenca_bp
+
+
 # ========================
 # CONFIGS JWT
 # ========================
-JWT_SECRET    = "monitora_chave_mlg_2026"
+JWT_SECRET = "monitora_chave_mlg_2026"
 JWT_EXPIRES_IN = 3600
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -29,6 +43,10 @@ app.register_blueprint(gestao_usuarios_bp)
 app.register_blueprint(notas_bp)
 app.register_blueprint(frequencia_bp)
 
+
+app.register_blueprint(presenca_bp)
+
+
 # ========================
 # BANCO
 # ========================
@@ -44,13 +62,16 @@ def get_db_connection():
 # ========================
 # JWT
 # ========================
+
+
 def base64url_encode(data):
     return base64.urlsafe_b64encode(data).rstrip(b"=").decode("utf-8")
+
 
 def create_jwt(payload):
     header = {"alg": "HS256", "typ": "JWT"}
 
-    header_part  = base64url_encode(json.dumps(header).encode())
+    header_part = base64url_encode(json.dumps(header).encode())
     payload_part = base64url_encode(json.dumps(payload).encode())
 
     signature = hmac.new(
@@ -60,6 +81,7 @@ def create_jwt(payload):
     ).digest()
 
     return f"{header_part}.{payload_part}.{base64url_encode(signature)}"
+
 
 def decode_jwt_payload(token):
     try:
@@ -73,9 +95,16 @@ def decode_jwt_payload(token):
 # ========================
 # ROTAS
 # ========================
+
+
+@app.get("/login")
+def serve_login():
+    return render_template("pages/autentificacao.html")
+
+
 @app.get("/")
 def serve_index():
-    return render_template("pages/autentificacao.html")
+    return render_template("pages/index.html")
 
 
 @app.post("/api/login")
@@ -83,7 +112,7 @@ def login():
     data = request.get_json(silent=True) or {}
 
     matricula = data.get("matricula")
-    senha     = data.get("senha")
+    senha = data.get("senha")
 
     if not matricula or not senha:
         return jsonify({"message": "Informe matrícula e senha."}), 400

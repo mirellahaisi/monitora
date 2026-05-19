@@ -10,6 +10,10 @@ from gerador_token import gerar_token, validar_token, TEMPO_SESSAO
 login_bp = Blueprint("login", __name__)
 
 
+def somente_numeros(valor):
+    return "".join(filter(str.isdigit, str(valor or "")))
+
+
 def obter_token_requisicao():
     auth_header = request.headers.get("Authorization", "")
 
@@ -63,7 +67,7 @@ def papel_obrigatorio(*papeis_permitidos):
     return decorator
 
 
-@login_bp.get("/")
+@login_bp.get("/login")
 def tela_login():
     return render_template("pages/autentificacao.html")
 
@@ -217,8 +221,8 @@ def buscar_perfil(usuario):
                 "id": perfil["id"],
                 "nome": perfil["nome"],
                 "email": perfil["email"],
-                "telefone": perfil["telefone"],
-                "cpf": perfil["cpf"],
+                "telefone": somente_numeros(perfil["telefone"]),
+                "cpf": somente_numeros(perfil["cpf"]),
                 "data_nascimento": data_nascimento,
                 "papel": perfil["papel"]
             }
@@ -247,7 +251,7 @@ def atualizar_perfil(usuario):
 
     nome = str(dados.get("nome", "")).strip()
     email = str(dados.get("email", "")).strip().lower()
-    telefone = str(dados.get("telefone", "")).strip()
+    telefone = somente_numeros(dados.get("telefone"))
     data_nascimento = str(dados.get("data_nascimento", "")).strip()
     senha_atual = str(dados.get("senha_atual", "")).strip()
     nova_senha = str(dados.get("nova_senha", "")).strip()
@@ -299,6 +303,7 @@ def atualizar_perfil(usuario):
         )
 
         email_existente = cursor.fetchone()
+        cpf = somente_numeros(usuario_banco.get("cpf"))
 
         if email_existente:
             return jsonify({
@@ -323,10 +328,11 @@ def atualizar_perfil(usuario):
                     email = %s,
                     telefone = %s,
                     data_nascimento = %s,
+                    cpf = %s,
                     senha = %s
                 WHERE id = %s
                 """,
-                (nome, email, telefone, data_nascimento, nova_senha, usuario["id"])
+                (nome, email, telefone, data_nascimento, cpf, nova_senha, usuario["id"])
             )
 
         else:
@@ -336,10 +342,11 @@ def atualizar_perfil(usuario):
                 SET nome = %s,
                     email = %s,
                     telefone = %s,
-                    data_nascimento = %s
+                    data_nascimento = %s,
+                    cpf = %s
                 WHERE id = %s
                 """,
-                (nome, email, telefone, data_nascimento, usuario["id"])
+                (nome, email, telefone, data_nascimento, cpf, usuario["id"])
             )
 
         conexao.commit()

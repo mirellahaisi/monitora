@@ -113,7 +113,14 @@ def listar_professores(usuario):
 
 # CHATE -------------------------------------------------------
 
+def somente_numeros(valor):
+    return "".join(filter(str.isdigit, str(valor or "")))
+
+
 def _criar_usuario_com_papel(dados, fk_papel_id):
+    cpf = somente_numeros(dados.get("cpf"))
+    telefone = somente_numeros(dados.get("telefone"))
+
     conexao = None
     cursor = None
 
@@ -129,9 +136,9 @@ def _criar_usuario_com_papel(dados, fk_papel_id):
             ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1)
         """, (
             dados.get("nome"),
-            dados.get("cpf"),
+            cpf,
             dados.get("email"),
-            dados.get("telefone"),
+            telefone,
             dados.get("data_nascimento"),
             dados.get("especialidade"),
             dados.get("salario"),
@@ -194,6 +201,11 @@ def criar_coordenador(usuario_logado):
 @papel_obrigatorio("admin", "adm")
 def atualizar_usuario(usuario_logado, id):
     dados = request.json
+
+    for campo in ("cpf", "telefone"):
+        if campo in dados:
+            dados[campo] = somente_numeros(dados.get(campo))
+
 
     campos = []
     valores = []
