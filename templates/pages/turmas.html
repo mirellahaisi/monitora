@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Turmas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    :root {
+      --accent:     #4caebe;
+      --teal:       #57dbbd;
+      --teal-light: #93d7df;
+      --dark:       #173c4a;
+      --mid:        #34445c;
+      --text:       #436077;
+      --muted:      #7a96a8;
+      --bg:         #f5fafa;
+      --white:      #ffffff;
+      --grad:       linear-gradient(135deg, #93d7df 0%, #57dbbd 55%, #4caebe 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "DM Sans", "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ══════════════════════════════════════
+       LAYOUT
+    ══════════════════════════════════════ */
+    .inicio-body { display: flex; min-height: 100vh; background: var(--bg); }
+
+    /* ══════════════════════════════════════
+       SIDEBAR (idêntico ao notas.html)
+    ══════════════════════════════════════ */
+    .sidebar {
+      width: 200px; min-height: calc(100vh - 24px);
+      margin: 12px; padding: 24px 14px;
+      border-radius: 20px; background: var(--grad);
+      display: flex; flex-direction: column; align-items: center;
+      flex-shrink: 0; box-shadow: 0 8px 32px rgba(87,219,189,0.25);
+    }
+    .sidebar-brand { text-align: center; margin-bottom: 28px; }
+    .sidebar-logo { width: 72px; height: 72px; object-fit: contain; }
+    .sidebar-brand h1 {
+      margin: 6px 0 0; font-family: "Sora", sans-serif;
+      font-size: 1.25rem; font-weight: 700; color: var(--dark); letter-spacing: -0.02em;
+    }
+    .sidebar-brand h1 span { color: rgba(23,60,74,0.55); }
+    .sidebar-menu { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-link {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500;
+      text-decoration: none; transition: background 0.18s, color 0.18s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sidebar-link svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-link.active, .sidebar-link:hover {
+      background: rgba(255,255,255,0.92); color: var(--mid);
+    }
+    .sidebar-bottom { margin-top: auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .sidebar-laptop svg { width: 80px; opacity: 0.6; }
+    .logout-button {
+      width: 100%; padding: 10px 14px; border: 0;
+      background: transparent; color: rgba(255,255,255,0.7);
+      font: inherit; font-size: 0.86rem; text-align: left;
+      cursor: pointer; border-radius: 10px;
+      display: flex; align-items: center; gap: 8px;
+      transition: background 0.18s, color 0.18s;
+    }
+    .logout-button svg { width: 16px; height: 16px; }
+    .logout-button:hover { background: rgba(255,255,255,0.15); color: white; }
+
+    /* ══════════════════════════════════════
+       MAIN
+    ══════════════════════════════════════ */
+    .inicio-main { flex: 1; padding: 28px 36px; min-width: 0; }
+
+    /* ── Header ── */
+    .inicio-header {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 40px;
+    }
+    .search-box input {
+      width: 260px; height: 38px;
+      border: 1.5px solid rgba(147,215,223,0.35); border-radius: 50px;
+      padding: 0 18px; background: var(--white); outline: none;
+      font: inherit; font-size: 0.88rem; color: var(--text);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1); }
+    .search-box input::placeholder { color: #a8bfcc; }
+
+    .user-menu { position: relative; display: flex; align-items: center; }
+    .user-menu-button {
+      border: none; background: var(--white); cursor: pointer;
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 14px 7px 7px; border-radius: 999px;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.15); color: var(--mid);
+      transition: box-shadow 0.2s;
+    }
+    .user-menu-button:hover { box-shadow: 0 4px 18px rgba(76,190,190,0.22); }
+    .user-avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: var(--grad); color: white;
+      display: flex; align-items: center; justify-content: center;
+      font-family: "Sora", sans-serif; font-weight: 700; font-size: 0.9rem;
+    }
+    .user-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+    .user-text span { font-size: 0.72rem; font-weight: 600; color: var(--accent); }
+    .user-text strong { font-size: 0.88rem; font-weight: 700; color: var(--mid); }
+    .user-arrow { font-size: 12px; color: var(--muted); }
+    .user-dropdown {
+      display: none; position: absolute; top: 48px; right: 0;
+      min-width: 180px; background: var(--white); border-radius: 14px;
+      box-shadow: 0 8px 28px rgba(0,0,0,0.12); padding: 8px; z-index: 100;
+    }
+    .user-dropdown.show { display: block; }
+    .user-dropdown button {
+      width: 100%; border: none; background: transparent;
+      padding: 10px 12px; text-align: left; border-radius: 8px;
+      cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--text);
+    }
+    .user-dropdown button:hover { background: var(--bg); color: var(--accent); }
+
+    /* ══════════════════════════════════════
+       PAGE HEADING
+    ══════════════════════════════════════ */
+    .page-heading {
+      display: flex; align-items: center;
+      gap: 14px; margin-bottom: 28px;
+    }
+    .page-heading-icon {
+      width: 44px; height: 44px; border-radius: 12px;
+      background: var(--grad); display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 14px rgba(87,219,189,0.3); flex-shrink: 0;
+    }
+    .page-heading-icon svg { width: 22px; height: 22px; color: white; }
+    .page-heading h2 {
+      font-family: "Sora", sans-serif; font-size: 1.5rem;
+      font-weight: 800; color: var(--dark); letter-spacing: -0.025em;
+    }
+    .page-heading p { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+    /* ══════════════════════════════════════
+       BARRA DE AÇÕES (filtro + botão criar)
+    ══════════════════════════════════════ */
+    .turmas-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .turmas-filtros { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+    .filtro-select {
+      height: 40px; border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 10px; background: var(--white);
+      color: var(--mid); font: inherit; font-size: 0.88rem;
+      font-weight: 500; padding: 0 14px; outline: none;
+      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .filtro-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1); }
+
+    .btn-nova-turma {
+      height: 40px; padding: 0 20px;
+      background: var(--grad); color: white; border: none;
+      border-radius: 10px; font: inherit; font-size: 0.88rem; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 4px 14px rgba(87,219,189,0.3);
+      transition: opacity 0.2s, transform 0.15s; white-space: nowrap;
+    }
+    .btn-nova-turma:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-nova-turma svg { width: 16px; height: 16px; }
+
+    /* ══════════════════════════════════════
+       GRID DE CARDS DE TURMA
+    ══════════════════════════════════════ */
+    .turmas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 18px;
+    }
+
+    .turma-card {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 16px;
+      padding: 22px 22px 18px;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.08);
+      cursor: pointer;
+      transition: box-shadow 0.2s, transform 0.18s, border-color 0.2s;
+      display: flex; flex-direction: column; gap: 14px;
+    }
+    .turma-card:hover {
+      box-shadow: 0 8px 32px rgba(76,190,190,0.18);
+      transform: translateY(-3px);
+      border-color: rgba(76,190,190,0.35);
+    }
+
+    .turma-card-header {
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    }
+    .turma-card-titulo {
+      font-family: "Sora", sans-serif;
+      font-size: 1rem; font-weight: 700; color: var(--dark); line-height: 1.3;
+    }
+    .turma-card-codigo {
+      font-size: 0.75rem; color: var(--muted); margin-top: 2px;
+    }
+
+    .badge-periodo {
+      flex-shrink: 0;
+      padding: 4px 10px; border-radius: 6px;
+      font-size: 0.72rem; font-weight: 700;
+      background: rgba(147,215,223,0.2); color: var(--accent);
+      border: 1px solid rgba(76,190,190,0.2); letter-spacing: 0.02em;
+      white-space: nowrap;
+    }
+
+    .turma-card-stats {
+      display: flex; gap: 12px;
+    }
+    .stat-item {
+      flex: 1; background: var(--bg); border-radius: 10px;
+      padding: 10px 12px; display: flex; flex-direction: column; gap: 2px;
+    }
+    .stat-valor {
+      font-family: "Sora", sans-serif;
+      font-size: 1.3rem; font-weight: 800; color: var(--dark);
+    }
+    .stat-label {
+      font-size: 0.72rem; color: var(--muted); font-weight: 500;
+    }
+
+    .turma-card-materias {
+      font-size: 0.8rem; color: var(--muted);
+      border-top: 1px solid rgba(147,215,223,0.2);
+      padding-top: 12px; line-height: 1.5;
+    }
+    .turma-card-materias strong {
+      font-size: 0.72rem; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.04em; display: block; margin-bottom: 3px;
+    }
+
+    .turma-card-footer {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .turma-turno {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.78rem; color: var(--muted);
+    }
+    .turma-turno svg { width: 13px; height: 13px; }
+
+    .btn-ver-turma {
+      height: 32px; padding: 0 14px; border: 1.5px solid rgba(76,190,190,0.35);
+      border-radius: 8px; background: transparent; color: var(--accent);
+      font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+    }
+    .btn-ver-turma:hover { background: var(--accent); color: white; }
+
+    /* ── Vazio ── */
+    .turmas-vazio {
+      grid-column: 1/-1;
+      text-align: center; padding: 60px 20px;
+      color: var(--muted); font-size: 0.95rem;
+    }
+
+    /* ══════════════════════════════════════
+       MODAL DE DETALHES DA TURMA
+    ══════════════════════════════════════ */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(23,60,74,0.45); backdrop-filter: blur(4px);
+      z-index: 200; align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+
+    .modal {
+      background: var(--white); border-radius: 20px;
+      width: 680px; max-width: calc(100vw - 40px);
+      max-height: 85vh; display: flex; flex-direction: column;
+      box-shadow: 0 24px 60px rgba(23,60,74,0.2); overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 24px 28px 20px;
+      border-bottom: 1.5px solid rgba(147,215,223,0.2);
+      display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    }
+    .modal-titulo {
+      font-family: "Sora", sans-serif;
+      font-size: 1.2rem; font-weight: 800; color: var(--dark);
+    }
+    .modal-subtitulo { font-size: 0.82rem; color: var(--muted); margin-top: 3px; }
+
+    .modal-close {
+      width: 34px; height: 34px; border-radius: 8px; border: none;
+      background: var(--bg); color: var(--muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; flex-shrink: 0; transition: background 0.18s;
+    }
+    .modal-close:hover { background: rgba(147,215,223,0.3); color: var(--dark); }
+
+    .modal-tabs {
+      display: flex; padding: 0 28px;
+      border-bottom: 1.5px solid rgba(147,215,223,0.2);
+      gap: 0;
+    }
+    .modal-tab {
+      padding: 14px 18px; border: none; background: transparent;
+      font: inherit; font-size: 0.86rem; font-weight: 600; color: var(--muted);
+      cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px;
+      transition: color 0.18s, border-color 0.18s;
+    }
+    .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .modal-tab:hover:not(.active) { color: var(--mid); }
+
+    .modal-body {
+      flex: 1; overflow-y: auto; padding: 24px 28px;
+    }
+
+    /* Tabela dentro do modal */
+    .modal-table {
+      width: 100%; border-collapse: collapse;
+    }
+    .modal-table th {
+      height: 40px; padding: 0 14px;
+      color: var(--mid); font-family: "Sora", sans-serif;
+      font-size: 0.75rem; font-weight: 700; text-align: left;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      border-bottom: 1.5px solid rgba(147,215,223,0.25);
+    }
+    .modal-table td {
+      height: 50px; padding: 0 14px;
+      color: var(--text); font-size: 0.88rem;
+      border-bottom: 1px solid rgba(147,215,223,0.12); vertical-align: middle;
+    }
+    .modal-table tr:last-child td { border-bottom: none; }
+    .modal-table tbody tr:hover { background: rgba(147,215,223,0.06); }
+    .modal-vazio {
+      text-align: center; padding: 36px; color: var(--muted); font-size: 0.88rem;
+    }
+
+    .media-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 60px; height: 28px; border-radius: 7px;
+      font-size: 0.82rem; font-weight: 700;
+    }
+    .media-aprovada { background: rgba(87,219,189,0.15); color: #1a8c6e; border: 1px solid rgba(87,219,189,0.3); }
+    .media-baixa    { background: rgba(255,107,107,0.1);  color: #c0392b; border: 1px solid rgba(255,107,107,0.25); }
+    .media-neutra   { background: rgba(147,215,223,0.12); color: var(--muted); border: 1px solid rgba(147,215,223,0.25); }
+
+    /* ══════════════════════════════════════
+       MODAL NOVA TURMA
+    ══════════════════════════════════════ */
+    .modal-form { display: flex; flex-direction: column; gap: 16px; }
+
+    .form-row { display: flex; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .form-group label {
+      font-size: 0.75rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .form-group input,
+    .form-group select {
+      height: 42px; border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 10px; background: var(--bg);
+      color: var(--mid); font: inherit; font-size: 0.9rem;
+      padding: 0 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+      background: var(--white);
+    }
+
+    .modal-footer {
+      padding: 18px 28px;
+      border-top: 1.5px solid rgba(147,215,223,0.2);
+      display: flex; justify-content: flex-end; gap: 12px;
+    }
+    .btn-cancelar {
+      height: 42px; padding: 0 20px; border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 10px; background: var(--bg); color: var(--mid);
+      font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+      transition: background 0.18s;
+    }
+    .btn-cancelar:hover { background: rgba(147,215,223,0.2); }
+    .btn-confirmar {
+      height: 42px; padding: 0 22px; border: none;
+      border-radius: 10px; background: var(--grad); color: white;
+      font: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 14px rgba(87,219,189,0.3);
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .btn-confirmar:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    /* ══════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════ */
+    @media (max-width: 800px) {
+      .inicio-body { flex-direction: column; }
+      .sidebar { width: auto; min-height: auto; margin: 10px; flex-direction: row; flex-wrap: wrap; justify-content: center; }
+      .inicio-main { padding: 20px 16px; }
+      .inicio-header { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+      .search-box input { width: 100%; }
+      .turmas-toolbar { flex-direction: column; align-items: flex-start; }
+      .form-row { flex-direction: column; }
+    }
+  </style>
+</head>
+
+<body class="inicio-body">
+
+{% include 'components/sidebar.html' %}
+
+  <main class="inicio-main">
+    {% include 'components/header.html' %}
+
+    <section class="turmas-content">
+
+      <!-- Cabeçalho -->
+      <div class="page-heading">
+        <div class="page-heading-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <line x1="8" y1="21" x2="16" y2="21"/>
+            <line x1="12" y1="17" x2="12" y2="21"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Turmas</h2>
+          <p id="subtituloTurmas">Carregando suas turmas...</p>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="turmas-toolbar">
+        <div class="turmas-filtros">
+          <select class="filtro-select" id="filtroPeriodo">
+            <option value="">Todos os períodos</option>
+          </select>
+          <select class="filtro-select" id="filtroTurno">
+            <option value="">Todos os turnos</option>
+          </select>
+        </div>
+        <!-- Botão só aparece para coordenador/admin -->
+        <button class="btn-nova-turma" id="btnNovaTurma" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nova turma
+        </button>
+      </div>
+
+      <!-- Grid de turmas -->
+      <div class="turmas-grid" id="turmasGrid">
+        <div class="turmas-vazio">Carregando turmas...</div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ══════════════════════════════════════
+       MODAL: Detalhes da turma
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalDetalhes">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-titulo" id="detalhesTitulo">—</div>
+          <div class="modal-subtitulo" id="detalhesSubtitulo">—</div>
+        </div>
+        <button class="modal-close" id="fecharDetalhes">✕</button>
+      </div>
+
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="alunos">Alunos</button>
+        <button class="modal-tab" data-tab="materias">Matérias</button>
+      </div>
+
+      <div class="modal-body" id="detalhesBody">
+        <!-- conteúdo injetado via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════
+       MODAL: Nova turma (só coordenador)
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalNovaTurma">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-titulo">Nova turma</div>
+          <div class="modal-subtitulo">Preencha os dados da turma a ser criada</div>
+        </div>
+        <button class="modal-close" id="fecharNovaTurma">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-form" id="formNovaTurma">
+          <div class="form-row">
+            <div class="form-group" style="flex:2">
+              <label>Nome da turma</label>
+              <input type="text" id="inputNome" placeholder="Ex: Engenharia de Software — 2026.1">
+            </div>
+            <div class="form-group">
+              <label>Código</label>
+              <input type="text" id="inputCodigo" placeholder="Ex: ES-2026-1A">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Período</label>
+              <input type="number" id="inputPeriodo" min="1" max="12" placeholder="Ex: 3">
+            </div>
+            <div class="form-group">
+              <label>Ano</label>
+              <input type="number" id="inputAno" min="2020" max="2099" placeholder="Ex: 2026">
+            </div>
+            <div class="form-group">
+              <label>Semestre</label>
+              <select id="inputSemestre">
+                <option value="1">1º semestre</option>
+                <option value="2">2º semestre</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Turno</label>
+              <select id="inputTurno">
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Noite">Noite</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Capacidade</label>
+              <input type="number" id="inputCapacidade" min="1" max="200" placeholder="Ex: 40">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancelar" id="cancelarNovaTurma">Cancelar</button>
+        <button class="btn-confirmar" id="confirmarNovaTurma">Criar turma</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // ── Refs ──────────────────────────────────────────────
+    const turmasGrid      = document.getElementById("turmasGrid");
+    const filtroPeriodo   = document.getElementById("filtroPeriodo");
+    const filtroTurno     = document.getElementById("filtroTurno");
+    const btnNovaTurma    = document.getElementById("btnNovaTurma");
+
+    const modalDetalhes   = document.getElementById("modalDetalhes");
+    const detalhesTitulo  = document.getElementById("detalhesTitulo");
+    const detalhesSubtitulo = document.getElementById("detalhesSubtitulo");
+    const detalhesBody    = document.getElementById("detalhesBody");
+    const fecharDetalhes  = document.getElementById("fecharDetalhes");
+
+    const modalNovaTurma  = document.getElementById("modalNovaTurma");
+    const fecharNovaTurma = document.getElementById("fecharNovaTurma");
+    const cancelarNovaTurma = document.getElementById("cancelarNovaTurma");
+    const confirmarNovaTurma = document.getElementById("confirmarNovaTurma");
+
+    const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
+    const papelUsuario     = document.getElementById("papelUsuario");
+    const avatarUsuario    = document.getElementById("avatarUsuario");
+    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+    const menuUsuario      = document.getElementById("menuUsuario");
+    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
+    const btnSair          = document.getElementById("btnSair");
+
+    // ── Estado ────────────────────────────────────────────
+    let todasTurmas    = [];
+    let tabAtiva       = "alunos";
+    let turmaDetalheId = null;
+    let papelAtual     = "";
+
+    // ── Auth ──────────────────────────────────────────────
+    function getToken() { return localStorage.getItem("token"); }
+
+    function limparSessao() {
+      ["token","usuario","sessaoExpiracao"].forEach(k => localStorage.removeItem(k));
+    }
+
+    function tokenExpirado() {
+      const exp = Number(localStorage.getItem("sessaoExpiracao"));
+      return !exp || exp < Math.floor(Date.now() / 1000);
+    }
+
+    function verificarToken() {
+      if (!getToken() || tokenExpirado()) { limparSessao(); window.location.href = "/"; return false; }
+      return true;
+    }
+
+    function formatarPapel(p) {
+      const s = String(p).toLowerCase();
+      if (["admin","adm","coordenador"].includes(s)) return "Coordenador";
+      if (s === "professor") return "Professor";
+      if (s === "aluno") return "Aluno";
+      return p;
+    }
+
+    function ehCoordenador(p) {
+      return ["admin","adm","coordenador"].includes(String(p).toLowerCase());
+    }
+
+    // ── Carregar usuário ──────────────────────────────────
+    async function carregarUsuarioLogado() {
+      if (!verificarToken()) return;
+      try {
+        const res = await fetch("/api/usuario-logado", { headers: { Authorization: `Bearer ${getToken()}` } });
+        if (!res.ok) { limparSessao(); window.location.href = "/"; return; }
+        const { usuario } = await res.json();
+
+        papelAtual = usuario.papel;
+        if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+        if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+        if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+
+        const btnGestao = document.getElementById("btnGestaoUsuarios");
+        if (btnGestao && ehCoordenador(usuario.papel)) btnGestao.style.display = "block";
+
+        // Subtítulo e botão nova turma
+        if (ehCoordenador(usuario.papel)) {
+          document.getElementById("subtituloTurmas").textContent = "Visão geral de todas as turmas ativas";
+          btnNovaTurma.style.display = "flex";
+        } else {
+          document.getElementById("subtituloTurmas").textContent = "Turmas em que você leciona";
+        }
+
+        await carregarTurmas();
+      } catch { limparSessao(); window.location.href = "/"; }
+    }
+
+    // ── Carregar turmas ───────────────────────────────────
+    async function carregarTurmas() {
+      if (!verificarToken()) return;
+      turmasGrid.innerHTML = `<div class="turmas-vazio">Carregando turmas...</div>`;
+      try {
+        const res = await fetch("/api/turmas", { headers: { Authorization: `Bearer ${getToken()}` } });
+        const dados = await res.json();
+        if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error"); return; }
+        todasTurmas = dados.turmas || [];
+        popularFiltroPeriodo();
+        popularFiltroTurno();
+        renderizarTurmas();
+      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+    }
+
+    function popularFiltroPeriodo() {
+      const periodos = [...new Set(todasTurmas.map(t => t.periodo).filter(Boolean))].sort((a,b) => a-b);
+      filtroPeriodo.innerHTML = `<option value="">Todos os períodos</option>`;
+      periodos.forEach(p => {
+        filtroPeriodo.innerHTML += `<option value="${p}">${p}\u00ba per\u00edodo</option>`;
+      });
+    }
+
+    function popularFiltroTurno() {
+      const turnos = [...new Set(
+        todasTurmas.map(t => t.turno).filter(Boolean).map(t => t.trim())
+      )].sort();
+      const atual = filtroTurno.value;
+      filtroTurno.innerHTML = `<option value="">Todos os turnos</option>`;
+      turnos.forEach(t => {
+        filtroTurno.innerHTML += `<option value="${t.toLowerCase()}">${t}</option>`;
+      });
+      if (atual) filtroTurno.value = atual;
+    }
+
+    function renderizarTurmas() {
+      const periodo = filtroPeriodo.value;
+      const turno   = filtroTurno.value;
+
+      const filtradas = todasTurmas.filter(t => {
+        if (periodo && String(t.periodo) !== String(periodo)) return false;
+        if (turno   && (t.turno || '').trim().toLowerCase() !== turno) return false;
+        return true;
+      });
+
+      if (filtradas.length === 0) {
+        turmasGrid.innerHTML = `<div class="turmas-vazio">Nenhuma turma encontrada com esses filtros.</div>`;
+        return;
+      }
+
+      turmasGrid.innerHTML = filtradas.map(t => {
+        const ocupacao   = t.capacidade ? `${t.total_alunos}/${t.capacidade}` : t.total_alunos;
+        const materias   = t.materias   || "—";
+        const turno      = t.turno      || "—";
+        const codLabel   = t.codigo     ? `Cód. ${t.codigo}` : "";
+        const semLabel   = t.semestre   ? ` · ${t.semestre}º sem. ${t.ano || ""}` : "";
+
+        return `
+          <div class="turma-card" data-id="${t.id}">
+            <div class="turma-card-header">
+              <div>
+                <div class="turma-card-titulo">${t.nome}</div>
+                <div class="turma-card-codigo">${codLabel}${semLabel}</div>
+              </div>
+              <span class="badge-periodo">${t.periodo ? t.periodo + "º per." : "—"}</span>
+            </div>
+
+            <div class="turma-card-stats">
+              <div class="stat-item">
+                <span class="stat-valor">${t.total_alunos}</span>
+                <span class="stat-label">Alunos</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-valor">${t.capacidade || "—"}</span>
+                <span class="stat-label">Capacidade</span>
+              </div>
+            </div>
+
+            <div class="turma-card-materias">
+              <strong>Matérias</strong>
+              ${materias}
+            </div>
+
+            <div class="turma-card-footer">
+              <span class="turma-turno">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                ${turno}
+              </span>
+              <button class="btn-ver-turma" data-id="${t.id}" data-nome="${t.nome}">Ver detalhes</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      // eventos nos cards e botões
+      document.querySelectorAll(".turma-card").forEach(card => {
+        card.addEventListener("click", e => {
+          if (e.target.closest(".btn-ver-turma")) return; // botão cuida disso
+          abrirDetalhes(card.dataset.id, card.querySelector(".turma-card-titulo").textContent);
+        });
+      });
+      document.querySelectorAll(".btn-ver-turma").forEach(btn => {
+        btn.addEventListener("click", e => {
+          e.stopPropagation();
+          abrirDetalhes(btn.dataset.id, btn.dataset.nome);
+        });
+      });
+    }
+
+    // ── Modal Detalhes ────────────────────────────────────
+    async function abrirDetalhes(id, nome) {
+      turmaDetalheId = id;
+      const turma = todasTurmas.find(t => String(t.id) === String(id));
+      detalhesTitulo.textContent   = nome;
+      detalhesSubtitulo.textContent = turma
+        ? `${turma.turno || ""} · ${turma.periodo ? turma.periodo + "º período" : ""} · ${turma.total_alunos} aluno(s)`
+        : "";
+
+      // Resetar aba
+      tabAtiva = "alunos";
+      document.querySelectorAll(".modal-tab").forEach(t => t.classList.remove("active"));
+      document.querySelector(".modal-tab[data-tab='alunos']").classList.add("active");
+
+      modalDetalhes.classList.add("show");
+      await carregarAba("alunos", id);
+    }
+
+    async function carregarAba(aba, id) {
+      detalhesBody.innerHTML = `<div class="turmas-vazio">Carregando...</div>`;
+      try {
+        const endpoint = aba === "alunos"
+          ? `/api/turmas/${id}/alunos`
+          : `/api/turmas/${id}/materias`;
+
+        const res  = await fetch(endpoint, { headers: { Authorization: `Bearer ${getToken()}` } });
+        const dados = await res.json();
+        if (!res.ok) { detalhesBody.innerHTML = `<div class="turmas-vazio">${dados.message}</div>`; return; }
+
+        if (aba === "alunos") {
+          const alunos = dados.alunos || [];
+          if (!alunos.length) { detalhesBody.innerHTML = `<div class="turmas-vazio">Nenhum aluno matriculado.</div>`; return; }
+
+          detalhesBody.innerHTML = `
+            <table class="modal-table">
+              <thead><tr>
+                <th>Aluno(a)</th>
+                <th>E-mail</th>
+                <th style="text-align:center">Média Geral</th>
+              </tr></thead>
+              <tbody>
+                ${alunos.map(a => {
+                  const media = a.media_geral !== null && a.media_geral !== undefined ? a.media_geral : null;
+                  const classeMedia = media === null ? "media-neutra" : media >= 6 ? "media-aprovada" : "media-baixa";
+                  const mediaLabel  = media !== null ? String(media).replace(".", ",") : "—";
+                  return `<tr>
+                    <td>${a.nome}</td>
+                    <td style="color:var(--muted);font-size:0.82rem">${a.email || "—"}</td>
+                    <td style="text-align:center"><span class="media-badge ${classeMedia}">${mediaLabel}</span></td>
+                  </tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          `;
+        } else {
+          const materias = dados.materias || [];
+          if (!materias.length) { detalhesBody.innerHTML = `<div class="turmas-vazio">Nenhuma matéria vinculada.</div>`; return; }
+
+          detalhesBody.innerHTML = `
+            <table class="modal-table">
+              <thead><tr>
+                <th>Matéria</th>
+                <th>Carga horária</th>
+                <th>Professor(es)</th>
+              </tr></thead>
+              <tbody>
+                ${materias.map(m => `<tr>
+                  <td>${m.nome}</td>
+                  <td>${m.carga_horaria ? m.carga_horaria + "h" : "—"}</td>
+                  <td style="color:var(--muted);font-size:0.82rem">${m.professores || "Sem professor"}</td>
+                </tr>`).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+      } catch { detalhesBody.innerHTML = `<div class="turmas-vazio">Erro ao carregar dados.</div>`; }
+    }
+
+    document.querySelectorAll(".modal-tab").forEach(tab => {
+      tab.addEventListener("click", async () => {
+        if (tab.dataset.tab === tabAtiva) return;
+        tabAtiva = tab.dataset.tab;
+        document.querySelectorAll(".modal-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        await carregarAba(tabAtiva, turmaDetalheId);
+      });
+    });
+
+    fecharDetalhes.addEventListener("click", () => modalDetalhes.classList.remove("show"));
+    modalDetalhes.addEventListener("click", e => { if (e.target === modalDetalhes) modalDetalhes.classList.remove("show"); });
+
+    // ── Modal Nova Turma ──────────────────────────────────
+    btnNovaTurma.addEventListener("click", () => modalNovaTurma.classList.add("show"));
+    fecharNovaTurma.addEventListener("click",  () => modalNovaTurma.classList.remove("show"));
+    cancelarNovaTurma.addEventListener("click", () => modalNovaTurma.classList.remove("show"));
+    modalNovaTurma.addEventListener("click", e => { if (e.target === modalNovaTurma) modalNovaTurma.classList.remove("show"); });
+
+    confirmarNovaTurma.addEventListener("click", async () => {
+      const payload = {
+        nome:       document.getElementById("inputNome").value.trim(),
+        codigo:     document.getElementById("inputCodigo").value.trim(),
+        periodo:    document.getElementById("inputPeriodo").value,
+        ano:        document.getElementById("inputAno").value,
+        semestre:   document.getElementById("inputSemestre").value,
+        turno:      document.getElementById("inputTurno").value,
+        capacidade: document.getElementById("inputCapacidade").value,
+      };
+
+      if (!payload.nome || !payload.codigo || !payload.periodo || !payload.capacidade) {
+        Swal.fire("Atenção", "Preencha todos os campos obrigatórios.", "warning"); return;
+      }
+
+      try {
+        const res = await fetch("/api/turmas", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+          body: JSON.stringify(payload),
+        });
+        const dados = await res.json();
+        if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao criar turma.", "error"); return; }
+
+        modalNovaTurma.classList.remove("show");
+        Swal.fire("Sucesso", "Turma criada com sucesso.", "success");
+        await carregarTurmas();
+      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+    });
+
+    // ── Filtros ───────────────────────────────────────────
+    filtroPeriodo.addEventListener("change", renderizarTurmas);
+    filtroTurno.addEventListener("change",   renderizarTurmas);
+
+    // ── Header ───────────────────────────────────────────
+    if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
+    if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");
+    if (btnSair) btnSair.addEventListener("click", async () => {
+      const ok = await Swal.fire({ icon:"question", title:"Deseja sair?", text:"Sua sessão será encerrada.",
+        showCancelButton:true, confirmButtonText:"Sim, sair", cancelButtonText:"Cancelar" });
+      if (ok.isConfirmed) { limparSessao(); window.location.href = "/"; }
+    });
+
+    // ── Init ─────────────────────────────────────────────
+    carregarUsuarioLogado();
+  </script>
+
+  <script src="/static/js/darkmode.js"></script>
+
+</body>
+</html>
