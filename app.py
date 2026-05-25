@@ -15,6 +15,8 @@ from login import login_bp
 from gestao_usuarios import gestao_usuarios_bp
 from notas import notas_bp
 from frequencia import frequencia_bp
+from turmas import turmas_bp
+
 
 
 from presenca import presenca_bp
@@ -42,9 +44,8 @@ app.register_blueprint(login_bp)
 app.register_blueprint(gestao_usuarios_bp)
 app.register_blueprint(notas_bp)
 app.register_blueprint(frequencia_bp)
-
-
 app.register_blueprint(presenca_bp)
+app.register_blueprint(turmas_bp)
 
 
 # ========================
@@ -55,7 +56,7 @@ def get_db_connection():
         host=os.getenv("DB_HOST", "localhost"),
         port=int(os.getenv("DB_PORT", "3306")),
         user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", "548921"),
+        password=os.getenv("DB_PASSWORD", ""),
         database=os.getenv("DB_NAME", "monitora"),
     )
 
