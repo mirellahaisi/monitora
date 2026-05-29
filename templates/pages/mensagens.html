@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Mensagens</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    :root {
+      --accent:     #4caebe;
+      --teal:       #57dbbd;
+      --teal-light: #93d7df;
+      --dark:       #173c4a;
+      --mid:        #34445c;
+      --text:       #436077;
+      --muted:      #7a96a8;
+      --bg:         #f5fafa;
+      --white:      #ffffff;
+      --grad:       linear-gradient(135deg, #93d7df 0%, #57dbbd 55%, #4caebe 100%);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: "DM Sans", "Segoe UI", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    /* ── LAYOUT ── */
+    .inicio-body { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 200px; min-height: calc(100vh - 24px); margin: 12px; padding: 24px 14px;
+      border-radius: 20px; background: var(--grad); display: flex; flex-direction: column;
+      align-items: center; flex-shrink: 0; box-shadow: 0 8px 32px rgba(87,219,189,0.25);
+    }
+    .sidebar-brand { text-align: center; margin-bottom: 28px; }
+    .sidebar-logo  { width: 72px; height: 72px; object-fit: contain; }
+    .sidebar-brand h1 { margin: 6px 0 0; font-family: "Sora", sans-serif; font-size: 1.25rem; font-weight: 700; color: var(--dark); letter-spacing: -0.02em; }
+    .sidebar-brand h1 span { color: rgba(23,60,74,0.55); }
+    .sidebar-menu { width: 100%; display: flex; flex-direction: column; gap: 4px; }
+    .sidebar-link { width: 100%; padding: 10px 14px; border-radius: 10px; color: rgba(255,255,255,0.85); font-size: 0.86rem; font-weight: 500; text-decoration: none; transition: background 0.18s, color 0.18s; display: flex; align-items: center; gap: 8px; }
+    .sidebar-link svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .sidebar-link.active, .sidebar-link:hover { background: rgba(255,255,255,0.92); color: var(--mid); }
+    .sidebar-bottom { margin-top: auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .sidebar-laptop svg { width: 80px; opacity: 0.7; }
+    .logout-button { width: 100%; padding: 10px 14px; border: 0; background: transparent; color: rgba(255,255,255,0.7); font: inherit; font-size: 0.86rem; text-align: left; cursor: pointer; border-radius: 10px; display: flex; align-items: center; gap: 8px; transition: background 0.18s, color 0.18s; }
+    .logout-button svg { width: 16px; height: 16px; }
+    .logout-button:hover { background: rgba(255,255,255,0.15); color: white; }
+
+    /* ── MAIN ── */
+    .inicio-main {
+      flex: 1;
+      padding: 28px 36px;
+      min-width: 0;
+      overflow-y: auto;
+      height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    .inicio-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; }
+    .search-box input { width: 260px; height: 38px; border: 1.5px solid rgba(147,215,223,0.35); border-radius: 50px; padding: 0 18px; background: var(--white); outline: none; font: inherit; font-size: 0.88rem; color: var(--text); transition: border-color 0.2s, box-shadow 0.2s; }
+    .search-box input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1); }
+    .search-box input::placeholder { color: #a8bfcc; }
+    .user-menu { position: relative; display: flex; align-items: center; }
+    .user-menu-button { border: none; background: var(--white); cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; border-radius: 999px; box-shadow: 0 2px 12px rgba(76,190,190,0.15); color: var(--mid); transition: box-shadow 0.2s; }
+    .user-menu-button:hover { box-shadow: 0 4px 18px rgba(76,190,190,0.22); }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--grad); color: white; display: flex; align-items: center; justify-content: center; font-family: "Sora", sans-serif; font-weight: 700; font-size: 0.9rem; }
+    .user-text { display: flex; flex-direction: column; align-items: flex-start; line-height: 1.15; }
+    .user-text span { font-size: 0.72rem; font-weight: 600; color: var(--accent); }
+    .user-text strong { font-size: 0.88rem; font-weight: 700; color: var(--mid); }
+    .user-arrow { font-size: 12px; color: var(--muted); }
+    .user-dropdown { display: none; position: absolute; top: 48px; right: 0; min-width: 180px; background: var(--white); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.12); padding: 8px; z-index: 100; }
+    .user-dropdown.show { display: block; }
+    .user-dropdown button { width: 100%; border: none; background: transparent; padding: 10px 12px; text-align: left; border-radius: 8px; cursor: pointer; font: inherit; font-size: 0.88rem; color: var(--text); }
+    .user-dropdown button:hover { background: var(--bg); color: var(--accent); }
+
+    /* ── PAGE HEADING ── */
+    .page-heading { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+    .page-heading-icon { width: 44px; height: 44px; border-radius: 12px; background: var(--grad); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(87,219,189,0.3); flex-shrink: 0; }
+    .page-heading-icon svg { width: 22px; height: 22px; color: white; }
+    .page-heading h2 { font-family: "Sora", sans-serif; font-size: 1.5rem; font-weight: 800; color: var(--dark); letter-spacing: -0.025em; }
+    .page-heading p { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── TABS ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--white); border-radius: 14px; padding: 6px; border: 1.5px solid rgba(147,215,223,0.25); box-shadow: 0 2px 12px rgba(76,190,190,0.06); width: fit-content; }
+    .tab-btn { padding: 9px 22px; border: none; background: transparent; border-radius: 10px; font: inherit; font-size: 0.88rem; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 7px; }
+    .tab-btn.active { background: var(--grad); color: var(--dark); box-shadow: 0 3px 10px rgba(87,219,189,0.3); }
+    .tab-btn .badge { background: rgba(255,107,107,0.9); color: white; font-size: 0.7rem; font-weight: 700; min-width: 18px; height: 18px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; padding: 0 5px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── LISTA DE MENSAGENS ── */
+    .mensagens-lista { display: flex; flex-direction: column; gap: 12px; max-width: 860px; }
+
+    .mensagem-card {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.06);
+      transition: box-shadow 0.2s, border-color 0.2s;
+      cursor: pointer;
+    }
+    .mensagem-card:hover { box-shadow: 0 6px 20px rgba(76,190,190,0.13); border-color: rgba(76,190,190,0.3); }
+    .mensagem-card.nao-lido { border-left: 4px solid var(--accent); }
+
+    .mensagem-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .mensagem-titulo { font-family: "Sora", sans-serif; font-size: 0.97rem; font-weight: 700; color: var(--dark); }
+    .mensagem-card.nao-lido .mensagem-titulo::before { content: "●"; color: var(--accent); margin-right: 6px; font-size: 0.6rem; vertical-align: middle; }
+    .mensagem-data { font-size: 0.75rem; color: var(--muted); white-space: nowrap; }
+    .mensagem-descricao { font-size: 0.88rem; color: var(--text); line-height: 1.5; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .mensagem-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .mensagem-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.73rem; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+    .chip-remetente { background: rgba(76,190,190,0.12); color: var(--accent); }
+    .chip-turma     { background: rgba(87,219,189,0.12); color: #1a8c6e; }
+    .chip-materia   { background: rgba(147,215,223,0.2); color: var(--mid); }
+    .chip-papel     { background: rgba(23,60,74,0.08); color: var(--dark); }
+
+    .mensagens-vazio { text-align: center; padding: 60px 20px; color: var(--muted); }
+    .mensagens-vazio svg { width: 48px; height: 48px; opacity: 0.35; margin-bottom: 14px; }
+    .mensagens-vazio p { font-size: 0.92rem; }
+
+    .mensagem-leitura { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 4px; }
+    .mensagem-leitura .lidos { color: var(--teal); font-weight: 700; }
+
+    /* ── FORMULÁRIO ENVIO ── */
+    .envio-card {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 20px;
+      padding: 28px 32px;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.08);
+      max-width: 680px;
+    }
+    .envio-card h3 { font-family: "Sora", sans-serif; font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .envio-card h3 svg { color: var(--accent); width: 18px; height: 18px; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+    .form-group label { font-size: 0.75rem; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+
+    .form-select, .form-input, .form-textarea {
+      border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 10px;
+      background: var(--bg);
+      color: var(--mid);
+      font: inherit;
+      font-size: 0.92rem;
+      font-weight: 500;
+      padding: 0 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+    .form-select { height: 44px; cursor: pointer; }
+    .form-input  { height: 44px; }
+    .form-textarea { padding: 12px 14px; resize: vertical; min-height: 110px; line-height: 1.5; }
+    .form-select:focus, .form-input:focus, .form-textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+    }
+    .form-select:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .hidden { display: none !important; }
+
+    .btn-enviar {
+      width: 100%;
+      height: 48px;
+      border: none;
+      border-radius: 12px;
+      background: var(--grad);
+      color: var(--dark);
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(87,219,189,0.35);
+      margin-top: 6px;
+    }
+    .btn-enviar:hover  { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(87,219,189,0.4); }
+    .btn-enviar:active { transform: translateY(0); }
+    .btn-enviar:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-enviar svg { width: 17px; height: 17px; }
+
+    /* ── MODAL ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(23,60,74,0.45); backdrop-filter: blur(4px); z-index: 500; align-items: center; justify-content: center; }
+    .modal-overlay.show { display: flex; }
+    .modal-box { background: var(--white); border-radius: 20px; padding: 32px; max-width: 540px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+    .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; gap: 16px; }
+    .modal-titulo { font-family: "Sora", sans-serif; font-size: 1.15rem; font-weight: 800; color: var(--dark); }
+    .modal-close { border: none; background: transparent; cursor: pointer; color: var(--muted); font-size: 1.4rem; line-height: 1; padding: 0 4px; }
+    .modal-close:hover { color: var(--dark); }
+    .modal-body { font-size: 0.92rem; color: var(--text); line-height: 1.65; white-space: pre-wrap; }
+    .modal-footer { margin-top: 20px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(23,60,74,0.2); border-top-color: var(--dark); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+<div class="inicio-body">
+
+  {% include "components/sidebar.html" %}
+
+  <main class="inicio-main">
+
+    <!-- Header -->
+    <div class="inicio-header">
+      <div class="search-box">
+        <input type="text" placeholder="Pesquisar" id="inputBusca">
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <div class="user-menu">
+          <button class="user-menu-button" id="btnMenuUsuario">
+            <div class="user-avatar" id="avatarUsuario">?</div>
+            <div class="user-text">
+              <span id="papelUsuario">—</span>
+              <strong id="nomeUsuarioTopo">Carregando...</strong>
+            </div>
+            <span class="user-arrow">▾</span>
+          </button>
+          <div class="user-dropdown" id="menuUsuario">
+            <button id="btnEditarPerfil">Meu perfil</button>
+            <button id="btnGestaoUsuarios" style="display:none">Gestão de usuários</button>
+            <button id="btnSair">Sair</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page heading -->
+    <div class="page-heading">
+      <div class="page-heading-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+      </div>
+      <div>
+        <h2>Mensagens</h2>
+        <p>Receba e envie comunicados para sua turma</p>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="recebidos" id="tabRecebidos">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="3" x2="12" y2="21"/></svg>
+        Recebidos
+        <span class="badge" id="badgeNaoLidos" style="display:none">0</span>
+      </button>
+      <button class="tab-btn" data-tab="enviados" id="tabEnviados">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 7 12 3 8 7"/><line x1="12" y1="21" x2="12" y2="3"/></svg>
+        Enviados
+      </button>
+      <button class="tab-btn" data-tab="novo" id="tabNovo">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova Mensagem
+      </button>
+    </div>
+
+    <!-- TAB: Recebidos -->
+    <div class="tab-panel active" id="panelRecebidos">
+      <div class="mensagens-lista" id="listaRecebidos">
+        <div class="mensagens-vazio">
+          <div class="spinner"></div>
+          <p style="margin-top:14px">Carregando mensagens...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Enviados -->
+    <div class="tab-panel" id="panelEnviados">
+      <div class="mensagens-lista" id="listaEnviados">
+        <div class="mensagens-vazio">
+          <div class="spinner"></div>
+          <p style="margin-top:14px">Carregando mensagens...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: Nova Mensagem -->
+    <div class="tab-panel" id="panelNovo">
+      <div class="envio-card">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Enviar mensagem
+        </h3>
+
+        <!-- Título -->
+        <div class="form-group">
+          <label>Título</label>
+          <input type="text" id="inputTitulo" class="form-input" placeholder="Assunto da mensagem" maxlength="255">
+        </div>
+
+        <!-- Para quem -->
+        <div class="form-group">
+          <label>Para quem</label>
+          <select id="selectDestino" class="form-select">
+            <option value="">Carregando...</option>
+          </select>
+        </div>
+
+        <!-- [ALUNO] Selecionar turma e depois professor -->
+        <div id="grupoTurmaAluno" class="hidden">
+          <div class="form-group">
+            <label>Turma</label>
+            <select id="selectTurmaAluno" class="form-select">
+              <option value="">Selecione a turma</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="grupoProfessor" class="hidden">
+          <div class="form-group">
+            <label>Professor</label>
+            <select id="selectProfessor" class="form-select" disabled>
+              <option value="">Selecione a turma primeiro</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="grupoProfMateria" class="hidden">
+          <div class="form-group">
+            <label>Matéria</label>
+            <select id="selectMateriaAluno" class="form-select" disabled>
+              <option value="">Selecione o professor primeiro</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- [ALUNO] Selecionar coordenador -->
+        <div id="grupoCoordenadorAluno" class="hidden">
+          <div class="form-group">
+            <label>Coordenador</label>
+            <select id="selectCoordenadorAluno" class="form-select">
+              <option value="">Carregando...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- [PROFESSOR] Selecionar turma e matéria OU coordenador -->
+        <div id="grupoTurmaProfessor" class="hidden">
+          <div class="form-group">
+            <label>Turma</label>
+            <select id="selectTurmaProfessor" class="form-select">
+              <option value="">Selecione a turma</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="grupoMateriaProfessor" class="hidden">
+          <div class="form-group">
+            <label>Matéria</label>
+            <select id="selectMateriaProfessor" class="form-select" disabled>
+              <option value="">Selecione a turma primeiro</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="grupoCoordenadorProf" class="hidden">
+          <div class="form-group">
+            <label>Coordenador</label>
+            <select id="selectCoordenadorProf" class="form-select">
+              <option value="">Carregando...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- [COORDENADOR] Turma ou Professor ou Todos -->
+        <div id="grupoTurmaCoordenador" class="hidden">
+          <div class="form-group">
+            <label>Turma</label>
+            <select id="selectTurmaCoordenador" class="form-select">
+              <option value="">Selecione a turma</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="grupoProfessorCoordenador" class="hidden">
+          <div class="form-group">
+            <label>Professor</label>
+            <select id="selectProfessorCoordenador" class="form-select">
+              <option value="">Carregando...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mensagem -->
+        <div class="form-group">
+          <label>Mensagem</label>
+          <textarea id="textMensagem" class="form-textarea" placeholder="Digite o conteúdo da mensagem..."></textarea>
+        </div>
+
+        <button class="btn-enviar" id="btnEnviar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Enviar mensagem
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-titulo" id="modalTitulo"></div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+  // ─── Sessão ───────────────────────────────────────
+  const getToken     = () => localStorage.getItem("token") || sessionStorage.getItem("token");
+  const limparSessao = () => { localStorage.clear(); sessionStorage.clear(); };
+  function authHeader() { return { "Authorization": `Bearer ${getToken()}`, "Content-Type": "application/json" }; }
+  function validarToken() {
+    const exp = localStorage.getItem("sessaoExpiracao") || sessionStorage.getItem("sessaoExpiracao");
+    if (!getToken() || !exp || Number(exp) < Math.floor(Date.now()/1000)) {
+      limparSessao(); window.location.href = "/"; return false;
+    }
+    return true;
+  }
+
+  function formatarPapel(p) {
+    const s = String(p).toLowerCase();
+    if (["admin","adm","coordenador"].includes(s)) return "Coordenador";
+    if (s === "professor") return "Professor";
+    if (s === "aluno") return "Aluno";
+    return p;
+  }
+  function formatarData(str) {
+    if (!str) return "";
+    const d = new Date(str.replace(" ","T"));
+    return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  }
+  function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+  function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function vazio(msg) {
+    return `<div class="mensagens-vazio">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <p>${msg}</p></div>`;
+  }
+  function labelDestino(p) {
+    const m = { aluno:"Alunos", professor:"Professores", coordenador:"Coordenador", todos:"Todos" };
+    return m[p] || p;
+  }
+  function show(id) { document.getElementById(id).classList.remove("hidden"); }
+  function hide(id) { document.getElementById(id).classList.add("hidden"); }
+  function ocultarTodosGrupos() {
+    ["grupoTurmaAluno","grupoProfessor","grupoProfMateria","grupoCoordenadorAluno",
+     "grupoTurmaProfessor","grupoMateriaProfessor","grupoCoordenadorProf",
+     "grupoTurmaCoordenador","grupoProfessorCoordenador"].forEach(hide);
+  }
+
+  // ─── Elementos ────────────────────────────────────
+  const listaRecebidos            = document.getElementById("listaRecebidos");
+  const listaEnviados             = document.getElementById("listaEnviados");
+  const badgeNaoLidos             = document.getElementById("badgeNaoLidos");
+  const selectDestino             = document.getElementById("selectDestino");
+  const inputTitulo               = document.getElementById("inputTitulo");
+  const textMensagem              = document.getElementById("textMensagem");
+  const btnEnviar                 = document.getElementById("btnEnviar");
+  const modalOverlay              = document.getElementById("modalOverlay");
+  const modalTitulo               = document.getElementById("modalTitulo");
+  const modalBody                 = document.getElementById("modalBody");
+  const modalFooter               = document.getElementById("modalFooter");
+
+  // Selects específicos
+  const selectTurmaAluno          = document.getElementById("selectTurmaAluno");
+  const selectProfessor           = document.getElementById("selectProfessor");
+  const selectMateriaAluno        = document.getElementById("selectMateriaAluno");
+  const selectCoordenadorAluno    = document.getElementById("selectCoordenadorAluno");
+  const selectTurmaProfessor      = document.getElementById("selectTurmaProfessor");
+  const selectMateriaProfessor    = document.getElementById("selectMateriaProfessor");
+  const selectCoordenadorProf     = document.getElementById("selectCoordenadorProf");
+  const selectTurmaCoordenador    = document.getElementById("selectTurmaCoordenador");
+  const selectProfessorCoordenador= document.getElementById("selectProfessorCoordenador");
+
+  // Estado
+  let papelUsuario  = "";
+  let turmasCache   = [];
+
+  // ─── Tabs ─────────────────────────────────────────
+  document.querySelectorAll(".tab-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("panel" + capitalize(btn.dataset.tab)).classList.add("active");
+      if (btn.dataset.tab === "enviados") carregarEnviados();
+    });
+  });
+
+  // ─── Usuário logado ───────────────────────────────
+  async function carregarUsuarioLogado() {
+    if (!validarToken()) return;
+    try {
+      const r = await fetch("/api/usuario-logado", { headers: authHeader() });
+      if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
+      const { usuario } = await r.json();
+      document.getElementById("nomeUsuarioTopo").textContent = usuario.nome;
+      document.getElementById("papelUsuario").textContent    = formatarPapel(usuario.papel);
+      document.getElementById("avatarUsuario").textContent   = usuario.nome.charAt(0).toUpperCase();
+      papelUsuario = usuario.papel.toLowerCase();
+      const btnG = document.getElementById("btnGestaoUsuarios");
+      if (btnG && ["coordenador","admin","adm"].includes(papelUsuario)) btnG.style.display = "block";
+      await carregarOpcoes();
+    } catch { limparSessao(); window.location.href = "/"; }
+  }
+
+  // ─── Badge não lidos ──────────────────────────────
+  async function carregarNaoLidos() {
+    try {
+      const r = await fetch("/api/mensagens/nao-lidos", { headers: authHeader() });
+      const d = await r.json();
+      if (d.nao_lidos > 0) {
+        badgeNaoLidos.textContent = d.nao_lidos > 99 ? "99+" : d.nao_lidos;
+        badgeNaoLidos.style.display = "inline-flex";
+      } else {
+        badgeNaoLidos.style.display = "none";
+      }
+    } catch {}
+  }
+
+  // ─── Mensagens recebidas ─────────────────────────────
+  async function carregarRecebidos() {
+    listaRecebidos.innerHTML = `<div class="mensagens-vazio"><div class="spinner"></div><p style="margin-top:14px">Carregando...</p></div>`;
+    try {
+      const r = await fetch("/api/mensagens/recebidos", { headers: authHeader() });
+      const d = await r.json();
+      if (!r.ok) { listaRecebidos.innerHTML = vazio("Erro ao carregar mensagens."); return; }
+      if (!d.mensagens.length) { listaRecebidos.innerHTML = vazio("Nenhuma mensagem recebida."); return; }
+      listaRecebidos.innerHTML = d.mensagens.map(a => cardRecebido(a)).join("");
+      document.querySelectorAll("#listaRecebidos .mensagem-card[data-id]").forEach(card => {
+        card.addEventListener("click", () => abrirModal(card.dataset.id, "recebido"));
+      });
+    } catch { listaRecebidos.innerHTML = vazio("Falha na conexão."); }
+  }
+
+  function cardRecebido(a) {
+    const naoLido = !a.lido ? " nao-lido" : "";
+    const chips = [
+      `<span class="mensagem-chip chip-remetente">${esc(a.remetente_nome)} (${formatarPapel(a.remetente_papel)})</span>`,
+      a.turma_nome   ? `<span class="mensagem-chip chip-turma">${esc(a.turma_nome)}</span>` : "",
+      a.materia_nome ? `<span class="mensagem-chip chip-materia">${esc(a.materia_nome)}</span>` : "",
+    ].filter(Boolean).join("");
+    return `
+      <div class="mensagem-card${naoLido}" data-id="${a.id}" data-titulo="${esc(a.titulo)}" data-body="${esc(a.descricao)}" data-footer="${esc(chips)}" data-mensagem-id="${a.id}" data-lido="${a.lido ? 'true' : 'false'}">
+        <div class="mensagem-card-top">
+          <div class="mensagem-titulo">${esc(a.titulo)}</div>
+          <div class="mensagem-data">${formatarData(a.data_publicacao)}</div>
+        </div>
+        <div class="mensagem-descricao">${esc(a.descricao)}</div>
+        <div class="mensagem-meta">${chips}</div>
+      </div>`;
+  }
+
+  // ─── Mensagens enviadas ──────────────────────────────
+  async function carregarEnviados() {
+    listaEnviados.innerHTML = `<div class="mensagens-vazio"><div class="spinner"></div><p style="margin-top:14px">Carregando...</p></div>`;
+    try {
+      const r = await fetch("/api/mensagens/enviados", { headers: authHeader() });
+      const d = await r.json();
+      if (!r.ok) { listaEnviados.innerHTML = vazio("Erro ao carregar mensagens."); return; }
+      if (!d.mensagens.length) { listaEnviados.innerHTML = vazio("Nenhuma mensagem enviada."); return; }
+      listaEnviados.innerHTML = d.mensagens.map(a => cardEnviado(a)).join("");
+      document.querySelectorAll("#listaEnviados .mensagem-card[data-id]").forEach(card => {
+        card.addEventListener("click", () => abrirModal(card.dataset.id, "enviado"));
+      });
+    } catch { listaEnviados.innerHTML = vazio("Falha na conexão."); }
+  }
+
+  function cardEnviado(a) {
+    const lidos = a.total_lidos || 0;
+    const total = a.total_destinatarios || 0;
+    const chips = [
+      a.turma_nome   ? `<span class="mensagem-chip chip-turma">${esc(a.turma_nome)}</span>` : "",
+      a.materia_nome ? `<span class="mensagem-chip chip-materia">${esc(a.materia_nome)}</span>` : "",
+      `<span class="mensagem-chip chip-papel">${labelDestino(a.papel_destino)}</span>`,
+    ].filter(Boolean).join("");
+    return `
+      <div class="mensagem-card" data-id="${a.id}" data-titulo="${esc(a.titulo)}" data-body="${esc(a.descricao)}" data-footer="${esc(chips)}">
+        <div class="mensagem-card-top">
+          <div class="mensagem-titulo">${esc(a.titulo)}</div>
+          <div class="mensagem-data">${formatarData(a.data_publicacao)}</div>
+        </div>
+        <div class="mensagem-descricao">${esc(a.descricao)}</div>
+        <div class="mensagem-meta">
+          ${chips}
+          <span class="mensagem-leitura">· <span class="lidos">${lidos}</span>/${total} leram</span>
+        </div>
+      </div>`;
+  }
+
+  // ─── Modal ────────────────────────────────────────
+  function abrirModal(cardId, tipo) {
+    const card = document.querySelector(`[data-id="${cardId}"]`);
+    if (!card) return;
+    modalTitulo.textContent = card.dataset.titulo;
+    modalBody.textContent   = card.dataset.body;
+    // recria chips a partir do footer salvo
+    const tmp = document.createElement("div");
+    tmp.innerHTML = card.dataset.footer || "";
+    modalFooter.innerHTML = tmp.innerHTML;
+    modalOverlay.classList.add("show");
+
+    // Marcar como lido
+    if (tipo === "recebido" && card.dataset.lido === "false") {
+      fetch(`/api/mensagens/${card.dataset.mensagemId}/lido`, {
+        method: "PATCH",
+        headers: authHeader()
+      }).then(r => {
+        if (r.ok) {
+          card.classList.remove("nao-lido");
+          card.dataset.lido = "true";
+          carregarNaoLidos();
+        }
+      }).catch(() => {});
+    }
+  }
+
+  document.getElementById("modalClose").addEventListener("click", () => modalOverlay.classList.remove("show"));
+  modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) modalOverlay.classList.remove("show"); });
+
+  // ─── Opções de envio ──────────────────────────────
+  async function carregarOpcoes() {
+    try {
+      const r = await fetch("/api/mensagens/opcoes", { headers: authHeader() });
+      const d = await r.json();
+      turmasCache = d.turmas || [];
+
+      selectDestino.innerHTML = `<option value="">Para quem?</option>` +
+        d.destinos.map(o => `<option value="${o.valor}">${o.label}</option>`).join("");
+
+      // Pré-carrega coordenadores se for aluno ou professor
+      if (papelUsuario === "aluno" || papelUsuario === "professor") {
+        carregarCoordenadores();
+      }
+
+      // Pré-carrega turmas de aluno
+      if (papelUsuario === "aluno" && turmasCache.length) {
+        selectTurmaAluno.innerHTML = `<option value="">Selecione a turma</option>` +
+          turmasCache.map(t => `<option value="${t.id}">${t.nome}${t.periodo?" – Per."+t.periodo:""}</option>`).join("");
+      }
+
+      // Pré-carrega turmas de professor
+      if (papelUsuario === "professor" && turmasCache.length) {
+        selectTurmaProfessor.innerHTML = `<option value="">Selecione a turma</option>` +
+          turmasCache.map(t => `<option value="${t.id}">${t.nome}${t.periodo?" – Per."+t.periodo:""}</option>`).join("");
+      }
+
+      // Pré-carrega dados para coordenador
+      if (["coordenador","admin","adm"].includes(papelUsuario)) {
+        carregarTurmascoordenador();
+        carregarProfessoresCoordenador();
+      }
+
+    } catch {}
+  }
+
+  async function carregarCoordenadores() {
+    try {
+      const r = await fetch("/api/mensagens/coordenadores", { headers: authHeader() });
+      const d = await r.json();
+      const opts = d.length
+        ? d.map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join("")
+        : `<option value="">Nenhum coordenador encontrado</option>`;
+      selectCoordenadorAluno.innerHTML = `<option value="">Selecione o coordenador</option>` + opts;
+      selectCoordenadorProf.innerHTML  = `<option value="">Selecione o coordenador</option>` + opts;
+    } catch {}
+  }
+
+  async function carregarTurmascoordenador() {
+    try {
+      const r = await fetch("/api/mensagens/todas-turmas", { headers: authHeader() });
+      const d = await r.json();
+      selectTurmaCoordenador.innerHTML = `<option value="">Selecione a turma</option>` +
+        d.map(t => `<option value="${t.id}">${esc(t.nome)}${t.periodo?" – Per."+t.periodo:""}</option>`).join("");
+    } catch {}
+  }
+
+  async function carregarProfessoresCoordenador() {
+    try {
+      const r = await fetch("/api/mensagens/todos-professores", { headers: authHeader() });
+      const d = await r.json();
+      selectProfessorCoordenador.innerHTML = `<option value="">Selecione o professor</option>` +
+        d.map(p => `<option value="${p.id}">${esc(p.nome)}</option>`).join("");
+    } catch {}
+  }
+
+  // ─── Lógica de destino por papel ──────────────────
+
+  selectDestino.addEventListener("change", () => {
+    ocultarTodosGrupos();
+    const val = selectDestino.value;
+
+    if (papelUsuario === "aluno") {
+      if (val === "professor") {
+        show("grupoTurmaAluno");
+        show("grupoProfessor");
+        // matéria só aparece após selecionar professor
+      } else if (val === "coordenador") {
+        show("grupoCoordenadorAluno");
+      }
+
+    } else if (papelUsuario === "professor") {
+      if (val === "aluno") {
+        show("grupoTurmaProfessor");
+        show("grupoMateriaProfessor");
+      } else if (val === "coordenador") {
+        show("grupoCoordenadorProf");
+      }
+
+    } else { // coordenador
+      if (val === "turma") {
+        show("grupoTurmaCoordenador");
+      } else if (val === "professor") {
+        show("grupoProfessorCoordenador");
+      }
+      // "todos" → sem campos adicionais
+    }
+  });
+
+  // Aluno: ao selecionar turma → carrega professores
+  selectTurmaAluno.addEventListener("change", async () => {
+    const tid = selectTurmaAluno.value;
+    selectProfessor.innerHTML = `<option value="">Carregando...</option>`;
+    selectProfessor.disabled  = true;
+    hide("grupoProfMateria");
+    if (!tid) { selectProfessor.innerHTML = `<option value="">Selecione a turma primeiro</option>`; return; }
+    try {
+      const r = await fetch(`/api/mensagens/professores?turma_id=${tid}`, { headers: authHeader() });
+      const d = await r.json();
+      selectProfessor.innerHTML = `<option value="">Selecione o professor</option>` +
+        d.map(p => `<option value="${p.id}">${esc(p.nome)}</option>`).join("");
+      selectProfessor.disabled = false;
+    } catch { selectProfessor.innerHTML = `<option value="">Erro ao carregar</option>`; }
+  });
+
+  // Aluno: ao selecionar professor → carrega matérias dele nessa turma
+  selectProfessor.addEventListener("change", async () => {
+    const pid = selectProfessor.value;
+    const tid = selectTurmaAluno.value;
+    if (!pid || !tid) { hide("grupoProfMateria"); return; }
+    show("grupoProfMateria");
+    selectMateriaAluno.innerHTML = `<option value="">Carregando...</option>`;
+    selectMateriaAluno.disabled  = true;
+    try {
+      const r = await fetch(`/api/mensagens/materias?turma_id=${tid}&professor_id=${pid}`, { headers: authHeader() });
+      const d = await r.json();
+      selectMateriaAluno.innerHTML = `<option value="">Selecione a matéria</option>` +
+        d.map(m => `<option value="${m.id}">${esc(m.nome)}</option>`).join("");
+      selectMateriaAluno.disabled = false;
+    } catch { selectMateriaAluno.innerHTML = `<option value="">Erro ao carregar</option>`; }
+  });
+
+  // Professor: ao selecionar turma → carrega matérias
+  selectTurmaProfessor.addEventListener("change", async () => {
+    const tid = selectTurmaProfessor.value;
+    selectMateriaProfessor.innerHTML = `<option value="">Carregando...</option>`;
+    selectMateriaProfessor.disabled  = true;
+    if (!tid) { selectMateriaProfessor.innerHTML = `<option value="">Selecione a turma primeiro</option>`; return; }
+    try {
+      const r = await fetch(`/api/mensagens/materias?turma_id=${tid}`, { headers: authHeader() });
+      const d = await r.json();
+      selectMateriaProfessor.innerHTML = `<option value="">Selecione a matéria</option>` +
+        d.map(m => `<option value="${m.id}">${esc(m.nome)}</option>`).join("");
+      selectMateriaProfessor.disabled = false;
+    } catch { selectMateriaProfessor.innerHTML = `<option value="">Erro ao carregar</option>`; }
+  });
+
+  // ─── Coletar dados do form por papel ──────────────
+  function coletarDadosEnvio() {
+    const dest = selectDestino.value;
+    let turmaId = null, materiaId = null, papelDestino = dest, usuarioDestinoId = null;
+
+    if (papelUsuario === "aluno") {
+      if (dest === "professor") {
+        turmaId           = selectTurmaAluno.value || null;
+        usuarioDestinoId  = selectProfessor.value  || null;
+        materiaId         = selectMateriaAluno.value || null;
+        papelDestino      = "professor";
+        if (!turmaId)          { Swal.fire("Atenção","Selecione a turma.","warning"); return null; }
+        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o professor.","warning"); return null; }
+        if (!materiaId)        { Swal.fire("Atenção","Selecione a matéria.","warning"); return null; }
+      } else if (dest === "coordenador") {
+        usuarioDestinoId = selectCoordenadorAluno.value || null;
+        papelDestino     = "coordenador";
+        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o coordenador.","warning"); return null; }
+      }
+
+    } else if (papelUsuario === "professor") {
+      if (dest === "aluno") {
+        turmaId      = selectTurmaProfessor.value        || null;
+        materiaId    = selectMateriaProfessor.value      || null;
+        papelDestino = "aluno";
+        if (!turmaId)   { Swal.fire("Atenção","Selecione a turma.","warning"); return null; }
+        if (!materiaId) { Swal.fire("Atenção","Selecione a matéria.","warning"); return null; }
+      } else if (dest === "coordenador") {
+        usuarioDestinoId = selectCoordenadorProf.value || null;
+        papelDestino     = "coordenador";
+        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o coordenador.","warning"); return null; }
+      }
+
+    } else { // coordenador
+      if (dest === "turma") {
+        turmaId      = selectTurmaCoordenador.value || null;
+        papelDestino = "todos";
+        if (!turmaId)   { Swal.fire("Atenção","Selecione a turma.","warning"); return null; }
+        if (!materiaId) { Swal.fire("Atenção","Selecione a matéria.","warning"); return null; }
+      } else if (dest === "professor") {
+        usuarioDestinoId = selectProfessorCoordenador.value || null;
+        papelDestino     = "professor";
+        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o professor.","warning"); return null; }
+      } else if (dest === "todos") {
+        papelDestino = "todos";
+      }
+    }
+
+    return { turmaId, materiaId, papelDestino, usuarioDestinoId };
+  }
+
+  // ─── Enviar mensagem ─────────────────────────────────
+  btnEnviar.addEventListener("click", async () => {
+    const titulo    = inputTitulo.value.trim();
+    const descricao = textMensagem.value.trim();
+    const destino   = selectDestino.value;
+
+    if (!titulo)    { Swal.fire("Atenção","Preencha o título.","warning"); return; }
+    if (!descricao) { Swal.fire("Atenção","Escreva a mensagem.","warning"); return; }
+    if (!destino)   { Swal.fire("Atenção","Selecione para quem enviar.","warning"); return; }
+
+    const dados = coletarDadosEnvio();
+    if (!dados) return;
+
+    btnEnviar.disabled = true;
+    btnEnviar.innerHTML = `<div class="spinner" style="border-top-color:#173c4a"></div> Enviando...`;
+
+    try {
+      const r = await fetch("/api/mensagens", {
+        method: "POST",
+        headers: authHeader(),
+        body: JSON.stringify({
+          titulo,
+          descricao,
+          papel_destino:      dados.papelDestino,
+          turma_id:           dados.turmaId,
+          materia_id:         dados.materiaId,
+          usuario_destino_id: dados.usuarioDestinoId
+        })
+      });
+      const d = await r.json();
+      if (!r.ok) { Swal.fire("Erro", d.message || "Erro ao enviar.", "error"); return; }
+      Swal.fire("Enviado!", d.message, "success");
+      // Limpar form
+      inputTitulo.value = ""; textMensagem.value = ""; selectDestino.value = "";
+      ocultarTodosGrupos();
+      carregarNaoLidos();
+    } catch { Swal.fire("Erro","Falha na conexão.","error"); }
+    finally {
+      btnEnviar.disabled = false;
+      btnEnviar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar mensagem`;
+    }
+  });
+
+  // ─── Menu usuário ─────────────────────────────────
+  const botaoMenuUsuario = document.getElementById("btnMenuUsuario");
+  const menuUsuarioEl    = document.getElementById("menuUsuario");
+  if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuarioEl.classList.toggle("show"));
+  document.getElementById("btnEditarPerfil").addEventListener("click", () => window.location.href = "/perfil");
+  document.getElementById("btnSair").addEventListener("click", async () => {
+    const c = await Swal.fire({ icon:"question", title:"Deseja sair?", text:"Sua sessão será encerrada.", showCancelButton:true, confirmButtonText:"Sim, sair", cancelButtonText:"Cancelar" });
+    if (!c.isConfirmed) return;
+    limparSessao(); window.location.href = "/";
+  });
+
+  // ─── Busca local ──────────────────────────────────
+  document.getElementById("inputBusca").addEventListener("input", e => {
+    const q = e.target.value.toLowerCase();
+    document.querySelectorAll(".mensagem-card").forEach(card => {
+      card.style.display = card.textContent.toLowerCase().includes(q) ? "" : "none";
+    });
+  });
+
+  // ─── Init ─────────────────────────────────────────
+  carregarUsuarioLogado();
+  carregarNaoLidos();
+  carregarRecebidos();
+</script>
+
+<script src="/static/js/darkmode.js"></script>
+</body>
+</html>
