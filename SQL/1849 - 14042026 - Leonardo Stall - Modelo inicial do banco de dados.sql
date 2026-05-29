@@ -180,3 +180,41 @@ CREATE TABLE professor_materia (
     REFERENCES materia(id)
     ON DELETE CASCADE
 );
+
+
+USE monitora;
+
+-- 1. Cria a tabela evento_calendario se ainda não existir (caso seja instalação nova)
+CREATE TABLE IF NOT EXISTS evento_calendario (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    titulo          VARCHAR(255) NOT NULL,
+    descricao       VARCHAR(1000),
+    data_inicio     DATETIME NOT NULL,
+    data_fim        DATETIME,
+    cor             VARCHAR(20) DEFAULT '#4caebe',
+    tipo            VARCHAR(30) DEFAULT 'evento',
+    ativo           BOOLEAN DEFAULT TRUE,
+    data_criacao    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    fk_criador_id   INT NOT NULL,
+    fk_turma_id     INT,
+    fk_materia_id   INT,
+
+    FOREIGN KEY (fk_criador_id) REFERENCES usuario(id) ON DELETE CASCADE,
+    FOREIGN KEY (fk_turma_id)   REFERENCES turma(id)   ON DELETE SET NULL,
+    FOREIGN KEY (fk_materia_id) REFERENCES materia(id) ON DELETE SET NULL
+);
+
+-- 2. Adiciona coluna de visibilidade (para eventos do coordenador):
+--    'todos'       = alunos + professores enxergam
+--    'alunos'      = apenas alunos da turma vinculada
+--    'professores' = apenas professores
+-- Padrão 'todos' garante compatibilidade com eventos já existentes.
+ALTER TABLE evento_calendario
+    ADD COLUMN visibilidade ENUM('todos','alunos','professores') NOT NULL DEFAULT 'todos';
+
+-- 3. Adiciona flag de evento pessoal (criado pelo usuário para si mesmo).
+--    TRUE  = só o próprio criador enxerga
+--    FALSE = visível conforme regras de turma/visibilidade
+ALTER TABLE evento_calendario
+    ADD COLUMN pessoal BOOLEAN NOT NULL DEFAULT FALSE;
