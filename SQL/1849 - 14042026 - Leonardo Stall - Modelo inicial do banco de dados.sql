@@ -218,3 +218,65 @@ ALTER TABLE evento_calendario
 --    FALSE = visível conforme regras de turma/visibilidade
 ALTER TABLE evento_calendario
     ADD COLUMN pessoal BOOLEAN NOT NULL DEFAULT FALSE;
+
+
+-- ================================================================
+-- Sistema de Mensagens do Monitora+
+-- ================================================================
+
+USE monitora;
+
+-- ── 1. Remove estrutura antiga (se existir) ──────────────────────
+DROP TABLE IF EXISTS aviso_destinatario;
+DROP TABLE IF EXISTS aviso;
+
+-- ── 2. Tabela principal de mensagens ────────────────────────────────
+-- Cada mensagem tem um remetente (fk_remetente_id) e pode ter como
+-- destino uma combinação de: turma inteira, matéria específica,
+-- papel (aluno/professor/coordenador) ou usuário individual.
+CREATE TABLE mensagem (
+    id                  INT AUTO_INCREMENT PRIMARY KEY,
+    titulo              VARCHAR(255)  NOT NULL,
+    descricao           TEXT          NOT NULL,
+    data_publicacao     DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    ativo               BOOLEAN       DEFAULT TRUE,
+
+    -- Quem enviou
+    fk_remetente_id     INT           NOT NULL,
+
+    -- Escopo do envio (todos opcionais; combinados pelo backend)
+    -- NULL = sem restrição naquele nível
+    fk_turma_id         INT           NULL,      -- turma alvo (NULL = todas)
+    fk_materia_id       INT           NULL,      -- matéria alvo (NULL = todas)
+
+    -- Papel-alvo: 'aluno', 'professor', 'coordenador', 'todos'
+    papel_destino       VARCHAR(30)   NOT NULL DEFAULT 'todos',
+
+    data_criacao        DATETIME      DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao    DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (fk_remetente_id) REFERENCES usuario(id) ON DELETE CASCADE,
+    FOREIGN KEY (fk_turma_id)     REFERENCES turma(id)   ON DELETE SET NULL,
+    FOREIGN KEY (fk_materia_id)   REFERENCES materia(id) ON DELETE SET NULL
+);
+
+-- ── 3. Tabela de destinatários individuais ───────────────────────
+-- Gerada pelo backend no momento do envio: uma linha por usuário
+-- que deve ver a mensagem. Armazena também se foi lido.
+CREATE TABLE mensagem_destinatario (
+    id              INT AUTO_INCREMENT PRIMARY KEY,
+    fk_mensagem_id     INT      NOT NULL,
+    fk_usuario_id   INT      NOT NULL,         -- destinatário
+    lido            BOOLEAN  DEFAULT FALSE,
+    data_leitura    DATETIME NULL,
+
+    UNIQUE (fk_mensagem_id, fk_usuario_id),
+
+    FOREIGN KEY (fk_mensagem_id)   REFERENCES mensagem(id)    ON DELETE CASCADE,
+    FOREIGN KEY (fk_usuario_id) REFERENCES usuario(id)  ON DELETE CASCADE
+);
+
+-- ── 4. Índices úteis ─────────────────────────────────────────────
+CREATE INDEX idx_mensagem_remetente  ON mensagem (fk_remetente_id);
+CREATE INDEX idx_mensagem_turma      ON mensagem (fk_turma_id);
+CREATE INDEX idx_mensagem_destino    ON mensagem_destinatario (fk_usuario_id, lido);
