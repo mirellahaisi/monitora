@@ -16,9 +16,7 @@ from gestao_usuarios import gestao_usuarios_bp
 from notas import notas_bp
 from frequencia import frequencia_bp
 from turmas import turmas_bp
-
-
-
+from calendario import calendario_bp
 from presenca import presenca_bp
 
 
@@ -46,6 +44,7 @@ app.register_blueprint(notas_bp)
 app.register_blueprint(frequencia_bp)
 app.register_blueprint(presenca_bp)
 app.register_blueprint(turmas_bp)
+app.register_blueprint(calendario_bp)
 
 
 # ========================
