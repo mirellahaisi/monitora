@@ -150,6 +150,64 @@ def listar_alunos_da_turma(usuario):
             conexao.close()
 
 
+@notas_bp.get("/api/notas/minhas-notas")
+@token_obrigatorio
+def minhas_notas(usuario):
+    """
+    Aluno → retorna todas as matérias da sua turma com as notas e média de cada uma.
+    """
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT
+                m.id         AS materia_id,
+                m.nome       AS materia_nome,
+                m.carga_horaria,
+                GROUP_CONCAT(DISTINCT u.nome ORDER BY u.nome SEPARATOR ', ') AS professores,
+                MAX(CASE WHEN n.observacao = 'nota1' THEN n.valor END) AS nota1,
+                MAX(CASE WHEN n.observacao = 'nota2' THEN n.valor END) AS nota2
+            FROM materia m
+            INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
+            INNER JOIN usuario_turma ut  ON ut.fk_turma_id   = mt.fk_turma_id
+                                        AND ut.fk_usuario_id = %s
+            LEFT JOIN professor_materia pm ON pm.fk_materia_id = m.id
+            LEFT JOIN usuario u            ON u.id = pm.fk_usuario_id AND u.ativo = 1
+            LEFT JOIN nota n               ON n.fk_usuario_id  = %s
+                                          AND n.fk_materia_id  = m.id
+            WHERE m.ativo = 1
+            GROUP BY m.id, m.nome, m.carga_horaria
+            ORDER BY m.nome
+        """, (usuario["id"], usuario["id"]))
+
+        materias = cursor.fetchall()
+
+        for mat in materias:
+            n1 = mat["nota1"]
+            n2 = mat["nota2"]
+            mat["nota1"] = float(n1) if n1 is not None else None
+            mat["nota2"] = float(n2) if n2 is not None else None
+            if n1 is not None and n2 is not None:
+                mat["media"] = round((float(n1) + float(n2)) / 2, 2)
+            else:
+                mat["media"] = None
+
+        return jsonify({"materias": materias}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao buscar suas notas.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
 @notas_bp.post("/api/notas/salvar")
 @token_obrigatorio
 @papel_obrigatorio("professor")

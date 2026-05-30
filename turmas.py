@@ -92,6 +92,74 @@ def listar_turmas(usuario):
             conexao.close()
 
 
+@turmas_bp.get("/api/minha-turma")
+@token_obrigatorio
+def minha_turma(usuario):
+    """
+    Aluno → retorna sua turma e a lista de colegas em ordem alfabética.
+    """
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor(dictionary=True)
+
+        # Busca a turma do aluno logado
+        cursor.execute("""
+            SELECT
+                t.id,
+                t.nome,
+                t.codigo,
+                t.periodo,
+                t.turno,
+                t.ano,
+                t.semestre,
+                t.capacidade,
+                COUNT(DISTINCT ut2.fk_usuario_id) AS total_alunos,
+                GROUP_CONCAT(DISTINCT m.nome ORDER BY m.nome SEPARATOR ', ') AS materias
+            FROM turma t
+            INNER JOIN usuario_turma ut ON ut.fk_turma_id = t.id AND ut.fk_usuario_id = %s
+            LEFT JOIN usuario_turma ut2 ON ut2.fk_turma_id = t.id
+            LEFT JOIN materias_turma mt ON mt.fk_turma_id = t.id
+            LEFT JOIN materia m ON m.id = mt.fk_materia_id AND m.ativo = 1
+            WHERE t.ativo = 1
+            GROUP BY t.id, t.nome, t.codigo, t.periodo, t.turno, t.ano, t.semestre, t.capacidade
+            LIMIT 1
+        """, (usuario["id"],))
+
+        turma = cursor.fetchone()
+        if not turma:
+            return jsonify({"message": "Você não está matriculado em nenhuma turma ativa."}), 404
+
+        # Busca os colegas da turma em ordem alfabética
+        cursor.execute("""
+            SELECT
+                u.id,
+                u.nome,
+                u.email
+            FROM usuario u
+            INNER JOIN usuario_turma ut ON ut.fk_usuario_id = u.id
+            INNER JOIN papel p ON p.id = u.fk_papel_id
+            WHERE ut.fk_turma_id = %s
+              AND LOWER(p.descricao) = 'aluno'
+              AND u.ativo = 1
+            ORDER BY u.nome ASC
+        """, (turma["id"],))
+
+        alunos = cursor.fetchall()
+        return jsonify({"turma": turma, "alunos": alunos}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao buscar sua turma.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
 @turmas_bp.get("/api/turmas/<int:turma_id>/alunos")
 @token_obrigatorio
 def listar_alunos_turma(usuario, turma_id):

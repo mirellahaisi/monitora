@@ -421,36 +421,47 @@
     }
 
     async function carregarUsuarioLogado() {
+      // Aplicar cache local primeiro
       try {
-        const resposta = await fetch("/api/usuario-logado", {
-          headers: {
-            "Authorization": `Bearer ${getToken()}`
+        const usuarioCache = (function(){
+          try {
+            const t = localStorage.getItem('token');
+            if (t) {
+              const part = t.split('.')[1];
+              const b64 = part.replace(/-/g,'+').replace(/_/g,'/');
+              const pad = '='.repeat((4 - b64.length % 4) % 4);
+              return JSON.stringify(JSON.parse(atob(b64 + pad)));
+            }
+          } catch(e){}
+          return localStorage.getItem("usuario");
+        })();
+        if (usuarioCache) {
+          const usuario = JSON.parse(usuarioCache);
+          if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+          if (papelUsuario) papelUsuario.textContent = formatarPapel(usuario.papel);
+          if (avatarUsuario) avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+          const btnGestao = document.getElementById("btnGestaoUsuarios");
+          if (btnGestao && ["coordenador", "admin", "adm"].includes(String(usuario.papel).toLowerCase())) {
+            btnGestao.style.display = "block";
           }
-        });
-
-        if (!resposta.ok) {
-          limparSessao();
-          window.location.href = "/";
-          return;
         }
+      } catch (e) { console.warn("Erro ao aplicar usuario do cache:", e); }
 
+      // Em seguida valida/atualiza com API
+      try {
+        const resposta = await fetch("/api/usuario-logado", { headers: { "Authorization": `Bearer ${getToken()}` } });
+        if (!resposta.ok) { limparSessao(); window.location.href = "/"; return; }
         const dados = await resposta.json();
         const usuario = dados.usuario;
-
+        localStorage.setItem("usuario", JSON.stringify(usuario));
         if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
         if (papelUsuario) papelUsuario.textContent = formatarPapel(usuario.papel);
         if (avatarUsuario) avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
-
         const btnGestao = document.getElementById("btnGestaoUsuarios");
-
-        if (btnGestao && ["coordenador", "admin", "adm"].includes(usuario.papel.toLowerCase())) {
+        if (btnGestao && ["coordenador", "admin", "adm"].includes(String(usuario.papel).toLowerCase())) {
           btnGestao.style.display = "block";
         }
-
-      } catch {
-        limparSessao();
-        window.location.href = "/";
-      }
+      } catch { limparSessao(); window.location.href = "/"; }
     }
 
     async function sair() {

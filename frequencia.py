@@ -160,6 +160,93 @@ def api_dados_frequencia():
 
 
 # ========================
+# API PARA ALUNO VER A PRÓPRIA FREQUÊNCIA (papel = 3)
+# ========================
+
+@frequencia_bp.get("/api/frequencia/dados-proprios")
+def api_dados_proprios():
+    """
+    Retorna a frequência do aluno logado em todas as suas matérias.
+    Usado pela view de papel=3 (aluno).
+    Parâmetro: aluno_id (vindo do JWT decodificado no front-end).
+    """
+    aluno_id = request.args.get("aluno_id")
+
+    if not aluno_id:
+        return jsonify({"error": "Parâmetro aluno_id ausente"}), 400
+
+    conexao = criar_conexao()
+    cursor = conexao.cursor(dictionary=True)
+
+    # Nome do aluno
+    cursor.execute("SELECT nome FROM usuario WHERE id = %s AND ativo = 1", (aluno_id,))
+    aluno_row = cursor.fetchone()
+
+    if not aluno_row:
+        cursor.close()
+        conexao.close()
+        return jsonify({"error": "Aluno não encontrado"}), 404
+
+    # Busca todas as matérias do aluno (via turmas em que está matriculado)
+    cursor.execute("""
+        SELECT DISTINCT
+            m.id   AS materia_id,
+            m.nome AS materia_nome,
+            t.id   AS turma_id,
+            t.nome AS turma_nome,
+            t.periodo
+        FROM usuario_turma ut
+        INNER JOIN turma t          ON t.id  = ut.fk_turma_id
+        INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
+        INNER JOIN materia m        ON m.id  = mt.fk_materia_id
+        WHERE ut.fk_usuario_id = %s
+          AND t.ativo = 1
+          AND m.ativo = 1
+        ORDER BY m.nome
+    """, (aluno_id,))
+
+    materias_turmas = cursor.fetchall()
+
+    resultado = []
+    for row in materias_turmas:
+        cursor.execute("""
+            SELECT
+                COUNT(id)                       AS total,
+                COALESCE(SUM(presente = 1), 0)  AS presencas,
+                COALESCE(SUM(presente = 0), 0)  AS faltas
+            FROM frequencia
+            WHERE fk_usuario_id = %s AND fk_materia_id = %s
+        """, (aluno_id, row["materia_id"]))
+
+        freq = cursor.fetchone()
+
+        total     = freq["total"]     if freq else 0
+        presencas = freq["presencas"] if freq else 0
+        faltas    = freq["faltas"]    if freq else 0
+        pct_raw   = max(0, 100 - (faltas * 2))
+
+        resultado.append({
+            "materia_id":   row["materia_id"],
+            "materia":      row["materia_nome"],
+            "turma":        f"{row['turma_nome']} — {row['periodo']}º Período",
+            "turma_id":     row["turma_id"],
+            "total":        total,
+            "presencas":    presencas,
+            "faltas":       faltas,
+            "presenca":     f"{pct_raw}%",
+            "presenca_raw": pct_raw,
+        })
+
+    cursor.close()
+    conexao.close()
+
+    return jsonify({
+        "nome":     aluno_row["nome"],
+        "materias": resultado,
+    })
+
+
+# ========================
 # RELATÓRIO
 # ========================
 

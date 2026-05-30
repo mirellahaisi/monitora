@@ -45,8 +45,10 @@
     ══════════════════════════════════════ */
     .sidebar {
       width: 200px;
-      min-height: calc(100vh - 24px);
-      margin: 12px;
+      height: calc(100vh - 24px);
+      position: sticky;
+      top: 12px;
+      margin: 12px 0 12px 12px;
       padding: 24px 14px;
       border-radius: 20px;
       background: var(--grad);
@@ -55,6 +57,7 @@
       align-items: center;
       flex-shrink: 0;
       box-shadow: 0 8px 32px rgba(87,219,189,0.25);
+      overflow-y: auto;
     }
 
     .sidebar-brand {
@@ -139,7 +142,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 40px;
+      margin-bottom: 20px;
     }
 
     .header-title {
@@ -232,7 +235,7 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      margin-bottom: 28px;
+      margin-bottom: 14px;
     }
     .page-heading-icon {
       width: 44px; height: 44px;
@@ -439,6 +442,85 @@
       
 
     /* ══════════════════════════════════════
+       VISÃO DO ALUNO: MINHAS NOTAS
+    ══════════════════════════════════════ */
+    .aluno-resumo {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .aluno-resumo-card {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.07);
+    }
+    .aluno-resumo-label {
+      font-size: 0.68rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .aluno-resumo-valor {
+      font-family: "Sora", sans-serif;
+      font-size: 1.5rem; font-weight: 800; color: var(--dark);
+      line-height: 1;
+    }
+    .aluno-resumo-valor.aprovado { color: #1a8c6e; }
+    .aluno-resumo-valor.reprovado { color: #c0392b; }
+
+    .aluno-materias-grid {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .aluno-materia-card {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 2px 14px rgba(76,190,190,0.07);
+    }
+    .aluno-materia-header {
+      padding: 14px 18px 12px;
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      border-bottom: 1px solid rgba(147,215,223,0.18);
+    }
+    .aluno-materia-nome {
+      font-family: "Sora", sans-serif;
+      font-size: 0.95rem; font-weight: 800; color: var(--dark);
+    }
+    .aluno-materia-prof {
+      font-size: 0.75rem; color: var(--muted); margin-top: 1px;
+    }
+    .aluno-materia-notas {
+      padding: 12px 18px;
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    .nota-bloco {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--bg); border-radius: 10px;
+      padding: 8px 18px; gap: 3px; min-width: 76px;
+    }
+    .nota-bloco-label {
+      font-size: 0.65rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .nota-bloco-valor {
+      font-family: "Sora", sans-serif;
+      font-size: 1.25rem; font-weight: 800; color: var(--dark);
+    }
+    .nota-bloco-valor.vazia { color: var(--muted); font-size: 1rem; }
+    .nota-bloco.media-bloco { border: 1.5px solid rgba(147,215,223,0.3); }
+    .nota-bloco.media-bloco .nota-bloco-valor { font-size: 1.4rem; }
+    .nota-bloco.media-bloco .nota-bloco-valor.aprovado { color: #1a8c6e; }
+    .nota-bloco.media-bloco .nota-bloco-valor.reprovado { color: #c0392b; }
+    .nota-bloco.media-bloco .nota-bloco-label { color: var(--accent); }
+    .sem-nota-msg {
+      font-size: 0.78rem; color: var(--muted); padding: 4px 0;
+      font-style: italic;
+    }
+
+    /* ══════════════════════════════════════
        RESPONSIVE
     ══════════════════════════════════════ */
     @media (max-width: 800px) {
@@ -471,65 +553,78 @@
           </svg>
         </div>
         <div>
-          <h2>Lançamento de notas</h2>
-          <p>Selecione a matéria e turma para registrar as notas</p>
+          <h2 id="tituloNotas">Lançamento de notas</h2>
+          <p id="subtituloNotas">Selecione a matéria e turma para registrar as notas</p>
         </div>
       </div>
 
-      <!-- Filtros -->
-      <div class="notas-filtros">
-        <div class="filtro-group">
-          <label for="selectMateria">Matéria</label>
-          <select id="selectMateria">
-            <option value="">Selecione a matéria</option>
-          </select>
+      <!-- ── Visão PROFESSOR ── -->
+      <div id="secaoProfessor">
+        <!-- Filtros -->
+        <div class="notas-filtros">
+          <div class="filtro-group">
+            <label for="selectMateria">Matéria</label>
+            <select id="selectMateria">
+              <option value="">Selecione a matéria</option>
+            </select>
+          </div>
+          <div class="filtro-group">
+            <label for="selectTurma">Turma</label>
+            <select id="selectTurma" disabled>
+              <option value="">Selecione a turma</option>
+            </select>
+          </div>
         </div>
-        <div class="filtro-group">
-          <label for="selectTurma">Turma</label>
-          <select id="selectTurma" disabled>
-            <option value="">Selecione a turma</option>
-          </select>
+
+        <!-- Tabela -->
+        <div class="notas-tabela-area">
+          <div class="notas-card">
+            <table class="notas-table">
+              <thead>
+                <tr>
+                  <th>Aluno(a)</th>
+                  <th>Nota 1</th>
+                  <th>Nota 2</th>
+                  <th>Média</th>
+                </tr>
+              </thead>
+              <tbody id="tabelaNotas">
+                <tr>
+                  <td colspan="4" class="notas-vazio">
+                    Selecione uma matéria e uma turma para carregar os alunos.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="notas-actions">
+            <button type="button" class="btn-rascunho" id="btnSalvarRascunho">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              Salvar rascunho
+            </button>
+            <button type="button" class="btn-publicar" id="btnPublicarNotas">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Publicar notas
+            </button>
+          </div>
         </div>
       </div>
 
-      <!-- Tabela -->
-      <div class="notas-tabela-area">
-        <div class="notas-card">
-          <table class="notas-table">
-            <thead>
-              <tr>
-                <th>Aluno(a)</th>
-                <th>Nota 1</th>
-                <th>Nota 2</th>
-                <th>Média</th>
-              </tr>
-            </thead>
-            <tbody id="tabelaNotas">
-              <tr>
-                <td colspan="4" class="notas-vazio">
-                  Selecione uma matéria e uma turma para carregar os alunos.
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- ── Visão ALUNO ── -->
+      <div id="secaoAluno" style="display:none">
+        <!-- cards de resumo -->
+        <div class="aluno-resumo" id="alunoResumo">
+          <div class="notas-vazio" style="grid-column:1/-1">Carregando notas...</div>
         </div>
-
-        <div class="notas-actions">
-          <button type="button" class="btn-rascunho" id="btnSalvarRascunho">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-              <polyline points="17 21 17 13 7 13 7 21"/>
-              <polyline points="7 3 7 8 15 8"/>
-            </svg>
-            Salvar rascunho
-          </button>
-          <button type="button" class="btn-publicar" id="btnPublicarNotas">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-            Publicar notas
-          </button>
-        </div>
+        <!-- cards por matéria -->
+        <div class="aluno-materias-grid" id="alunoMaterias"></div>
       </div>
 
     </section>
@@ -568,6 +663,18 @@
       return papel;
     }
 
+    function isProfessor(p) {
+      if (p === null || p === undefined) return false;
+      const s = String(p).toLowerCase();
+      return s === "professor" || s === "2" || Number(p) === 2;
+    }
+
+    function isAluno(p) {
+      if (p === null || p === undefined) return false;
+      const s = String(p).toLowerCase();
+      return s === "aluno" || s === "1" || Number(p) === 1;
+    }
+
     function tokenExpirado(sessaoExpiracao) {
       return Number(sessaoExpiracao) < Math.floor(Date.now() / 1000);
     }
@@ -588,22 +695,152 @@
     }
 
     async function carregarUsuarioLogado() {
+      // Aplica cache local primeiro para evitar inconsistências ao navegar entre páginas
+      try {
+        const usuarioCache = (function(){
+          try {
+            const t = getToken();
+            if (t) {
+              const part = t.split('.')[1];
+              const b64 = part.replace(/-/g,'+').replace(/_/g,'/');
+              const pad = '='.repeat((4 - b64.length % 4) % 4);
+              return JSON.stringify(JSON.parse(atob(b64 + pad)));
+            }
+          } catch(e){}
+          return localStorage.getItem("usuario");
+        })();
+        if (usuarioCache) {
+          const usuario = JSON.parse(usuarioCache);
+          if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+          if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+          if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+          const btnGestao = document.getElementById("btnGestaoUsuarios");
+          if (btnGestao && ["coordenador","admin","adm"].includes(String(usuario.papel).toLowerCase())) {
+            btnGestao.style.display = "block";
+          }
+          const labelLink = document.getElementById("labelLinkTurmas");
+          if (labelLink && isAluno(usuario.papel)) labelLink.textContent = "Minha Turma";
+          const linkPresenca = document.getElementById("linkPresenca");
+          if (linkPresenca && !isProfessor(usuario.papel)) linkPresenca.style.display = "none";
+          if (isAluno(usuario.papel)) {
+            document.getElementById("tituloNotas").textContent    = "Minhas Notas";
+            document.getElementById("subtituloNotas").textContent = "Suas notas e médias por matéria";
+            document.getElementById("secaoProfessor").style.display = "none";
+            document.getElementById("secaoAluno").style.display     = "block";
+            await carregarMinhasNotas();
+          } else {
+            await carregarMaterias();
+          }
+        }
+      } catch (e) { console.warn("Erro ao aplicar usuario do cache:", e); }
+
+      // Em seguida valida/atualiza com servidor
       if (!verificarTokenFront()) return;
       try {
-        const resposta = await fetch("/api/usuario-logado", {
-          headers: { "Authorization": `Bearer ${getToken()}` }
-        });
+        const resposta = await fetch("/api/usuario-logado", { headers: { "Authorization": `Bearer ${getToken()}` } });
         if (!resposta.ok) { limparSessao(); window.location.href = "/"; return; }
         const dados = await resposta.json();
         const usuario = dados.usuario;
+        localStorage.setItem("usuario", JSON.stringify(usuario));
         if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
         if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
         if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
-        const btnGestao = document.getElementById("btnGestaoUsuarios");
-        if (btnGestao && ["coordenador","admin","adm"].includes(usuario.papel.toLowerCase())) {
-          btnGestao.style.display = "block";
-        }
       } catch { limparSessao(); window.location.href = "/"; }
+    }
+
+    async function carregarMinhasNotas() {
+      if (!verificarTokenFront()) return;
+      const resumoDiv   = document.getElementById("alunoResumo");
+      const materiasDiv = document.getElementById("alunoMaterias");
+
+      resumoDiv.innerHTML   = `<div class="notas-vazio" style="grid-column:1/-1">Carregando notas...</div>`;
+      materiasDiv.innerHTML = "";
+
+      try {
+        const resposta = await fetch("/api/notas/minhas-notas", {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) {
+          resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">${dados.message || "Erro ao carregar notas."}</div>`;
+          return;
+        }
+
+        const materias = dados.materias || [];
+        if (!materias.length) {
+          resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">Nenhuma matéria encontrada para sua turma.</div>`;
+          return;
+        }
+
+        // ── Cards de resumo geral ──────────────────────────
+        const comMedia   = materias.filter(m => m.media !== null);
+        const mediaGeral = comMedia.length
+          ? (comMedia.reduce((s, m) => s + m.media, 0) / comMedia.length).toFixed(2)
+          : null;
+        const aprovadas  = comMedia.filter(m => m.media >= 6).length;
+        const reprovadas = comMedia.filter(m => m.media < 6).length;
+
+        resumoDiv.innerHTML = `
+          <div class="aluno-resumo-card">
+            <span class="aluno-resumo-label">Matérias</span>
+            <span class="aluno-resumo-valor">${materias.length}</span>
+          </div>
+          <div class="aluno-resumo-card">
+            <span class="aluno-resumo-label">Média geral</span>
+            <span class="aluno-resumo-valor ${mediaGeral !== null ? (Number(mediaGeral) >= 6 ? 'aprovado' : 'reprovado') : ''}">
+              ${mediaGeral !== null ? String(mediaGeral).replace(".", ",") : "—"}
+            </span>
+          </div>
+          <div class="aluno-resumo-card">
+            <span class="aluno-resumo-label">Aprovado em</span>
+            <span class="aluno-resumo-valor aprovado">${aprovadas}</span>
+          </div>
+          <div class="aluno-resumo-card">
+            <span class="aluno-resumo-label">Em atenção</span>
+            <span class="aluno-resumo-valor ${reprovadas > 0 ? 'reprovado' : ''}">${reprovadas}</span>
+          </div>
+        `;
+
+        // ── Cards por matéria ─────────────────────────────
+        materiasDiv.innerHTML = materias.map(m => {
+          const n1     = m.nota1 !== null && m.nota1 !== undefined;
+          const n2     = m.nota2 !== null && m.nota2 !== undefined;
+          const temMedia = m.media !== null && m.media !== undefined;
+          const classeMedia = temMedia ? (m.media >= 6 ? "aprovado" : "reprovado") : "vazia";
+          const mediaLabel  = temMedia ? String(m.media).replace(".", ",") : "—";
+          const prof = m.professores || "Professor não informado";
+
+          return `
+            <div class="aluno-materia-card">
+              <div class="aluno-materia-header">
+                <div>
+                  <div class="aluno-materia-nome">${m.materia_nome}</div>
+                  <div class="aluno-materia-prof">${prof}</div>
+                </div>
+                <span class="media-badge ${temMedia ? (m.media >= 6 ? 'media-aprovada' : 'media-baixa') : 'media-neutra'}">
+                  ${temMedia ? "Média " + mediaLabel : "Sem notas"}
+                </span>
+              </div>
+              <div class="aluno-materia-notas">
+                <div class="nota-bloco">
+                  <span class="nota-bloco-label">Nota 1</span>
+                  <span class="nota-bloco-valor ${n1 ? '' : 'vazia'}">${n1 ? String(m.nota1).replace(".", ",") : "—"}</span>
+                </div>
+                <div class="nota-bloco">
+                  <span class="nota-bloco-label">Nota 2</span>
+                  <span class="nota-bloco-valor ${n2 ? '' : 'vazia'}">${n2 ? String(m.nota2).replace(".", ",") : "—"}</span>
+                </div>
+                <div class="nota-bloco media-bloco">
+                  <span class="nota-bloco-label">Média</span>
+                  <span class="nota-bloco-valor ${classeMedia}">${mediaLabel}</span>
+                </div>
+                ${!n1 && !n2 ? `<span class="sem-nota-msg">Notas ainda não lançadas pelo professor.</span>` : ""}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+      } catch { resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">Erro ao carregar suas notas.</div>`; }
     }
 
     async function carregarMaterias() {
@@ -768,7 +1005,6 @@
     if (btnSair)          btnSair.addEventListener("click", sair);
 
     carregarUsuarioLogado();
-    carregarMaterias();
   </script>
 
   <script src="/static/js/darkmode.js"></script>

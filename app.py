@@ -195,6 +195,7 @@ def usuario_logado():
             "nome":  user["nome"],
             "email": user["email"],
             "papel": papel_row["descricao"] if papel_row else payload.get("papel", ""),
+            "papel_id": user.get("fk_papel_id") or payload.get("papel_id"),
         }
     })
 

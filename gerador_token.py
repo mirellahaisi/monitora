@@ -32,6 +32,7 @@ def gerar_token(usuario):
         "nome": usuario["nome"],
         "email": usuario["email"],
         "papel": usuario["papel"],
+        "papel_id": usuario.get("fk_papel_id") or usuario.get("papel_id"),
         "iat": agora,
         "exp": agora + TEMPO_SESSAO
     }

@@ -493,7 +493,18 @@
         document.getElementById("btnSair").addEventListener("click", sair);
 
         // ── Inicialização ─────────────────────────────────────────────────────────
-        const usuarioSalvo = localStorage.getItem("usuario");
+        const usuarioSalvo = (function(){
+            try {
+                const t = localStorage.getItem('token');
+                if (t) {
+                    const part = t.split('.')[1];
+                    const b64 = part.replace(/-/g,'+').replace(/_/g,'/');
+                    const pad = '='.repeat((4 - b64.length % 4) % 4);
+                    return JSON.stringify(JSON.parse(atob(b64 + pad)));
+                }
+            } catch(e){}
+            return localStorage.getItem("usuario");
+        })();
         if (usuarioSalvo) {
             try {
                 const u = JSON.parse(usuarioSalvo);

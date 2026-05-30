@@ -601,7 +601,18 @@
     // UTILITÁRIOS DE SESSÃO
     // ══════════════════════════════════════
     const getToken  = () => localStorage.getItem("token");
-    const getUsuario = () => JSON.parse(localStorage.getItem("usuario") || "null");
+    const getUsuario = () => {
+      try {
+        const t = localStorage.getItem("token");
+        if (t) {
+          const part = t.split('.')[1];
+          const b64 = part.replace(/-/g,'+').replace(/_/g,'/');
+          const pad = '='.repeat((4 - b64.length % 4) % 4);
+          return JSON.parse(atob(b64 + pad));
+        }
+      } catch(e) {}
+      try { return JSON.parse(localStorage.getItem("usuario") || "null"); } catch(e){ return null; }
+    };
 
     function limparSessao() {
       localStorage.removeItem("token");

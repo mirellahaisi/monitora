@@ -39,11 +39,14 @@
        SIDEBAR (idêntico ao notas.html)
     ══════════════════════════════════════ */
     .sidebar {
-      width: 200px; min-height: calc(100vh - 24px);
-      margin: 12px; padding: 24px 14px;
+      width: 200px; height: calc(100vh - 24px);
+      position: sticky; top: 12px;
+      margin: 12px 0 12px 12px;
+      padding: 24px 14px;
       border-radius: 20px; background: var(--grad);
       display: flex; flex-direction: column; align-items: center;
       flex-shrink: 0; box-shadow: 0 8px 32px rgba(87,219,189,0.25);
+      overflow-y: auto;
     }
     .sidebar-brand { text-align: center; margin-bottom: 28px; }
     .sidebar-logo { width: 72px; height: 72px; object-fit: contain; }
@@ -402,6 +405,89 @@
     .btn-confirmar:hover { opacity: 0.9; transform: translateY(-1px); }
 
     /* ══════════════════════════════════════
+       VISÃO DO ALUNO: MINHA TURMA
+    ══════════════════════════════════════ */
+    .minha-turma-info {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 18px;
+      padding: 28px 30px;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.08);
+      margin-bottom: 28px;
+    }
+    .minha-turma-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      gap: 12px; margin-bottom: 20px;
+    }
+    .minha-turma-nome {
+      font-family: "Sora", sans-serif;
+      font-size: 1.3rem; font-weight: 800; color: var(--dark);
+    }
+    .minha-turma-meta {
+      display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px;
+    }
+    .turma-meta-item {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 0.82rem; color: var(--muted); font-weight: 500;
+    }
+    .turma-meta-item svg { width: 13px; height: 13px; flex-shrink: 0; }
+    .minha-turma-materias {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(147,215,223,0.2);
+      font-size: 0.84rem; color: var(--text); line-height: 1.6;
+    }
+    .minha-turma-materias strong {
+      display: block; margin-bottom: 4px;
+      font-size: 0.72rem; font-weight: 700; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    .minha-turma-colegas {
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 18px;
+      padding: 24px 28px;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.08);
+    }
+    .colegas-titulo {
+      font-family: "Sora", sans-serif;
+      font-size: 1rem; font-weight: 800; color: var(--dark);
+      margin-bottom: 16px;
+    }
+    .colegas-tabela {
+      width: 100%; border-collapse: collapse;
+    }
+    .colegas-tabela th {
+      height: 40px; padding: 0 14px;
+      color: var(--mid); font-family: "Sora", sans-serif;
+      font-size: 0.75rem; font-weight: 700; text-align: left;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      border-bottom: 1.5px solid rgba(147,215,223,0.25);
+    }
+    .colegas-tabela td {
+      height: 50px; padding: 0 14px;
+      color: var(--text); font-size: 0.88rem;
+      border-bottom: 1px solid rgba(147,215,223,0.12);
+      vertical-align: middle;
+    }
+    .colegas-tabela tr:last-child td { border-bottom: none; }
+    .colegas-tabela tbody tr:hover { background: rgba(147,215,223,0.06); }
+    .colega-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--grad); color: white;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: "Sora", sans-serif; font-weight: 700; font-size: 0.8rem;
+      margin-right: 10px; flex-shrink: 0; vertical-align: middle;
+    }
+    .colega-eu {
+      display: inline-flex; align-items: center;
+      padding: 2px 8px; border-radius: 5px; margin-left: 8px;
+      font-size: 0.7rem; font-weight: 700; color: var(--accent);
+      background: rgba(76,190,190,0.1); border: 1px solid rgba(76,190,190,0.2);
+    }
+
+    /* ══════════════════════════════════════
        RESPONSIVE
     ══════════════════════════════════════ */
     @media (max-width: 800px) {
@@ -440,28 +526,39 @@
         </div>
       </div>
 
-      <!-- Toolbar -->
-      <div class="turmas-toolbar">
-        <div class="turmas-filtros">
-          <select class="filtro-select" id="filtroPeriodo">
-            <option value="">Todos os períodos</option>
-          </select>
-          <select class="filtro-select" id="filtroTurno">
-            <option value="">Todos os turnos</option>
-          </select>
+      <!-- Grid de turmas (professores / coordenadores) -->
+      <div id="secaoTurmas">
+        <div class="turmas-toolbar">
+          <div class="turmas-filtros">
+            <select class="filtro-select" id="filtroPeriodo">
+              <option value="">Todos os períodos</option>
+            </select>
+            <select class="filtro-select" id="filtroTurno">
+              <option value="">Todos os turnos</option>
+            </select>
+          </div>
+          <!-- Botão só aparece para coordenador/admin -->
+          <button class="btn-nova-turma" id="btnNovaTurma" style="display:none">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Nova turma
+          </button>
         </div>
-        <!-- Botão só aparece para coordenador/admin -->
-        <button class="btn-nova-turma" id="btnNovaTurma" style="display:none">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          Nova turma
-        </button>
+        <div class="turmas-grid" id="turmasGrid">
+          <div class="turmas-vazio">Carregando turmas...</div>
+        </div>
       </div>
 
-      <!-- Grid de turmas -->
-      <div class="turmas-grid" id="turmasGrid">
-        <div class="turmas-vazio">Carregando turmas...</div>
+      <!-- Visão do aluno: Minha Turma -->
+      <div id="secaoMinhaTurma" style="display:none">
+        <div id="minhaTurmaInfo" class="minha-turma-info">
+          <div class="turmas-vazio">Carregando sua turma...</div>
+        </div>
+        <div class="minha-turma-colegas" id="minhaTurmaColegas" style="display:none">
+          <h3 class="colegas-titulo">Colegas de turma</h3>
+          <div id="colegasLista"></div>
+        </div>
       </div>
 
     </section>
@@ -566,6 +663,8 @@
     const filtroPeriodo   = document.getElementById("filtroPeriodo");
     const filtroTurno     = document.getElementById("filtroTurno");
     const btnNovaTurma    = document.getElementById("btnNovaTurma");
+    const secaoTurmas     = document.getElementById("secaoTurmas");
+    const secaoMinhaTurma = document.getElementById("secaoMinhaTurma");
 
     const modalDetalhes   = document.getElementById("modalDetalhes");
     const detalhesTitulo  = document.getElementById("detalhesTitulo");
@@ -617,36 +716,168 @@
       return p;
     }
 
+    function isProfessor(p) {
+      if (p === null || p === undefined) return false;
+      const s = String(p).toLowerCase();
+      return s === "professor" || s === "2" || Number(p) === 2;
+    }
+
+    function isAluno(p) {
+      if (p === null || p === undefined) return false;
+      const s = String(p).toLowerCase();
+      return s === "aluno" || s === "1" || Number(p) === 1;
+    }
+
     function ehCoordenador(p) {
       return ["admin","adm","coordenador"].includes(String(p).toLowerCase());
     }
 
     // ── Carregar usuário ──────────────────────────────────
     async function carregarUsuarioLogado() {
-      if (!verificarToken()) return;
+      // Primeiro tenta aplicar UI a partir do que está em localStorage (mais rápido e consistente ao navegar)
+      try {
+        const usuarioCache = (function(){
+          try {
+            const t = getToken();
+            if (t) {
+              const part = t.split('.')[1];
+              const b64 = part.replace(/-/g,'+').replace(/_/g,'/');
+              const pad = '='.repeat((4 - b64.length % 4) % 4);
+              return JSON.stringify(JSON.parse(atob(b64 + pad)));
+            }
+          } catch(e){}
+          return localStorage.getItem("usuario");
+        })();
+        if (usuarioCache) {
+          const usuario = JSON.parse(usuarioCache);
+          papelAtual = usuario.papel;
+          if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+          if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+          if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+
+          const btnGestao = document.getElementById("btnGestaoUsuarios");
+          if (btnGestao && ehCoordenador(usuario.papel)) btnGestao.style.display = "block";
+
+          const ehAluno = isAluno(usuario.papel);
+          const labelLink = document.getElementById("labelLinkTurmas");
+          if (labelLink && ehAluno) labelLink.textContent = "Minha Turma";
+          const linkPresenca = document.getElementById("linkPresenca");
+          if (linkPresenca && !isProfessor(usuario.papel)) linkPresenca.style.display = "none";
+
+          if (ehAluno) {
+            document.querySelector(".page-heading h2").textContent = "Minha Turma";
+            document.getElementById("subtituloTurmas").textContent = "Sua turma e colegas matriculados";
+            secaoTurmas.style.display = "none";
+            secaoMinhaTurma.style.display = "block";
+            await carregarMinhaTurma(usuario.id);
+          } else {
+            if (ehCoordenador(usuario.papel)) {
+              document.getElementById("subtituloTurmas").textContent = "Visão geral de todas as turmas ativas";
+              btnNovaTurma.style.display = "flex";
+            } else {
+              document.getElementById("subtituloTurmas").textContent = "Turmas em que você leciona";
+            }
+            await carregarTurmas();
+          }
+        }
+      } catch (e) { console.warn("Erro ao aplicar usuario do cache:", e); }
+
+      // Depois valida/atualiza com a API (autoriza token e obtém dados atuais)
+      if (!verificarToken()) { limparSessao(); window.location.href = "/"; return; }
       try {
         const res = await fetch("/api/usuario-logado", { headers: { Authorization: `Bearer ${getToken()}` } });
         if (!res.ok) { limparSessao(); window.location.href = "/"; return; }
         const { usuario } = await res.json();
-
+        // Atualiza cache e UI com dados do servidor
+        localStorage.setItem("usuario", JSON.stringify(usuario));
         papelAtual = usuario.papel;
         if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
         if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
         if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+      } catch { limparSessao(); window.location.href = "/"; }
+    }
 
-        const btnGestao = document.getElementById("btnGestaoUsuarios");
-        if (btnGestao && ehCoordenador(usuario.papel)) btnGestao.style.display = "block";
+    // ── Carregar minha turma (aluno) ──────────────────────
+    async function carregarMinhaTurma(usuarioId) {
+      if (!verificarToken()) return;
+      const infoDiv    = document.getElementById("minhaTurmaInfo");
+      const colegasDiv = document.getElementById("minhaTurmaColegas");
+      const listaDiv   = document.getElementById("colegasLista");
 
-        // Subtítulo e botão nova turma
-        if (ehCoordenador(usuario.papel)) {
-          document.getElementById("subtituloTurmas").textContent = "Visão geral de todas as turmas ativas";
-          btnNovaTurma.style.display = "flex";
-        } else {
-          document.getElementById("subtituloTurmas").textContent = "Turmas em que você leciona";
+      infoDiv.innerHTML = `<div class="turmas-vazio">Carregando sua turma...</div>`;
+      try {
+        const res   = await fetch("/api/minha-turma", { headers: { Authorization: `Bearer ${getToken()}` } });
+        const dados = await res.json();
+
+        if (!res.ok) {
+          infoDiv.innerHTML = `<div class="turmas-vazio">${dados.message || "Erro ao carregar sua turma."}</div>`;
+          return;
         }
 
-        await carregarTurmas();
-      } catch { limparSessao(); window.location.href = "/"; }
+        const t = dados.turma;
+        const semLabel = t.semestre ? `${t.semestre}º sem. ${t.ano || ""}` : "";
+
+        infoDiv.innerHTML = `
+          <div class="minha-turma-header">
+            <div>
+              <div class="minha-turma-nome">${t.nome}</div>
+              <div class="minha-turma-meta">
+                ${t.periodo ? `<span class="turma-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                  ${t.periodo}º período
+                </span>` : ""}
+                ${t.turno ? `<span class="turma-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  ${t.turno}
+                </span>` : ""}
+                ${semLabel ? `<span class="turma-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  ${semLabel}
+                </span>` : ""}
+                ${t.codigo ? `<span class="turma-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                  ${t.codigo}
+                </span>` : ""}
+                <span class="turma-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                  ${t.total_alunos} aluno(s)
+                </span>
+              </div>
+            </div>
+            <span class="badge-periodo">${t.periodo ? t.periodo + "º per." : "—"}</span>
+          </div>
+          ${t.materias ? `<div class="minha-turma-materias"><strong>Matérias</strong>${t.materias}</div>` : ""}
+        `;
+
+        // Lista de colegas
+        const alunos = dados.alunos || [];
+        if (alunos.length) {
+          colegasDiv.style.display = "block";
+          listaDiv.innerHTML = `
+            <table class="colegas-tabela">
+              <thead><tr>
+                <th>#</th>
+                <th>Nome</th>
+                <th>E-mail</th>
+              </tr></thead>
+              <tbody>
+                ${alunos.map((a, i) => {
+                  const euLabel = String(a.id) === String(usuarioId)
+                    ? `<span class="colega-eu">você</span>` : "";
+                  return `<tr>
+                    <td style="color:var(--muted);font-size:0.8rem;width:40px">${i + 1}</td>
+                    <td>
+                      <span class="colega-avatar">${a.nome.charAt(0).toUpperCase()}</span>
+                      ${a.nome}${euLabel}
+                    </td>
+                    <td style="color:var(--muted);font-size:0.82rem">${a.email || "—"}</td>
+                  </tr>`;
+                }).join("")}
+              </tbody>
+            </table>
+          `;
+        }
+      } catch { infoDiv.innerHTML = `<div class="turmas-vazio">Erro ao carregar sua turma.</div>`; }
     }
 
     // ── Carregar turmas ───────────────────────────────────
@@ -888,8 +1119,8 @@
     });
 
     // ── Filtros ───────────────────────────────────────────
-    filtroPeriodo.addEventListener("change", renderizarTurmas);
-    filtroTurno.addEventListener("change",   renderizarTurmas);
+    if (filtroPeriodo) filtroPeriodo.addEventListener("change", renderizarTurmas);
+    if (filtroTurno)   filtroTurno.addEventListener("change",   renderizarTurmas);
 
     // ── Header ───────────────────────────────────────────
     if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
