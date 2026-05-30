@@ -218,6 +218,8 @@ def criar_evento(usuario):
             if not turma_id:
                 return jsonify({"message": "Professor deve selecionar uma turma."}), 400
             materia_id   = dados.get("fk_materia_id") or None
+            if not materia_id:
+                return jsonify({"message": "Professor deve selecionar uma matéria."}), 400
             pessoal      = False
             visibilidade = "alunos"   # professor nunca cria evento global
 

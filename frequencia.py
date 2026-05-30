@@ -6,94 +6,13 @@ frequencia_bp = Blueprint("frequencia", __name__)
 
 
 # ========================
-# ROTAS DE TELA
+# ROTA DE TELA
 # ========================
 
 @frequencia_bp.route("/frequencia")
 def frequencia():
-    aluno_id = request.args.get("aluno")
-    materia_id = request.args.get("materia")
-    turma_id = request.args.get("turma")
-
-    conexao = criar_conexao()
-    cursor = conexao.cursor(dictionary=True)
-
-    # Lista todos os alunos para o primeiro select
-    cursor.execute("""
-        SELECT u.id, u.nome
-        FROM usuario u
-        INNER JOIN papel p ON p.id = u.fk_papel_id
-        WHERE LOWER(p.descricao) = 'aluno' AND u.ativo = 1
-        ORDER BY u.nome
-    """)
-    alunos = cursor.fetchall()
-
-    aluno = None
-    mostrar = False
-    materia_nome = None
-    turma_nome = None
-
-    if aluno_id and turma_id and materia_id:
-        # Busca nome da turma e período
-        cursor.execute("""
-            SELECT nome, periodo FROM turma WHERE id = %s
-        """, (turma_id,))
-        turma_row = cursor.fetchone()
-        if turma_row:
-            turma_nome = f"{turma_row['nome']} (Período {turma_row['periodo']})"
-
-        # Busca nome da matéria
-        cursor.execute("SELECT nome FROM materia WHERE id = %s", (materia_id,))
-        materia_row = cursor.fetchone()
-        if materia_row:
-            materia_nome = materia_row["nome"]
-
-        # Frequência filtrada por aluno E matéria
-        cursor.execute("""
-            SELECT
-                u.nome,
-                COUNT(f.id)                       AS total,
-                COALESCE(SUM(f.presente = 1), 0)  AS presencas,
-                COALESCE(SUM(f.presente = 0), 0)  AS faltas
-            FROM usuario u
-            LEFT JOIN frequencia f
-                   ON f.fk_usuario_id = u.id
-                  AND f.fk_materia_id = %s
-            WHERE u.id = %s
-            GROUP BY u.nome
-        """, (materia_id, aluno_id))
-
-        result = cursor.fetchone()
-
-        if result:
-            total = result["total"]
-            presencas = result["presencas"]
-            faltas = result["faltas"]
-
-            pct_raw = round((presencas / total) * 100) if total else 0
-
-            pct_raw = max(0, 100 - (faltas * 2))
-
-            aluno = {
-                "nome":         result["nome"],
-                "total":        total,
-                "presencas":    presencas,
-                "faltas":       faltas,
-                "presenca":     f"{pct_raw}%",
-                "presenca_raw": pct_raw,
-            }
-            mostrar = True
-
-    cursor.close()
-    conexao.close()
-
     return render_template(
         "pages/frequencia.html",
-        alunos=alunos,
-        mostrar=mostrar,
-        aluno=aluno,
-        materia=materia_nome,
-        periodo=turma_nome,
         active_page="frequencia",
     )
 
@@ -102,12 +21,32 @@ def frequencia():
 # APIS PARA OS SELECTS DINÂMICOS
 # ========================
 
-@frequencia_bp.get("/api/frequencia/turmas")
-def api_turmas_por_aluno():
-    """Retorna as turmas do aluno selecionado."""
-    aluno_id = request.args.get("aluno_id")
+@frequencia_bp.get("/api/frequencia/materias")
+def api_todas_materias():
+    """Retorna todas as matérias ativas (primeiro select)."""
+    conexao = criar_conexao()
+    cursor = conexao.cursor(dictionary=True)
 
-    if not aluno_id:
+    cursor.execute("""
+        SELECT id, nome
+        FROM materia
+        WHERE ativo = 1
+        ORDER BY nome
+    """)
+
+    materias = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    return jsonify(materias)
+
+
+@frequencia_bp.get("/api/frequencia/turmas")
+def api_turmas_por_materia():
+    """Retorna as turmas que possuem a matéria selecionada."""
+    materia_id = request.args.get("materia_id")
+
+    if not materia_id:
         return jsonify([])
 
     conexao = criar_conexao()
@@ -116,22 +55,21 @@ def api_turmas_por_aluno():
     cursor.execute("""
         SELECT t.id, t.nome, t.periodo
         FROM turma t
-        INNER JOIN usuario_turma ut ON ut.fk_turma_id = t.id
-        WHERE ut.fk_usuario_id = %s AND t.ativo = 1
-        ORDER BY t.periodo
-    """, (aluno_id,))
+        INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
+        WHERE mt.fk_materia_id = %s AND t.ativo = 1
+        ORDER BY t.periodo, t.nome
+    """, (materia_id,))
 
     turmas = cursor.fetchall()
-
     cursor.close()
     conexao.close()
 
     return jsonify(turmas)
 
 
-@frequencia_bp.get("/api/frequencia/materias")
-def api_materias_por_turma():
-    """Retorna as matérias da turma selecionada."""
+@frequencia_bp.get("/api/frequencia/alunos")
+def api_alunos_por_turma():
+    """Retorna os alunos da turma selecionada."""
     turma_id = request.args.get("turma_id")
 
     if not turma_id:
@@ -141,19 +79,84 @@ def api_materias_por_turma():
     cursor = conexao.cursor(dictionary=True)
 
     cursor.execute("""
-        SELECT m.id, m.nome
-        FROM materia m
-        INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
-        WHERE mt.fk_turma_id = %s AND m.ativo = 1
-        ORDER BY m.nome
+        SELECT u.id, u.nome
+        FROM usuario u
+        INNER JOIN usuario_turma ut ON ut.fk_usuario_id = u.id
+        INNER JOIN papel p ON p.id = u.fk_papel_id
+        WHERE ut.fk_turma_id = %s
+          AND LOWER(p.descricao) = 'aluno'
+          AND u.ativo = 1
+        ORDER BY u.nome
     """, (turma_id,))
 
-    materias = cursor.fetchall()
+    alunos = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+
+    return jsonify(alunos)
+
+
+@frequencia_bp.get("/api/frequencia/dados")
+def api_dados_frequencia():
+    """Retorna os dados de frequência de um aluno em uma matéria/turma."""
+    aluno_id   = request.args.get("aluno_id")
+    materia_id = request.args.get("materia_id")
+    turma_id   = request.args.get("turma_id")
+
+    if not aluno_id or not materia_id or not turma_id:
+        return jsonify({"error": "Parâmetros insuficientes"}), 400
+
+    conexao = criar_conexao()
+    cursor = conexao.cursor(dictionary=True)
+
+    # Nome do aluno
+    cursor.execute("SELECT nome FROM usuario WHERE id = %s", (aluno_id,))
+    aluno_row = cursor.fetchone()
+
+    # Nome da matéria
+    cursor.execute("SELECT nome FROM materia WHERE id = %s", (materia_id,))
+    materia_row = cursor.fetchone()
+
+    # Nome e período da turma
+    cursor.execute("SELECT nome, periodo FROM turma WHERE id = %s", (turma_id,))
+    turma_row = cursor.fetchone()
+
+    # Dados de frequência
+    cursor.execute("""
+        SELECT
+            COUNT(id)                       AS total,
+            COALESCE(SUM(presente = 1), 0)  AS presencas,
+            COALESCE(SUM(presente = 0), 0)  AS faltas
+        FROM frequencia
+        WHERE fk_usuario_id = %s AND fk_materia_id = %s
+    """, (aluno_id, materia_id))
+
+    freq = cursor.fetchone()
 
     cursor.close()
     conexao.close()
 
-    return jsonify(materias)
+    total    = freq["total"]    if freq else 0
+    presencas = freq["presencas"] if freq else 0
+    faltas   = freq["faltas"]   if freq else 0
+
+    # Cálculo: começa em 100%, cada falta desconta 2%
+    pct_raw = max(0, 100 - (faltas * 2))
+
+    turma_label  = f"{turma_row['nome']} — {turma_row['periodo']}º Período" if turma_row else "—"
+    materia_label = materia_row["nome"] if materia_row else "—"
+    aluno_nome   = aluno_row["nome"]    if aluno_row  else "—"
+
+    return jsonify({
+        "nome":         aluno_nome,
+        "materia":      materia_label,
+        "turma":        turma_label,
+        "total":        total,
+        "presencas":    presencas,
+        "faltas":       faltas,
+        "presenca":     f"{pct_raw}%",
+        "presenca_raw": pct_raw,
+    })
 
 
 # ========================
@@ -162,9 +165,9 @@ def api_materias_por_turma():
 
 @frequencia_bp.route("/frequencia/relatorio")
 def relatorio_frequencia():
-    aluno_id = request.args.get("aluno")
+    aluno_id   = request.args.get("aluno")
     materia_id = request.args.get("materia")
-    turma_id = request.args.get("turma")
+    turma_id   = request.args.get("turma")
 
     conexao = criar_conexao()
     cursor = conexao.cursor(dictionary=True)
@@ -172,8 +175,7 @@ def relatorio_frequencia():
     cursor.execute("SELECT nome FROM usuario WHERE id = %s", (aluno_id,))
     aluno = cursor.fetchone()
 
-    cursor.execute(
-        "SELECT nome, periodo FROM turma WHERE id = %s", (turma_id,))
+    cursor.execute("SELECT nome, periodo FROM turma WHERE id = %s", (turma_id,))
     turma = cursor.fetchone()
 
     cursor.execute("SELECT nome FROM materia WHERE id = %s", (materia_id,))
@@ -193,12 +195,13 @@ def relatorio_frequencia():
     cursor.close()
     conexao.close()
 
-    total = freq["total"]
+    total     = freq["total"]
     presencas = freq["presencas"]
-    faltas = freq["faltas"]
-    percentual = f"{round((presencas / total) * 100)}%" if total else "0%"
+    faltas    = freq["faltas"]
+    pct_raw   = max(0, 100 - (faltas * 2))
+    percentual = f"{pct_raw}%"
 
-    turma_label = f"{turma['nome']} (Período {turma['periodo']})" if turma else "—"
+    turma_label  = f"{turma['nome']} ({turma['periodo']}º Período)" if turma else "—"
     materia_label = materia["nome"] if materia else "—"
 
     conteudo = (
@@ -216,5 +219,6 @@ def relatorio_frequencia():
         conteudo,
         mimetype="text/plain",
         headers={
-            "Content-Disposition": "attachment; filename=relatorio_frequencia.txt"},
+            "Content-Disposition": "attachment; filename=relatorio_frequencia.txt"
+        },
     )
