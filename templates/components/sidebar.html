@@ -13,13 +13,13 @@
       Página Inicial
     </a>
 
-    <a href="/turmas" class="sidebar-link{% if active_page == 'turmas' %} active{% endif %}">
+    <a href="/turmas" class="sidebar-link{% if active_page == 'turmas' %} active{% endif %}" id="linkTurmas">
       <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="2" y="3" width="20" height="14" rx="2" />
         <line x1="8" y1="21" x2="16" y2="21" />
         <line x1="12" y1="17" x2="12" y2="21" />
       </svg>
-      Turmas
+      <span id="labelLinkTurmas">Turmas</span>
     </a>
 
     <a href="/notas" class="sidebar-link{% if active_page == 'notas' %} active{% endif %}">
@@ -33,7 +33,7 @@
       Notas
     </a>
 
-    <a href="/presenca" class="sidebar-link{% if active_page == 'presenca' %} active{% endif %}">
+    <a href="/presenca" class="sidebar-link{% if active_page == 'presenca' %} active{% endif %}" id="linkPresenca">
       <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
@@ -97,3 +97,27 @@
     </button>
   </div>
 </aside>
+<script>
+  (function(){
+    try {
+      function decodeJwtPayload(token){ try{ const part = token.split('.')[1]; const b64 = part.replace(/-/g,'+').replace(/_/g,'/'); const pad = '='.repeat((4 - b64.length % 4) % 4); return JSON.parse(atob(b64 + pad)); }catch(e){return null;} }
+      function isProfessor(p){ if (p===null||p===undefined) return false; const s=String(p).toLowerCase(); return s==='professor' || s==='2' || Number(p)===2; }
+      function isAluno(p){ if (p===null||p===undefined) return false; const s=String(p).toLowerCase(); return s==='aluno' || s==='1' || Number(p)===1; }
+
+      let usuario = null;
+      const token = localStorage.getItem('token');
+      if (token) usuario = decodeJwtPayload(token);
+      if (!usuario) {
+        const raw = localStorage.getItem('usuario');
+        if (raw) try { usuario = JSON.parse(raw); } catch(e) { usuario = null; }
+      }
+      if (!usuario) return;
+
+      const labelLink = document.getElementById('labelLinkTurmas');
+      if (labelLink && isAluno(usuario.papel || usuario.papel_id || usuario.fk_papel_id)) labelLink.textContent = 'Minha Turma';
+
+      const linkPresenca = document.getElementById('linkPresenca');
+      if (linkPresenca && !isProfessor(usuario.papel || usuario.papel_id || usuario.fk_papel_id)) linkPresenca.style.display = 'none';
+    } catch(e){ console.warn('Sidebar script error', e); }
+  })();
+</script>

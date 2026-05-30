@@ -107,6 +107,7 @@ def login():
                 usuario.id,
                 usuario.nome,
                 usuario.email,
+                usuario.fk_papel_id AS fk_papel_id,
                 papel.descricao AS papel
             FROM usuario
             INNER JOIN papel 
@@ -151,7 +152,8 @@ def login():
             "id": usuario["id"],
             "nome": usuario["nome"],
             "email": usuario["email"],
-            "papel": usuario["papel"]
+            "papel": usuario["papel"],
+            "papel_id": usuario.get("fk_papel_id")
         },
         "sessao": {
             "inicio": payload["iat"],
@@ -169,7 +171,8 @@ def usuario_logado(usuario):
             "id": usuario["id"],
             "nome": usuario["nome"],
             "email": usuario["email"],
-            "papel": usuario["papel"]
+            "papel": usuario["papel"],
+            "papel_id": usuario.get("papel_id") or usuario.get("fk_papel_id")
         }
     }), 200
 
@@ -357,6 +360,7 @@ def atualizar_perfil(usuario):
                 usuario.id,
                 usuario.nome,
                 usuario.email,
+                usuario.fk_papel_id AS fk_papel_id,
                 papel.descricao AS papel
             FROM usuario
             INNER JOIN papel
@@ -378,7 +382,8 @@ def atualizar_perfil(usuario):
                 "id": usuario_atualizado["id"],
                 "nome": usuario_atualizado["nome"],
                 "email": usuario_atualizado["email"],
-                "papel": usuario_atualizado["papel"]
+                "papel": usuario_atualizado["papel"],
+                "papel_id": usuario_atualizado.get("fk_papel_id")
             },
             "sessao": {
                 "inicio": payload["iat"],

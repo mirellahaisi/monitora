@@ -509,11 +509,37 @@
 
   // ─── Usuário logado ───────────────────────────────
   async function carregarUsuarioLogado() {
+    // Aplicar cache local primeiro
+    try {
+      const usuarioCache = (function(){
+        try {
+          const t = getToken();
+          if (t) {
+            const part = t.split('.')[1];
+            const b64 = part.replace(/-/g,'+').replace(/_/g,'/');
+            const pad = '='.repeat((4 - b64.length % 4) % 4);
+            return JSON.stringify(JSON.parse(atob(b64 + pad)));
+          }
+        } catch(e){}
+        return localStorage.getItem("usuario");
+      })();
+      if (usuarioCache) {
+        const usuario = JSON.parse(usuarioCache);
+        document.getElementById("nomeUsuarioTopo").textContent = usuario.nome;
+        document.getElementById("papelUsuario").textContent    = formatarPapel(usuario.papel);
+        document.getElementById("avatarUsuario").textContent   = usuario.nome.charAt(0).toUpperCase();
+        papelUsuario = String(usuario.papel).toLowerCase();
+        const btnG = document.getElementById("btnGestaoUsuarios");
+        if (btnG && ["coordenador","admin","adm"].includes(papelUsuario)) btnG.style.display = "block";
+      }
+    } catch (e) { console.warn("Erro ao aplicar usuario do cache:", e); }
+
     if (!validarToken()) return;
     try {
       const r = await fetch("/api/usuario-logado", { headers: authHeader() });
       if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
       const { usuario } = await r.json();
+      localStorage.setItem("usuario", JSON.stringify(usuario));
       document.getElementById("nomeUsuarioTopo").textContent = usuario.nome;
       document.getElementById("papelUsuario").textContent    = formatarPapel(usuario.papel);
       document.getElementById("avatarUsuario").textContent   = usuario.nome.charAt(0).toUpperCase();

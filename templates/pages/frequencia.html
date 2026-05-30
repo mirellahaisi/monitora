@@ -33,7 +33,7 @@
 
     /* SIDEBAR */
     .sidebar {
-      width: 200px; min-height: 100%;
+      width: 200px; height: calc(100vh - 24px); position: sticky; top: 12px; overflow-y: auto;
       margin: 12px; padding: 24px 14px;
       border-radius: 20px; background: var(--grad);
       display: flex; flex-direction: column; align-items: center;
@@ -387,12 +387,13 @@
         </svg>
       </div>
       <div>
-        <h2>Frequência do Aluno</h2>
-        <p>Selecione a matéria, turma e aluno para visualizar a frequência</p>
+        <h2 id="pageHeadingTitle">Frequência do Aluno</h2>
+        <p id="pageHeadingDesc">Selecione a matéria, turma e aluno para visualizar a frequência</p>
       </div>
     </div>
 
-    <div class="notas-filtros">
+    <!-- Filtros: visíveis apenas para papel != 3 -->
+    <div class="notas-filtros" id="filtrosAdmin">
       <div class="filtro-group">
         <label for="selectMateria">Matéria</label>
         <select id="selectMateria">
@@ -428,12 +429,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-  const selectMateria = document.getElementById("selectMateria");
-  const selectTurma   = document.getElementById("selectTurma");
-  const selectAluno   = document.getElementById("selectAluno");
-  const btnLimpar     = document.getElementById("btnLimpar");
+  const selectMateria  = document.getElementById("selectMateria");
+  const selectTurma    = document.getElementById("selectTurma");
+  const selectAluno    = document.getElementById("selectAluno");
+  const btnLimpar      = document.getElementById("btnLimpar");
   const freqResultArea = document.getElementById("freqResultArea");
-  const freqEmpty     = document.getElementById("freqEmpty");
+  const filtrosAdmin   = document.getElementById("filtrosAdmin");
 
   const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
   const papelUsuario     = document.getElementById("papelUsuario");
@@ -457,6 +458,14 @@
     }
     return true;
   }
+  function decodeJwtPayload(token) {
+    try {
+      const part = token.split('.')[1];
+      const b64  = part.replace(/-/g, '+').replace(/_/g, '/');
+      const pad  = '='.repeat((4 - b64.length % 4) % 4);
+      return JSON.parse(atob(b64 + pad));
+    } catch { return null; }
+  }
   function formatarPapel(papel) {
     const p = String(papel).toLowerCase();
     if (["admin","adm","coordenador"].includes(p)) return "Coordenador";
@@ -464,22 +473,138 @@
     if (p === "aluno") return "Aluno";
     return papel;
   }
-
-  async function carregarUsuarioLogado() {
-    if (!verificarToken()) return;
-    try {
-      const r = await fetch("/api/usuario-logado", { headers: { "Authorization": `Bearer ${getToken()}` } });
-      if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
-      const { usuario } = await r.json();
-      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
-      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
-      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
-      const btnGestao = document.getElementById("btnGestaoUsuarios");
-      if (btnGestao && ["coordenador","admin","adm"].includes(usuario.papel.toLowerCase()))
-        btnGestao.style.display = "block";
-    } catch { limparSessao(); window.location.href = "/"; }
+  function isPapel3(usuario) {
+    // papel_id === 3  OU  fk_papel_id === 3
+    return Number(usuario.papel_id) === 3
+        || Number(usuario.fk_papel_id) === 3
+        || Number(usuario.papel) === 3;
   }
 
+  // ── Renderiza um card único (fluxo admin/professor) ──────────────────────
+  function renderizarResultado(d, alunoId, materiaId, turmaId) {
+    const pct = d.presenca_raw;
+    const statusClass = pct >= 75 ? "freq-alert-ok" : "freq-alert-danger";
+    const statusIcon  = pct >= 75 ? "ph-check-circle" : "ph-warning";
+    const statusMsg   = pct >= 75
+      ? "Frequência regular — acima do mínimo exigido (75%)"
+      : "Frequência insuficiente — abaixo do mínimo exigido (75%)";
+
+    freqResultArea.innerHTML = `
+      <div class="freq-alert ${statusClass}">
+        <i class="ph ${statusIcon}" style="font-size:1.2rem;"></i>
+        ${statusMsg}
+      </div>
+      <div class="freq-card">
+        <div class="freq-info">
+          <h3 class="freq-nome">${d.nome}</h3>
+          <p class="freq-sub">${d.materia} &mdash; ${d.turma}</p>
+          <div class="freq-stats">
+            <div class="freq-stat-row"><span>Total de Aulas</span><strong>${d.total}</strong></div>
+            <div class="freq-stat-row"><span>Presenças</span><strong class="freq-val-green">${d.presencas}</strong></div>
+            <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${d.faltas}</strong></div>
+            <div class="freq-stat-row freq-stat-highlight"><span>Frequência</span><strong>${d.presenca}</strong></div>
+          </div>
+        </div>
+        <div class="freq-chart-col">
+          <div class="freq-donut" style="--pct: ${pct}">
+            <div class="freq-donut-inner">
+              <span class="freq-donut-pct">${d.presenca}</span>
+              <span class="freq-donut-label">Frequência</span>
+            </div>
+          </div>
+          <div class="freq-legend">
+            <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presenças</div>
+            <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> Faltas</div>
+          </div>
+          <a class="btn-publicar"
+             href="/frequencia/relatorio?aluno=${alunoId}&materia=${materiaId}&turma=${turmaId}">
+            <i class="ph ph-download-simple"></i> Baixar relatório
+          </a>
+        </div>
+      </div>`;
+  }
+
+  // ── Renderiza múltiplos cards (fluxo aluno — papel 3) ────────────────────
+  function renderizarPropriaFrequencia(dados) {
+    if (!dados.materias || dados.materias.length === 0) {
+      freqResultArea.innerHTML = `
+        <div class="freq-empty">
+          <i class="ph ph-books" style="font-size:3.5rem; opacity:0.3;"></i>
+          <p>Nenhuma matéria encontrada para o seu cadastro.</p>
+        </div>`;
+      return;
+    }
+
+    let html = "";
+    dados.materias.forEach(m => {
+      const pct = m.presenca_raw;
+      const statusClass = pct >= 75 ? "freq-alert-ok" : "freq-alert-danger";
+      const statusIcon  = pct >= 75 ? "ph-check-circle" : "ph-warning";
+      const statusMsg   = pct >= 75
+        ? "Frequência regular — acima do mínimo exigido (75%)"
+        : "Frequência insuficiente — abaixo do mínimo exigido (75%)";
+
+      html += `
+        <div class="freq-alert ${statusClass}" style="margin-bottom:0;">
+          <i class="ph ${statusIcon}" style="font-size:1.2rem;"></i>
+          <strong style="margin-right:6px;">${m.materia}:</strong> ${statusMsg}
+        </div>
+        <div class="freq-card" style="margin-bottom:28px;">
+          <div class="freq-info">
+            <h3 class="freq-nome">${m.materia}</h3>
+            <p class="freq-sub">${m.turma}</p>
+            <div class="freq-stats">
+              <div class="freq-stat-row"><span>Total de Aulas</span><strong>${m.total}</strong></div>
+              <div class="freq-stat-row"><span>Presenças</span><strong class="freq-val-green">${m.presencas}</strong></div>
+              <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${m.faltas}</strong></div>
+              <div class="freq-stat-row freq-stat-highlight"><span>Frequência</span><strong>${m.presenca}</strong></div>
+            </div>
+          </div>
+          <div class="freq-chart-col">
+            <div class="freq-donut" style="--pct: ${pct}">
+              <div class="freq-donut-inner">
+                <span class="freq-donut-pct">${m.presenca}</span>
+                <span class="freq-donut-label">Frequência</span>
+              </div>
+            </div>
+            <div class="freq-legend">
+              <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presenças</div>
+              <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> Faltas</div>
+            </div>
+            <a class="btn-publicar"
+               href="/frequencia/relatorio?aluno=${dados.aluno_id}&materia=${m.materia_id}&turma=${m.turma_id}">
+              <i class="ph ph-download-simple"></i> Baixar relatório
+            </a>
+          </div>
+        </div>`;
+    });
+
+    freqResultArea.innerHTML = html;
+  }
+
+  // ── Carrega a própria frequência (papel 3) ───────────────────────────────
+  async function carregarPropriaFrequencia(alunoId) {
+    freqResultArea.innerHTML = `
+      <div class="freq-empty">
+        <i class="ph ph-spinner" style="font-size:2.5rem; opacity:0.4;"></i>
+        <p>Carregando sua frequência…</p>
+      </div>`;
+    try {
+      const r = await fetch(`/api/frequencia/dados-proprios?aluno_id=${alunoId}`);
+      if (!r.ok) throw new Error("Erro na requisição");
+      const dados = await r.json();
+      dados.aluno_id = alunoId; // passa para o render poder montar o link de relatório
+      renderizarPropriaFrequencia(dados);
+    } catch {
+      freqResultArea.innerHTML = `
+        <div class="freq-empty">
+          <i class="ph ph-warning" style="font-size:2.5rem; opacity:0.4;"></i>
+          <p>Não foi possível carregar sua frequência. Tente novamente.</p>
+        </div>`;
+    }
+  }
+
+  // ── Fluxo admin/professor ────────────────────────────────────────────────
   async function carregarMaterias() {
     try {
       const r = await fetch("/api/frequencia/materias");
@@ -530,11 +655,10 @@
     const turmaId   = selectTurma.value;
     const alunoId   = selectAluno.value;
     if (!materiaId || !turmaId || !alunoId) { mostrarVazio(); return; }
-
     try {
       const r = await fetch(`/api/frequencia/dados?aluno_id=${alunoId}&materia_id=${materiaId}&turma_id=${turmaId}`);
       const dados = await r.json();
-      renderizarResultado(dados);
+      renderizarResultado(dados, alunoId, materiaId, turmaId);
     } catch { console.error("Erro ao carregar frequência"); }
   }
 
@@ -543,74 +667,6 @@
       <div class="freq-empty">
         <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
         <p>Selecione matéria, turma e aluno para visualizar a frequência.</p>
-      </div>`;
-  }
-
-  function renderizarResultado(d) {
-    const pct = d.presenca_raw;
-    const statusClass = pct >= 75 ? "freq-alert-ok" : "freq-alert-danger";
-    const statusIcon  = pct >= 75 ? "ph-check-circle" : "ph-warning";
-    const statusMsg   = pct >= 75
-      ? "Frequência regular — acima do mínimo exigido (75%)"
-      : `Frequência insuficiente — abaixo do mínimo exigido (75%)`;
-
-    const materiaId = selectMateria.value;
-    const turmaId   = selectTurma.value;
-    const alunoId   = selectAluno.value;
-
-    freqResultArea.innerHTML = `
-      <div class="freq-alert ${statusClass}">
-        <i class="ph ${statusIcon}" style="font-size:1.2rem;"></i>
-        ${statusMsg}
-      </div>
-
-      <div class="freq-card">
-        <div class="freq-info">
-          <h3 class="freq-nome">${d.nome}</h3>
-          <p class="freq-sub">${d.materia} &mdash; ${d.turma}</p>
-
-          <div class="freq-stats">
-            <div class="freq-stat-row">
-              <span>Total de Aulas</span>
-              <strong>${d.total}</strong>
-            </div>
-            <div class="freq-stat-row">
-              <span>Presenças</span>
-              <strong class="freq-val-green">${d.presencas}</strong>
-            </div>
-            <div class="freq-stat-row">
-              <span>Faltas</span>
-              <strong class="freq-val-red">${d.faltas}</strong>
-            </div>
-            <div class="freq-stat-row freq-stat-highlight">
-              <span>Frequência</span>
-              <strong>${d.presenca}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div class="freq-chart-col">
-          <div class="freq-donut" style="--pct: ${pct}">
-            <div class="freq-donut-inner">
-              <span class="freq-donut-pct">${d.presenca}</span>
-              <span class="freq-donut-label">Frequência</span>
-            </div>
-          </div>
-
-          <div class="freq-legend">
-            <div class="freq-legend-item">
-              <span class="freq-dot freq-dot-green"></span> Presenças
-            </div>
-            <div class="freq-legend-item">
-              <span class="freq-dot freq-dot-orange"></span> Faltas
-            </div>
-          </div>
-
-          <a class="btn-publicar"
-             href="/frequencia/relatorio?aluno=${alunoId}&materia=${materiaId}&turma=${turmaId}">
-            <i class="ph ph-download-simple"></i> Baixar relatório
-          </a>
-        </div>
       </div>`;
   }
 
@@ -632,6 +688,38 @@
     limparSessao(); window.location.href = "/";
   }
 
+  // ── Init ─────────────────────────────────────────────────────────────────
+  async function carregarUsuarioLogado() {
+    if (!verificarToken()) return;
+    try {
+      const r = await fetch("/api/usuario-logado", { headers: { "Authorization": `Bearer ${getToken()}` } });
+      if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
+      const { usuario } = await r.json();
+
+      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+
+      const btnGestao = document.getElementById("btnGestaoUsuarios");
+      if (btnGestao && ["coordenador","admin","adm"].includes(String(usuario.papel).toLowerCase()))
+        btnGestao.style.display = "block";
+
+      // ── Papel 3 (aluno): esconde filtros e carrega direto ──
+      if (isPapel3(usuario)) {
+        filtrosAdmin.style.display = "none";
+        const heading = document.getElementById("pageHeadingTitle");
+        const desc    = document.getElementById("pageHeadingDesc");
+        if (heading) heading.textContent = "Minha Frequência";
+        if (desc)    desc.textContent    = "Confira sua frequência em cada matéria";
+        carregarPropriaFrequencia(usuario.id);
+      } else {
+        // Fluxo normal: carrega selects
+        carregarMaterias();
+      }
+
+    } catch { limparSessao(); window.location.href = "/"; }
+  }
+
   selectMateria.addEventListener("change", carregarTurmas);
   selectTurma.addEventListener("change", carregarAlunos);
   selectAluno.addEventListener("change", carregarFrequencia);
@@ -642,7 +730,6 @@
   if (btnSair) btnSair.addEventListener("click", sair);
 
   carregarUsuarioLogado();
-  carregarMaterias();
 </script>
 
 <script src="/static/js/darkmode.js"></script>
