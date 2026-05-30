@@ -497,12 +497,11 @@
             <option value="prova">Prova</option>
             <option value="entrega">Entrega</option>
             <option value="evento" selected>Evento</option>
-            <option value="aviso">Aviso</option>
           </select>
         </div>
         <!-- grupoTurma: oculto para aluno; obrigatório para professor; opcional para coordenador -->
         <div class="form-group hidden" id="grupoTurma">
-          <label for="selectTurma">Turma <span id="turmaObrigatorio" class="hidden" style="color:#e74c3c">*</span></label>
+          <label for="selectTurma">Turma <span id="turmaObrigatorio" class="hidden" style="color:var(--muted)">*</span></label>
           <select id="selectTurma">
             <option value="">Selecione a turma...</option>
           </select>
@@ -511,7 +510,7 @@
 
       <!-- grupoMateria: só para professor, carregado dinamicamente ao mudar turma -->
       <div class="form-group hidden" id="grupoMateria">
-        <label for="selectMateria">Matéria <span style="color:var(--muted);font-weight:400">(opcional)</span></label>
+        <label for="selectMateria">Matéria <span style="color:var(--muted)">*</span></label>
         <select id="selectMateria">
           <option value="">Selecione primeiro a turma</option>
         </select>
@@ -928,19 +927,19 @@
       });
 
       // Matéria começa limpa; só professor usa, preenchida ao mudar turma
-      selMateria.innerHTML = `<option value="">Todas as matérias</option>`;
+      selMateria.innerHTML = `<option value="">Selecione primeiro a turma</option>`;
 
       // Quando professor muda turma → recarrega matérias
       selTurma.onchange = async () => {
         const turmaId = selTurma.value;
         if (isProf && turmaId) {
           await carregarMateriasDaTurma(turmaId);
-          selMateria.innerHTML = `<option value="">Todas as matérias</option>`;
+          selMateria.innerHTML = `<option value="">Selecione a matéria...</option>`;
           materiasOpcoes.forEach(m => {
             selMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
           });
         } else {
-          selMateria.innerHTML = `<option value="">Todas as matérias</option>`;
+          selMateria.innerHTML = `<option value="">Selecione primeiro a turma</option>`;
         }
       };
 
@@ -991,7 +990,7 @@
         if (papelUsuario === "professor" && ev.fk_turma_id) {
           carregarMateriasDaTurma(ev.fk_turma_id).then(() => {
             const selMateria = document.getElementById("selectMateria");
-            selMateria.innerHTML = `<option value="">Todas as matérias</option>`;
+            selMateria.innerHTML = `<option value="">Selecione a matéria...</option>`;
             materiasOpcoes.forEach(m => {
               selMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
             });
@@ -1048,9 +1047,13 @@
 
         payload.fk_turma_id = turmaVal;
 
-        // Professor: inclui matéria; Coordenador: sem matéria
+        // Professor: inclui matéria obrigatória
         if (papelUsuario === "professor") {
-          payload.fk_materia_id = document.getElementById("selectMateria").value || null;
+          const materiaVal = document.getElementById("selectMateria").value || null;
+          if (!materiaVal) {
+            Swal.fire("Atenção", "Selecione uma matéria para o evento.", "warning"); return;
+          }
+          payload.fk_materia_id = materiaVal;
         }
       }
 
