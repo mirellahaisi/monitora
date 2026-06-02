@@ -69,12 +69,25 @@
       Frequência
     </a>
 
+        <a href="/gestao-usuarios" class="sidebar-link{% if active_page == 'gestao_usuarios' %} active{% endif %}" id="linkGestaoUsuarios" style="display:none;">
+      <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <line x1="19" y1="8" x2="19" y2="14"/>
+        <line x1="22" y1="11" x2="16" y2="11"/>
+      </svg>
+      Gestão de Usuários
+    </a>
+
     <a href="#" class="sidebar-link{% if active_page == 'desempenho' %} active{% endif %}">
       <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
       </svg>
       Desempenho
     </a>
+
   </nav>
 
   <div class="sidebar-bottom">
@@ -118,6 +131,15 @@
 
       const linkPresenca = document.getElementById('linkPresenca');
       if (linkPresenca && !isProfessor(usuario.papel || usuario.papel_id || usuario.fk_papel_id)) linkPresenca.style.display = 'none';
+
+      const linkGestao = document.getElementById('linkGestaoUsuarios');
+      if (linkGestao) {
+        const papel = String(usuario.papel || usuario.papel_id || usuario.fk_papel_id || '').toLowerCase();
+        const papelId = Number(usuario.papel_id || usuario.fk_papel_id);
+        if (papel === 'admin' || papel === 'adm' || papel === 'coordenador' || papelId === 1) {
+          linkGestao.style.display = '';
+        }
+      }
     } catch(e){ console.warn('Sidebar script error', e); }
   })();
 </script>
