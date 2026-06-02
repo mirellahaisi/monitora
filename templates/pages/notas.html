@@ -521,6 +521,135 @@
     }
 
     /* ══════════════════════════════════════
+       VISÃO DO COORDENADOR
+    ══════════════════════════════════════ */
+
+    /* Filtros do coordenador: grid de 4 colunas (igual à frequência) */
+    .coord-filtros {
+      display: grid;
+      grid-template-columns: minmax(0,1fr) minmax(0,1.1fr) minmax(0,1fr) auto;
+      align-items: end;
+      gap: 14px;
+      background: var(--white);
+      border: 1.5px solid rgba(147,215,223,0.3);
+      border-radius: 16px;
+      padding: 18px 24px;
+      margin-bottom: 28px;
+      box-shadow: 0 2px 12px rgba(76,190,190,0.07);
+    }
+    .coord-filtros select {
+      width: 100%; min-width: 0; height: 44px;
+      border: 1.5px solid rgba(147,215,223,0.4); border-radius: 10px;
+      background: var(--bg); color: var(--mid); font: inherit;
+      font-size: 0.92rem; font-weight: 500; padding: 0 14px; outline: none;
+      appearance: auto; transition: border-color 0.2s, box-shadow 0.2s; cursor: pointer;
+    }
+    .coord-filtros select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1); }
+    .coord-filtros select:disabled {
+      opacity: 1; cursor: not-allowed; color: #b8cdd6;
+      border-color: rgba(147,215,223,0.2); background: rgba(245,250,250,0.7);
+    }
+
+    .btn-limpar {
+      height: 44px; padding: 0 18px; border-radius: 10px;
+      border: 1.5px solid rgba(147,215,223,0.4); background: var(--bg);
+      color: var(--muted); font: inherit; font-size: 0.88rem; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: background 0.18s, color 0.18s; white-space: nowrap;
+    }
+    .btn-limpar:hover { background: rgba(147,215,223,0.15); color: var(--mid); }
+
+    /* Card de resultado do coordenador */
+    .coord-card {
+      background: var(--white); border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 16px; overflow: hidden;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.08);
+    }
+    .coord-card-header {
+      padding: 16px 24px 14px;
+      border-bottom: 1.5px solid rgba(147,215,223,0.18);
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      background: linear-gradient(90deg, rgba(147,215,223,0.1) 0%, rgba(87,219,189,0.07) 100%);
+    }
+    .coord-card-titulo {
+      font-family: "Sora", sans-serif; font-size: 1rem;
+      font-weight: 800; color: var(--dark);
+    }
+    .coord-card-subtitulo { font-size: 0.82rem; color: var(--muted); margin-top: 2px; }
+    .coord-card-badges { display: flex; gap: 8px; flex-shrink: 0; flex-wrap: wrap; }
+    .coord-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+      background: rgba(147,215,223,0.15); color: var(--accent);
+      border: 1px solid rgba(147,215,223,0.3);
+    }
+
+    /* Tabela read-only do coordenador */
+    .coord-table { width: 100%; border-collapse: collapse; }
+    .coord-table thead {
+      background: linear-gradient(90deg, rgba(147,215,223,0.12) 0%, rgba(87,219,189,0.08) 100%);
+    }
+    .coord-table th {
+      height: 46px; padding: 0 20px; color: var(--mid);
+      font-family: "Sora", sans-serif; font-size: 0.78rem; font-weight: 700;
+      text-align: left; letter-spacing: 0.04em; text-transform: uppercase;
+      border-bottom: 1.5px solid rgba(147,215,223,0.25);
+    }
+    .coord-table th.th-center { text-align: center; }
+    .coord-table td {
+      height: 54px; padding: 0 20px; color: var(--text);
+      font-size: 0.92rem; border-bottom: 1px solid rgba(147,215,223,0.13);
+      vertical-align: middle;
+    }
+    .coord-table td.td-center { text-align: center; }
+    .coord-table tr:last-child td { border-bottom: none; }
+    .coord-table tbody tr { transition: background 0.15s; }
+    .coord-table tbody tr:hover { background: rgba(147,215,223,0.06); }
+
+    .coord-num { width: 48px; color: var(--muted) !important; font-size: 0.82rem !important; }
+    .coord-aluno-wrap { display: flex; align-items: center; gap: 10px; }
+    .coord-aluno-inicial {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%; background: var(--grad);
+      color: white; font-family: "Sora", sans-serif; font-size: 0.8rem; font-weight: 700; flex-shrink: 0;
+    }
+    .coord-aluno-nome { font-weight: 600; color: var(--mid); }
+
+    .coord-nota {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 64px; height: 32px; border-radius: 8px;
+      font-size: 0.92rem; font-weight: 700;
+    }
+    .coord-nota-ok    { background: rgba(147,215,223,0.12); color: var(--mid); border: 1px solid rgba(147,215,223,0.3); }
+    .coord-nota-vazia { background: transparent; color: var(--muted); border: 1px solid rgba(147,215,223,0.18); font-weight: 400; }
+
+    /* Rodapé totalizadores */
+    .coord-rodape {
+      display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+      padding: 13px 24px;
+      background: rgba(147,215,223,0.06);
+      border-top: 1px solid rgba(147,215,223,0.18);
+      font-size: 0.82rem; font-weight: 600; color: var(--muted);
+    }
+    .coord-rodape strong { color: var(--mid); }
+    .coord-rodape-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+    .dot-teal { background: #57dbbd; }
+    .dot-red  { background: #e74c3c; }
+    .dot-gray { background: #b8cdd6; }
+    .coord-rodape-media { margin-left: auto; color: var(--mid); }
+    .coord-rodape-media strong { color: var(--accent); }
+
+    /* Estado vazio/carregando do coordenador */
+    .coord-vazio {
+      background: var(--white); border: 1.5px solid rgba(147,215,223,0.25);
+      border-radius: 16px; padding: 70px 40px; text-align: center;
+      color: var(--muted); font-size: 0.92rem;
+      box-shadow: 0 4px 20px rgba(76,190,190,0.06);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .coord-vazio i { display: block; font-size: 3.5rem; opacity: 0.3; margin-bottom: 14px; }
+
+    /* ══════════════════════════════════════
        RESPONSIVE
     ══════════════════════════════════════ */
     @media (max-width: 800px) {
@@ -532,6 +661,9 @@
       .notas-filtros { flex-direction: column; }
       .notas-actions { flex-direction: column; }
       .btn-rascunho, .btn-publicar { width: 100%; justify-content: center; }
+      .coord-filtros { grid-template-columns: 1fr; }
+      .coord-card-header { flex-direction: column; align-items: flex-start; }
+      .coord-num { display: none; }
     }
   </style>
 </head>
@@ -627,6 +759,44 @@
         <div class="aluno-materias-grid" id="alunoMaterias"></div>
       </div>
 
+      <!-- ── Visão COORDENADOR ── -->
+      <div id="secaoCoordenador" style="display:none">
+
+        <!-- Filtros: Professor → Turma → Matéria -->
+        <div class="coord-filtros">
+          <div class="filtro-group">
+            <label for="coordSelectProfessor">Professor</label>
+            <select id="coordSelectProfessor">
+              <option value="">Selecione o professor</option>
+            </select>
+          </div>
+          <div class="filtro-group">
+            <label for="coordSelectTurma">Turma / Período</label>
+            <select id="coordSelectTurma" disabled>
+              <option value="">Selecione a turma</option>
+            </select>
+          </div>
+          <div class="filtro-group">
+            <label for="coordSelectMateria">Matéria</label>
+            <select id="coordSelectMateria" disabled>
+              <option value="">Selecione a matéria</option>
+            </select>
+          </div>
+          <button type="button" class="btn-limpar" id="coordBtnLimpar">
+            <i class="ph ph-x-circle"></i> Limpar
+          </button>
+        </div>
+
+        <!-- Resultado -->
+        <div id="coordResultado">
+          <div class="coord-vazio">
+            <i class="ph ph-magnifying-glass"></i>
+            <p>Selecione professor, turma e matéria para visualizar as notas.</p>
+          </div>
+        </div>
+
+      </div>
+
     </section>
   </main>
 
@@ -673,6 +843,12 @@
       if (p === null || p === undefined) return false;
       const s = String(p).toLowerCase();
       return s === "aluno" || s === "1" || Number(p) === 1;
+    }
+
+    function isCoordenador(p) {
+      if (p === null || p === undefined) return false;
+      const s = String(p).toLowerCase();
+      return ["coordenador", "admin", "adm"].includes(s) || Number(p) === 1;
     }
 
     function tokenExpirado(sessaoExpiracao) {
@@ -725,10 +901,19 @@
           if (isAluno(usuario.papel)) {
             document.getElementById("tituloNotas").textContent    = "Minhas Notas";
             document.getElementById("subtituloNotas").textContent = "Suas notas e médias por matéria";
-            document.getElementById("secaoProfessor").style.display = "none";
-            document.getElementById("secaoAluno").style.display     = "block";
+            document.getElementById("secaoProfessor").style.display   = "none";
+            document.getElementById("secaoAluno").style.display       = "block";
+            document.getElementById("secaoCoordenador").style.display = "none";
             await carregarMinhasNotas();
+          } else if (isCoordenador(usuario.papel)) {
+            document.getElementById("tituloNotas").textContent    = "Notas por Turma";
+            document.getElementById("subtituloNotas").textContent = "Selecione professor, turma e matéria para visualizar as notas";
+            document.getElementById("secaoProfessor").style.display   = "none";
+            document.getElementById("secaoAluno").style.display       = "none";
+            document.getElementById("secaoCoordenador").style.display = "block";
+            await coordCarregarProfessores();
           } else {
+            document.getElementById("secaoCoordenador").style.display = "none";
             await carregarMaterias();
           }
         }
@@ -999,6 +1184,230 @@
     selectTurma.addEventListener("change", carregarAlunos);
     btnSalvarRascunho.addEventListener("click", () => salvarNotas("rascunho"));
     btnPublicarNotas.addEventListener("click",  () => salvarNotas("publicar"));
+
+    // ══════════════════════════════════════
+    // LÓGICA DO COORDENADOR (papel 1)
+    // ══════════════════════════════════════
+
+    const coordSelectProfessor = document.getElementById("coordSelectProfessor");
+    const coordSelectTurma     = document.getElementById("coordSelectTurma");
+    const coordSelectMateria   = document.getElementById("coordSelectMateria");
+    const coordBtnLimpar       = document.getElementById("coordBtnLimpar");
+    const coordResultado       = document.getElementById("coordResultado");
+
+    function coordMostrarVazio(msg) {
+      coordResultado.innerHTML = `
+        <div class="coord-vazio">
+          <i class="ph ph-magnifying-glass"></i>
+          <p>${msg || "Selecione professor, turma e matéria para visualizar as notas."}</p>
+        </div>`;
+    }
+
+    function coordMostrarCarregando() {
+      coordResultado.innerHTML = `
+        <div class="coord-vazio">
+          <i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;"></i>
+          <p>Carregando notas…</p>
+        </div>
+        <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>`;
+    }
+
+    async function coordCarregarProfessores() {
+      if (!verificarTokenFront()) return;
+      try {
+        const r = await fetch("/api/notas/coordenador/professores-lista", {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await r.json();
+        if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar professores.", "error"); return; }
+        coordSelectProfessor.innerHTML = `<option value="">Selecione o professor</option>`;
+        (dados.professores || []).forEach(p => {
+          coordSelectProfessor.innerHTML += `<option value="${p.id}">${p.nome}</option>`;
+        });
+      } catch { Swal.fire("Erro", "Falha ao buscar professores.", "error"); }
+    }
+
+    async function coordCarregarTurmas() {
+      const professorId = coordSelectProfessor.value;
+      coordSelectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      coordSelectTurma.disabled = true;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled = true;
+      coordMostrarVazio();
+      if (!professorId) return;
+      try {
+        const r = await fetch(`/api/notas/coordenador/turmas-por-professor?professor_id=${professorId}`, {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await r.json();
+        if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error"); return; }
+        (dados.turmas || []).forEach(t => {
+          const per = t.periodo ? ` — ${t.periodo}º Período` : "";
+          coordSelectTurma.innerHTML += `<option value="${t.id}">${t.nome}${per}</option>`;
+        });
+        coordSelectTurma.disabled = false;
+      } catch { Swal.fire("Erro", "Falha ao buscar turmas.", "error"); }
+    }
+
+    async function coordCarregarMaterias() {
+      const professorId = coordSelectProfessor.value;
+      const turmaId     = coordSelectTurma.value;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled = true;
+      coordMostrarVazio();
+      if (!professorId || !turmaId) return;
+      try {
+        const r = await fetch(`/api/notas/coordenador/materias-por-professor-turma?professor_id=${professorId}&turma_id=${turmaId}`, {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await r.json();
+        if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error"); return; }
+        (dados.materias || []).forEach(m => {
+          coordSelectMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
+        });
+        coordSelectMateria.disabled = false;
+      } catch { Swal.fire("Erro", "Falha ao buscar matérias.", "error"); }
+    }
+
+    async function coordCarregarNotas() {
+      const professorId = coordSelectProfessor.value;
+      const turmaId     = coordSelectTurma.value;
+      const materiaId   = coordSelectMateria.value;
+      if (!professorId || !turmaId || !materiaId) { coordMostrarVazio(); return; }
+      coordMostrarCarregando();
+      try {
+        const params = new URLSearchParams({ materia_id: materiaId, turma_id: turmaId, professor_id: professorId });
+        const r = await fetch(`/api/notas/coordenador/alunos?${params}`, {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await r.json();
+        if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar notas.", "error"); coordMostrarVazio(); return; }
+        coordRenderizarTabela(dados.alunos || []);
+      } catch { Swal.fire("Erro", "Falha ao buscar notas.", "error"); coordMostrarVazio(); }
+    }
+
+    function coordClasseMedia(media) {
+      if (media === null || media === undefined) return "media-neutra";
+      return Number(media) >= 6 ? "media-aprovada" : "media-baixa";
+    }
+
+    function coordRenderizarTabela(alunos) {
+      const nomeProfessor = coordSelectProfessor.options[coordSelectProfessor.selectedIndex].text;
+      const nomeTurma     = coordSelectTurma.options[coordSelectTurma.selectedIndex].text;
+      const nomeMateria   = coordSelectMateria.options[coordSelectMateria.selectedIndex].text;
+
+      if (!alunos.length) {
+        coordResultado.innerHTML = `
+          <div class="coord-card">
+            ${coordCabecalho(nomeProfessor, nomeTurma, nomeMateria, 0)}
+            <table class="coord-table">
+              <thead><tr>
+                <th class="coord-num">#</th><th>Aluno(a)</th>
+                <th class="th-center">Nota 1</th><th class="th-center">Nota 2</th><th class="th-center">Média</th>
+              </tr></thead>
+              <tbody><tr><td colspan="5" style="text-align:center;padding:50px 20px;color:var(--muted);">
+                <i class="ph ph-student" style="display:block;font-size:2.5rem;opacity:0.3;margin-bottom:10px;"></i>
+                Nenhum aluno encontrado para essa seleção.
+              </td></tr></tbody>
+            </table>
+          </div>`;
+        return;
+      }
+
+      const comMedia   = alunos.filter(a => a.media !== null && a.media !== undefined);
+      const aprovados  = comMedia.filter(a => a.media >= 6).length;
+      const reprovados = comMedia.filter(a => a.media < 6).length;
+      const semNota    = alunos.filter(a => a.media === null || a.media === undefined).length;
+      const mediaGeral = comMedia.length
+        ? (comMedia.reduce((s, a) => s + a.media, 0) / comMedia.length).toFixed(2)
+        : null;
+
+      const linhas = alunos.map((aluno, idx) => {
+        const n1       = aluno.nota1 !== null && aluno.nota1 !== undefined;
+        const n2       = aluno.nota2 !== null && aluno.nota2 !== undefined;
+        const temMedia = aluno.media !== null && aluno.media !== undefined;
+        return `
+          <tr>
+            <td class="coord-num td-center">${idx + 1}</td>
+            <td>
+              <div class="coord-aluno-wrap">
+                <span class="coord-aluno-inicial">${aluno.nome.charAt(0).toUpperCase()}</span>
+                <span class="coord-aluno-nome">${aluno.nome}</span>
+              </div>
+            </td>
+            <td class="td-center">
+              <span class="coord-nota ${n1 ? 'coord-nota-ok' : 'coord-nota-vazia'}">
+                ${n1 ? String(aluno.nota1).replace(".", ",") : "—"}
+              </span>
+            </td>
+            <td class="td-center">
+              <span class="coord-nota ${n2 ? 'coord-nota-ok' : 'coord-nota-vazia'}">
+                ${n2 ? String(aluno.nota2).replace(".", ",") : "—"}
+              </span>
+            </td>
+            <td class="td-center">
+              <span class="media-badge ${coordClasseMedia(aluno.media)}">
+                ${temMedia ? String(aluno.media).replace(".", ",") : "—"}
+              </span>
+            </td>
+          </tr>`;
+      }).join("");
+
+      const rodape = `
+        <div class="coord-rodape">
+          <span><span class="coord-rodape-dot dot-gray"></span>Total: <strong>${alunos.length} aluno${alunos.length !== 1 ? "s" : ""}</strong></span>
+          <span><span class="coord-rodape-dot dot-teal"></span>Aprovados: <strong>${aprovados}</strong></span>
+          <span><span class="coord-rodape-dot dot-red"></span>Em atenção: <strong>${reprovados}</strong></span>
+          ${semNota > 0 ? `<span><span class="coord-rodape-dot dot-gray"></span>Sem nota: <strong>${semNota}</strong></span>` : ""}
+          ${mediaGeral !== null ? `<span class="coord-rodape-media">Média da turma: <strong>${String(mediaGeral).replace(".", ",")}</strong></span>` : ""}
+        </div>`;
+
+      coordResultado.innerHTML = `
+        <div class="coord-card">
+          ${coordCabecalho(nomeProfessor, nomeTurma, nomeMateria, alunos.length)}
+          <table class="coord-table">
+            <thead>
+              <tr>
+                <th class="coord-num">#</th>
+                <th>Aluno(a)</th>
+                <th class="th-center">Nota 1</th>
+                <th class="th-center">Nota 2</th>
+                <th class="th-center">Média</th>
+              </tr>
+            </thead>
+            <tbody>${linhas}</tbody>
+          </table>
+          ${rodape}
+        </div>`;
+    }
+
+    function coordCabecalho(professor, turma, materia, total) {
+      return `
+        <div class="coord-card-header">
+          <div>
+            <div class="coord-card-titulo">${materia}</div>
+            <div class="coord-card-subtitulo">${turma}</div>
+          </div>
+          <div class="coord-card-badges">
+            <span class="coord-badge"><i class="ph ph-chalkboard-teacher"></i> ${professor}</span>
+            ${total > 0 ? `<span class="coord-badge"><i class="ph ph-users"></i> ${total} aluno${total !== 1 ? "s" : ""}</span>` : ""}
+          </div>
+        </div>`;
+    }
+
+    function coordLimpar() {
+      coordSelectProfessor.value = "";
+      coordSelectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      coordSelectTurma.disabled  = true;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled  = true;
+      coordMostrarVazio();
+    }
+
+    if (coordSelectProfessor) coordSelectProfessor.addEventListener("change", coordCarregarTurmas);
+    if (coordSelectTurma)     coordSelectTurma.addEventListener("change", coordCarregarMaterias);
+    if (coordSelectMateria)   coordSelectMateria.addEventListener("change", coordCarregarNotas);
+    if (coordBtnLimpar)       coordBtnLimpar.addEventListener("click", coordLimpar);
 
     if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
     if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");

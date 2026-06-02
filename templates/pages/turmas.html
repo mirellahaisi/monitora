@@ -159,14 +159,49 @@
     }
     .turmas-filtros { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
-    .filtro-select {
-      height: 40px; border: 1.5px solid rgba(147,215,223,0.4);
-      border-radius: 10px; background: var(--white);
-      color: var(--mid); font: inherit; font-size: 0.88rem;
-      font-weight: 500; padding: 0 14px; outline: none;
-      cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
+    /* Custom filter dropdowns */
+    .filtro-custom {
+      position: relative; display: inline-block;
     }
-    .filtro-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1); }
+    .filtro-custom-btn {
+      height: 40px; padding: 0 38px 0 14px;
+      border: 1.5px solid rgba(147,215,223,0.4); border-radius: 10px;
+      background: var(--white); color: var(--mid);
+      font: inherit; font-size: 0.88rem; font-weight: 500;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      white-space: nowrap; min-width: 160px; position: relative;
+    }
+    .filtro-custom-btn::after {
+      content: '';
+      position: absolute; right: 13px; top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-top-color: var(--muted);
+      margin-top: 3px;
+      transition: transform 0.2s;
+    }
+    .filtro-custom.open .filtro-custom-btn::after {
+      transform: translateY(-50%) rotate(180deg); margin-top: -3px;
+    }
+    .filtro-custom-btn:hover, .filtro-custom.open .filtro-custom-btn {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+    }
+    .filtro-custom-dropdown {
+      display: none; position: absolute; top: calc(100% + 6px); left: 0;
+      min-width: 100%; background: var(--white); border-radius: 12px;
+      box-shadow: 0 8px 28px rgba(23,60,74,0.14); z-index: 50;
+      padding: 6px; border: 1.5px solid rgba(147,215,223,0.2);
+      animation: dropIn 0.14s ease;
+    }
+    @keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+    .filtro-custom.open .filtro-custom-dropdown { display: block; }
+    .filtro-custom-option {
+      padding: 9px 12px; border-radius: 8px; cursor: pointer;
+      font-size: 0.86rem; color: var(--text); transition: background 0.14s;
+    }
+    .filtro-custom-option:hover { background: rgba(147,215,223,0.12); color: var(--mid); }
+    .filtro-custom-option.selected { background: rgba(76,190,190,0.1); color: var(--accent); font-weight: 600; }
 
     .btn-nova-turma {
       height: 40px; padding: 0 20px;
@@ -266,8 +301,95 @@
     }
     .btn-ver-turma:hover { background: var(--accent); color: white; }
 
-    /* ── Vazio ── */
-    .turmas-vazio {
+    .btn-gerir-turma {
+      height: 32px; padding: 0 14px; border: none;
+      border-radius: 8px; background: var(--grad); color: white;
+      font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      transition: opacity 0.18s, transform 0.15s;
+      box-shadow: 0 2px 8px rgba(87,219,189,0.3);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .btn-gerir-turma:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-gerir-turma svg { width: 13px; height: 13px; }
+
+    /* Modal de Gestão — mais largo para comportar as seções lado a lado */
+    .modal-gestao-wide {
+      width: 820px; max-width: calc(100vw - 40px);
+    }
+
+    /* Seções lado a lado no modal de gestão */
+    .gestao-grid-2col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 680px) {
+      .gestao-grid-2col { grid-template-columns: 1fr; }
+    }
+
+    .gestao-panel {
+      background: var(--bg); border-radius: 14px;
+      border: 1.5px solid rgba(147,215,223,0.2);
+      display: flex; flex-direction: column; gap: 0; overflow: hidden;
+    }
+    .gestao-panel-header {
+      padding: 14px 18px 12px;
+      border-bottom: 1.5px solid rgba(147,215,223,0.18);
+      background: var(--white);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .gestao-panel-icon {
+      width: 30px; height: 30px; border-radius: 8px;
+      background: var(--grad); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .gestao-panel-icon svg { width: 15px; height: 15px; color: white; }
+    .gestao-panel-title {
+      font-family: "Sora", sans-serif; font-size: 0.84rem;
+      font-weight: 800; color: var(--dark); letter-spacing: -0.01em;
+    }
+    .gestao-panel-body { padding: 14px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+
+    /* Custom select inside gestão */
+    .gestao-custom-select-wrap { position: relative; }
+    .gestao-custom-select-btn {
+      width: 100%; height: 40px; padding: 0 38px 0 12px;
+      border: 1.5px solid rgba(147,215,223,0.4); border-radius: 10px;
+      background: var(--white); color: var(--mid);
+      font: inherit; font-size: 0.86rem; cursor: pointer;
+      display: flex; align-items: center; text-align: left;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      transition: border-color 0.2s, box-shadow 0.2s; position: relative;
+    }
+    .gestao-custom-select-btn::after {
+      content: ''; position: absolute; right: 13px; top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent; border-top-color: var(--muted); margin-top: 3px;
+      transition: transform 0.18s;
+    }
+    .gestao-custom-select-wrap.open .gestao-custom-select-btn::after {
+      transform: translateY(-50%) rotate(180deg); margin-top: -3px;
+    }
+    .gestao-custom-select-btn:hover,
+    .gestao-custom-select-wrap.open .gestao-custom-select-btn {
+      border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1);
+    }
+    .gestao-custom-select-dropdown {
+      display: none; position: absolute; top: calc(100% + 5px); left: 0; right: 0;
+      background: var(--white); border-radius: 11px;
+      box-shadow: 0 8px 28px rgba(23,60,74,0.14); z-index: 60;
+      padding: 6px; border: 1.5px solid rgba(147,215,223,0.2);
+      max-height: 200px; overflow-y: auto;
+      animation: dropIn 0.13s ease;
+    }
+    .gestao-custom-select-wrap.open .gestao-custom-select-dropdown { display: block; }
+    .gestao-custom-select-option {
+      padding: 9px 12px; border-radius: 7px; cursor: pointer;
+      font-size: 0.84rem; color: var(--text); transition: background 0.13s;
+    }
+    .gestao-custom-select-option:hover { background: rgba(147,215,223,0.12); color: var(--mid); }
+    .gestao-custom-select-option.selected { background: rgba(76,190,190,0.1); color: var(--accent); font-weight: 600; }
+    .gestao-custom-select-no-results {
       grid-column: 1/-1;
       text-align: center; padding: 60px 20px;
       color: var(--muted); font-size: 0.95rem;
@@ -357,6 +479,100 @@
     .media-aprovada { background: rgba(87,219,189,0.15); color: #1a8c6e; border: 1px solid rgba(87,219,189,0.3); }
     .media-baixa    { background: rgba(255,107,107,0.1);  color: #c0392b; border: 1px solid rgba(255,107,107,0.25); }
     .media-neutra   { background: rgba(147,215,223,0.12); color: var(--muted); border: 1px solid rgba(147,215,223,0.25); }
+
+    /* ══════════════════════════════════════
+       GESTÃO DA TURMA (aba coordenador)
+    ══════════════════════════════════════ */
+    .gestao-section { margin-bottom: 28px; }
+    .gestao-section:last-child { margin-bottom: 0; }
+
+    .gestao-section-titulo {
+      font-family: "Sora", sans-serif;
+      font-size: 0.78rem; font-weight: 800; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    .gestao-add-row {
+      display: flex; gap: 10px; margin-bottom: 14px;
+    }
+    .gestao-add-row select {
+      flex: 1; height: 40px; border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 10px; background: var(--bg); color: var(--mid);
+      font: inherit; font-size: 0.88rem; padding: 0 12px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .gestao-add-row select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(76,190,190,0.1); }
+    .gestao-add-row select:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-gestao-add {
+      height: 40px; padding: 0 16px; border: none;
+      border-radius: 10px; background: var(--grad); color: white;
+      font: inherit; font-size: 0.84rem; font-weight: 700; cursor: pointer;
+      white-space: nowrap; flex-shrink: 0;
+      box-shadow: 0 3px 10px rgba(87,219,189,0.25);
+      transition: opacity 0.2s, transform 0.15s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn-gestao-add:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-gestao-add:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    .gestao-lista { display: flex; flex-direction: column; gap: 6px; }
+    .gestao-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 10px;
+      background: var(--bg); border: 1px solid rgba(147,215,223,0.2);
+      font-size: 0.88rem; color: var(--text); gap: 10px;
+    }
+    .gestao-item-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .gestao-item-nome { font-weight: 600; color: var(--mid); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gestao-item-sub  { font-size: 0.76rem; color: var(--muted); }
+
+    .btn-gestao-remove {
+      width: 28px; height: 28px; border-radius: 7px; border: none;
+      background: rgba(255,107,107,0.08); color: #c0392b; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background 0.18s;
+    }
+    .btn-gestao-remove:hover { background: rgba(255,107,107,0.18); }
+    .btn-gestao-remove svg { width: 14px; height: 14px; }
+
+    .gestao-materia-bloco {
+      background: var(--white); border: 1.5px solid rgba(147,215,223,0.2);
+      border-radius: 12px; margin-bottom: 10px; overflow: hidden;
+    }
+    .gestao-materia-header {
+      padding: 12px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      border-bottom: 1px solid rgba(147,215,223,0.15);
+    }
+    .gestao-materia-nome { font-weight: 700; color: var(--dark); font-size: 0.9rem; }
+    .gestao-materia-ch   { font-size: 0.75rem; color: var(--muted); margin-top: 1px; }
+    .gestao-materia-body { padding: 12px 16px; }
+    .gestao-materia-prof-row {
+      display: flex; gap: 8px; align-items: center; margin-bottom: 10px;
+    }
+    .gestao-materia-prof-row select {
+      flex: 1; height: 36px; border: 1.5px solid rgba(147,215,223,0.4);
+      border-radius: 8px; background: var(--bg); color: var(--mid);
+      font: inherit; font-size: 0.85rem; padding: 0 10px; outline: none;
+    }
+    .gestao-materia-prof-row select:focus { border-color: var(--accent); }
+    .btn-prof-add {
+      height: 36px; padding: 0 12px; border: none;
+      border-radius: 8px; background: var(--teal); color: white;
+      font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer;
+      white-space: nowrap; transition: opacity 0.2s;
+    }
+    .btn-prof-add:hover { opacity: 0.85; }
+    .gestao-prof-lista { display: flex; flex-direction: column; gap: 5px; }
+    .gestao-prof-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 7px 10px; background: rgba(147,215,223,0.08);
+      border-radius: 7px; font-size: 0.83rem; color: var(--text);
+    }
+    .gestao-vazio { font-size: 0.82rem; color: var(--muted); padding: 4px 0; }
 
     /* ══════════════════════════════════════
        MODAL NOVA TURMA
@@ -530,12 +746,27 @@
       <div id="secaoTurmas">
         <div class="turmas-toolbar">
           <div class="turmas-filtros">
-            <select class="filtro-select" id="filtroPeriodo">
-              <option value="">Todos os períodos</option>
-            </select>
-            <select class="filtro-select" id="filtroTurno">
-              <option value="">Todos os turnos</option>
-            </select>
+            <div class="filtro-custom" id="wrapFiltroPeriodo">
+              <button class="filtro-custom-btn" id="btnFiltroPeriodo" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                <span id="lblFiltroPeriodo">Todos os períodos</span>
+              </button>
+              <div class="filtro-custom-dropdown" id="dropFiltroPeriodo">
+                <!-- populado via JS -->
+              </div>
+            </div>
+            <div class="filtro-custom" id="wrapFiltroTurno">
+              <button class="filtro-custom-btn" id="btnFiltroTurno" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span id="lblFiltroTurno">Todos os turnos</span>
+              </button>
+              <div class="filtro-custom-dropdown" id="dropFiltroTurno">
+                <!-- populado via JS -->
+              </div>
+            </div>
+            <!-- hidden selects mantidos para compatibilidade com renderizarTurmas() -->
+            <select id="filtroPeriodo" style="display:none"></select>
+            <select id="filtroTurno"   style="display:none"></select>
           </div>
           <!-- Botão só aparece para coordenador/admin -->
           <button class="btn-nova-turma" id="btnNovaTurma" style="display:none">
@@ -656,6 +887,24 @@
     </div>
   </div>
 
+  <!-- ══════════════════════════════════════
+       MODAL: Gestão da turma (coordenador)
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalGestao">
+    <div class="modal modal-gestao-wide">
+      <div class="modal-header">
+        <div>
+          <div class="modal-titulo" id="gestaoTitulo">Gerir turma</div>
+          <div class="modal-subtitulo" id="gestaoSubtitulo">Gerencie alunos, matérias e professores</div>
+        </div>
+        <button class="modal-close" id="fecharGestao">✕</button>
+      </div>
+      <div class="modal-body" id="gestaoBody">
+        <!-- conteúdo injetado via JS -->
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     // ── Refs ──────────────────────────────────────────────
@@ -671,6 +920,12 @@
     const detalhesSubtitulo = document.getElementById("detalhesSubtitulo");
     const detalhesBody    = document.getElementById("detalhesBody");
     const fecharDetalhes  = document.getElementById("fecharDetalhes");
+
+    const modalGestao     = document.getElementById("modalGestao");
+    const gestaoTitulo    = document.getElementById("gestaoTitulo");
+    const gestaoSubtitulo = document.getElementById("gestaoSubtitulo");
+    const gestaoBody      = document.getElementById("gestaoBody");
+    const fecharGestao    = document.getElementById("fecharGestao");
 
     const modalNovaTurma  = document.getElementById("modalNovaTurma");
     const fecharNovaTurma = document.getElementById("fecharNovaTurma");
@@ -901,6 +1156,7 @@
       periodos.forEach(p => {
         filtroPeriodo.innerHTML += `<option value="${p}">${p}\u00ba per\u00edodo</option>`;
       });
+      atualizarDropdownPeriodo && atualizarDropdownPeriodo();
     }
 
     function popularFiltroTurno() {
@@ -913,6 +1169,7 @@
         filtroTurno.innerHTML += `<option value="${t.toLowerCase()}">${t}</option>`;
       });
       if (atual) filtroTurno.value = atual;
+      atualizarDropdownTurno && atualizarDropdownTurno();
     }
 
     function renderizarTurmas() {
@@ -970,7 +1227,13 @@
                 </svg>
                 ${turno}
               </span>
-              <button class="btn-ver-turma" data-id="${t.id}" data-nome="${t.nome}">Ver detalhes</button>
+              <div style="display:flex;gap:6px">
+                <button class="btn-ver-turma" data-id="${t.id}" data-nome="${t.nome}">Ver detalhes</button>
+                ${ehCoordenador(papelAtual) ? `<button class="btn-gerir-turma" data-id="${t.id}" data-nome="${t.nome}">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+                  Gerir
+                </button>` : ""}
+              </div>
             </div>
           </div>
         `;
@@ -979,7 +1242,8 @@
       // eventos nos cards e botões
       document.querySelectorAll(".turma-card").forEach(card => {
         card.addEventListener("click", e => {
-          if (e.target.closest(".btn-ver-turma")) return; // botão cuida disso
+          if (e.target.closest(".btn-ver-turma")) return;
+          if (e.target.closest(".btn-gerir-turma")) return;
           abrirDetalhes(card.dataset.id, card.querySelector(".turma-card-titulo").textContent);
         });
       });
@@ -987,6 +1251,12 @@
         btn.addEventListener("click", e => {
           e.stopPropagation();
           abrirDetalhes(btn.dataset.id, btn.dataset.nome);
+        });
+      });
+      document.querySelectorAll(".btn-gerir-turma").forEach(btn => {
+        btn.addEventListener("click", e => {
+          e.stopPropagation();
+          abrirGestao(btn.dataset.id, btn.dataset.nome);
         });
       });
     }
@@ -1009,8 +1279,23 @@
       await carregarAba("alunos", id);
     }
 
+    // ── Modal Gestão (coordenador) ────────────────────────
+    async function abrirGestao(id, nome) {
+      turmaDetalheId = id;
+      gestaoTitulo.textContent   = `Gerir: ${nome}`;
+      gestaoSubtitulo.textContent = "Alunos matriculados · Matérias e professores";
+      modalGestao.classList.add("show");
+      await carregarModalGestao(id);
+    }
+
     async function carregarAba(aba, id) {
       detalhesBody.innerHTML = `<div class="turmas-vazio">Carregando...</div>`;
+
+      if (aba === "gestao") {
+        await carregarAbaGestao(id);
+        return;
+      }
+
       try {
         const endpoint = aba === "alunos"
           ? `/api/turmas/${id}/alunos`
@@ -1069,6 +1354,321 @@
       } catch { detalhesBody.innerHTML = `<div class="turmas-vazio">Erro ao carregar dados.</div>`; }
     }
 
+    // ── Gestão (modal dedicado) ───────────────────────────
+    let todosUsuarios = [];
+    let todasMaterias = [];
+
+    async function carregarRecursosGestao() {
+      if (todosUsuarios.length && todasMaterias.length) return;
+      const [resU, resM] = await Promise.all([
+        fetch("/api/usuarios/disponiveis", { headers: { Authorization: `Bearer ${getToken()}` } }),
+        fetch("/api/materias/todas",       { headers: { Authorization: `Bearer ${getToken()}` } }),
+      ]);
+      if (resU.ok) { const d = await resU.json(); todosUsuarios = d.usuarios || []; }
+      if (resM.ok) { const d = await resM.json(); todasMaterias = d.materias || []; }
+    }
+
+    function buildCustomSelect(wrapId, options, placeholder) {
+      return `
+        <div class="gestao-custom-select-wrap" id="${wrapId}">
+          <button class="gestao-custom-select-btn" type="button" data-value="">
+            ${placeholder}
+          </button>
+          <div class="gestao-custom-select-dropdown">
+            <div class="gestao-custom-select-option selected" data-value="">${placeholder}</div>
+            ${options.map(o => `<div class="gestao-custom-select-option" data-value="${o.value}">${o.label}</div>`).join("")}
+          </div>
+        </div>`;
+    }
+
+    function initCustomSelect(wrapId, onChange) {
+      const wrap = document.getElementById(wrapId);
+      if (!wrap) return;
+      const btn  = wrap.querySelector(".gestao-custom-select-btn");
+      const drop = wrap.querySelector(".gestao-custom-select-dropdown");
+      btn.addEventListener("click", e => { e.stopPropagation(); wrap.classList.toggle("open"); });
+      drop.querySelectorAll(".gestao-custom-select-option").forEach(opt => {
+        opt.addEventListener("click", () => {
+          btn.dataset.value = opt.dataset.value;
+          btn.textContent   = opt.textContent;
+          drop.querySelectorAll(".gestao-custom-select-option").forEach(o => o.classList.remove("selected"));
+          opt.classList.add("selected");
+          wrap.classList.remove("open");
+          if (onChange) onChange(opt.dataset.value);
+        });
+      });
+      document.addEventListener("click", () => wrap.classList.remove("open"), { capture: false });
+    }
+
+    async function carregarModalGestao(turmaId) {
+      gestaoBody.innerHTML = `<div class="turmas-vazio">Carregando...</div>`;
+      await carregarRecursosGestao();
+
+      const [resAlunos, resMaterias] = await Promise.all([
+        fetch(`/api/turmas/${turmaId}/alunos`,   { headers: { Authorization: `Bearer ${getToken()}` } }),
+        fetch(`/api/turmas/${turmaId}/materias`,  { headers: { Authorization: `Bearer ${getToken()}` } }),
+      ]);
+
+      const alunosData   = resAlunos.ok   ? (await resAlunos.json()).alunos   || [] : [];
+      const materiasData = resMaterias.ok ? (await resMaterias.json()).materias || [] : [];
+
+      const alunoIds   = new Set(alunosData.map(a => a.id));
+      const materiaIds = new Set(materiasData.map(m => m.id));
+
+      const alunosDisp   = todosUsuarios.filter(u => u.papel === "aluno"     && !alunoIds.has(u.id));
+      const profesDisp   = todosUsuarios.filter(u => u.papel === "professor");
+      const materiasDisp = todasMaterias.filter(m => !materiaIds.has(m.id));
+
+      gestaoBody.innerHTML = `
+        <div class="gestao-grid-2col">
+
+          <!-- ── Painel Alunos ── -->
+          <div class="gestao-panel">
+            <div class="gestao-panel-header">
+              <div class="gestao-panel-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <div class="gestao-panel-title">Alunos matriculados</div>
+              </div>
+            </div>
+            <div class="gestao-panel-body">
+              ${buildCustomSelect("selAlunoWrap",
+                  alunosDisp.map(u => ({ value: u.id, label: `${u.nome}${u.email ? " — " + u.email : ""}` })),
+                  "Selecionar aluno...")}
+              <button class="btn-gestao-add" id="btnAlunoAdd" style="width:100%;justify-content:center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Matricular aluno
+              </button>
+              <div class="gestao-lista" id="gestaoAlunosLista">
+                ${alunosData.length === 0
+                  ? `<div class="gestao-vazio">Nenhum aluno matriculado.</div>`
+                  : alunosData.map(a => `
+                    <div class="gestao-item">
+                      <div class="gestao-item-info">
+                        <span class="gestao-item-nome">${a.nome}</span>
+                        <span class="gestao-item-sub">${a.email || ""}</span>
+                      </div>
+                      <button class="btn-gestao-remove" title="Remover" data-acao="remove-aluno" data-id="${a.id}">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    </div>`).join("")}
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Painel Matérias ── -->
+          <div class="gestao-panel">
+            <div class="gestao-panel-header">
+              <div class="gestao-panel-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              </div>
+              <div>
+                <div class="gestao-panel-title">Matérias e professores</div>
+              </div>
+            </div>
+            <div class="gestao-panel-body">
+              ${buildCustomSelect("selMateriaWrap",
+                  materiasDisp.map(m => ({ value: m.id, label: `${m.nome}${m.carga_horaria ? " — " + m.carga_horaria + "h" : ""}` })),
+                  "Selecionar matéria...")}
+              <button class="btn-gestao-add" id="btnMateriaAdd" style="width:100%;justify-content:center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                Vincular matéria
+              </button>
+              <div id="gestaoMateriasLista" style="display:flex;flex-direction:column;gap:8px">
+                ${materiasData.length === 0
+                  ? `<div class="gestao-vazio">Nenhuma matéria vinculada.</div>`
+                  : materiasData.map(m => {
+                      const profsAtuais = m.professores
+                        ? m.professores.split(", ").map(n => n.trim()).filter(Boolean)
+                        : [];
+                      const profsDispM = profesDisp.filter(p => !profsAtuais.includes(p.nome));
+                      return `
+                        <div class="gestao-materia-bloco" data-materia-id="${m.id}">
+                          <div class="gestao-materia-header">
+                            <div>
+                              <div class="gestao-materia-nome">${m.nome}</div>
+                              ${m.carga_horaria ? `<div class="gestao-materia-ch">${m.carga_horaria}h</div>` : ""}
+                            </div>
+                            <button class="btn-gestao-remove" title="Desvincular matéria" data-acao="remove-materia" data-id="${m.id}">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                            </button>
+                          </div>
+                          <div class="gestao-materia-body">
+                            <div class="gestao-custom-select-wrap" id="selProfWrap-${m.id}" style="margin-bottom:8px">
+                              <button class="gestao-custom-select-btn" type="button" data-value="" style="width:100%">Atribuir professor...</button>
+                              <div class="gestao-custom-select-dropdown">
+                                <div class="gestao-custom-select-option selected" data-value="">Atribuir professor...</div>
+                                ${profsDispM.map(p => `<div class="gestao-custom-select-option" data-value="${p.id}">${p.nome}</div>`).join("")}
+                              </div>
+                            </div>
+                            <button class="btn-prof-add" data-materia-id="${m.id}" style="width:100%;justify-content:center;display:flex;align-items:center;gap:5px">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                              Atribuir
+                            </button>
+                            <div class="gestao-prof-lista" id="profLista-${m.id}" style="margin-top:8px">
+                              ${profsAtuais.length === 0
+                                ? `<div class="gestao-vazio">Sem professor atribuído.</div>`
+                                : profsAtuais.map(nome => {
+                                    const profObj = profesDisp.find(p => p.nome === nome);
+                                    return `<div class="gestao-prof-item">
+                                      <span>${nome}</span>
+                                      ${profObj ? `<button class="btn-gestao-remove" style="width:24px;height:24px" title="Remover professor" data-acao="remove-prof" data-prof-id="${profObj.id}" data-materia-id="${m.id}">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                      </button>` : ""}
+                                    </div>`;
+                                  }).join("")}
+                            </div>
+                          </div>
+                        </div>`;
+                    }).join("")}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      // init custom selects
+      initCustomSelect("selAlunoWrap");
+      initCustomSelect("selMateriaWrap");
+      materiasData.forEach(m => initCustomSelect(`selProfWrap-${m.id}`));
+
+      // ── Eventos ──────────────────────────────────
+      // Matricular aluno
+      document.getElementById("btnAlunoAdd").addEventListener("click", async () => {
+        const wrap = document.getElementById("selAlunoWrap");
+        const alunoId = wrap?.querySelector(".gestao-custom-select-btn")?.dataset?.value;
+        if (!alunoId) { Swal.fire("Atenção", "Selecione um aluno.", "warning"); return; }
+
+        const btn = document.getElementById("btnAlunoAdd");
+        btn.disabled = true;
+        try {
+          const res = await fetch(`/api/turmas/${turmaId}/alunos`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+            body: JSON.stringify({ usuario_id: alunoId }),
+          });
+          const dados = await res.json();
+          if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao matricular.", "error"); return; }
+          Swal.fire({ icon:"success", title:"Matriculado!", timer:1400, showConfirmButton:false });
+          todosUsuarios = [];
+          await carregarModalGestao(turmaId);
+          await carregarTurmas();
+        } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        finally { btn.disabled = false; }
+      });
+
+      // Vincular matéria
+      document.getElementById("btnMateriaAdd").addEventListener("click", async () => {
+        const wrap = document.getElementById("selMateriaWrap");
+        const materiaId = wrap?.querySelector(".gestao-custom-select-btn")?.dataset?.value;
+        if (!materiaId) { Swal.fire("Atenção", "Selecione uma matéria.", "warning"); return; }
+
+        const btn = document.getElementById("btnMateriaAdd");
+        btn.disabled = true;
+        try {
+          const res = await fetch(`/api/turmas/${turmaId}/materias`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+            body: JSON.stringify({ materia_id: materiaId }),
+          });
+          const dados = await res.json();
+          if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao vincular.", "error"); return; }
+          Swal.fire({ icon:"success", title:"Vinculada!", timer:1400, showConfirmButton:false });
+          await carregarModalGestao(turmaId);
+          await carregarTurmas();
+        } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        finally { btn.disabled = false; }
+      });
+
+      // Atribuir professor
+      document.querySelectorAll(".btn-prof-add").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const mId  = btn.dataset.materiaId;
+          const wrap = document.getElementById(`selProfWrap-${mId}`);
+          const profId = wrap?.querySelector(".gestao-custom-select-btn")?.dataset?.value;
+          if (!profId) { Swal.fire("Atenção", "Selecione um professor.", "warning"); return; }
+
+          btn.disabled = true;
+          try {
+            const res = await fetch(`/api/turmas/${turmaId}/materias/${mId}/professor`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+              body: JSON.stringify({ professor_id: profId }),
+            });
+            const dados = await res.json();
+            if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao atribuir.", "error"); return; }
+            Swal.fire({ icon:"success", title:"Professor atribuído!", timer:1400, showConfirmButton:false });
+            await carregarModalGestao(turmaId);
+          } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+          finally { btn.disabled = false; }
+        });
+      });
+
+      // Remoções via delegação
+      gestaoBody.addEventListener("click", async e => {
+        const btn = e.target.closest("[data-acao]");
+        if (!btn) return;
+        const acao = btn.dataset.acao;
+
+        if (acao === "remove-aluno") {
+          const aId = btn.dataset.id;
+          const confirm = await Swal.fire({
+            icon:"warning", title:"Remover aluno?",
+            text:"O aluno será desmatriculado desta turma.",
+            showCancelButton:true, confirmButtonText:"Remover", cancelButtonText:"Cancelar",
+            confirmButtonColor:"#e74c3c"
+          });
+          if (!confirm.isConfirmed) return;
+          const res = await fetch(`/api/turmas/${turmaId}/alunos/${aId}`, {
+            method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
+          });
+          if (res.ok) {
+            Swal.fire({ icon:"success", title:"Aluno removido!", timer:1200, showConfirmButton:false });
+            todosUsuarios = [];
+            await carregarModalGestao(turmaId);
+            await carregarTurmas();
+          }
+        }
+
+        if (acao === "remove-materia") {
+          const mId = btn.dataset.id;
+          const confirm = await Swal.fire({
+            icon:"warning", title:"Desvincular matéria?",
+            text:"A matéria será removida desta turma.",
+            showCancelButton:true, confirmButtonText:"Remover", cancelButtonText:"Cancelar",
+            confirmButtonColor:"#e74c3c"
+          });
+          if (!confirm.isConfirmed) return;
+          const res = await fetch(`/api/turmas/${turmaId}/materias/${mId}`, {
+            method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
+          });
+          if (res.ok) {
+            Swal.fire({ icon:"success", title:"Matéria removida!", timer:1200, showConfirmButton:false });
+            await carregarModalGestao(turmaId);
+            await carregarTurmas();
+          }
+        }
+
+        if (acao === "remove-prof") {
+          const profId = btn.dataset.profId;
+          const mId    = btn.dataset.materiaId;
+          const res = await fetch(`/api/turmas/${turmaId}/materias/${mId}/professor/${profId}`, {
+            method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
+          });
+          if (res.ok) {
+            Swal.fire({ icon:"success", title:"Professor removido!", timer:1200, showConfirmButton:false });
+            await carregarModalGestao(turmaId);
+          }
+        }
+      }, { once: true });
+    }
+
+    // ── Aba Gestão (mantida por compatibilidade, redireciona para o modal) ──
+    async function carregarAbaGestao(turmaId) {
+      await carregarModalGestao(turmaId);
+    }
+
     document.querySelectorAll(".modal-tab").forEach(tab => {
       tab.addEventListener("click", async () => {
         if (tab.dataset.tab === tabAtiva) return;
@@ -1081,6 +1681,10 @@
 
     fecharDetalhes.addEventListener("click", () => modalDetalhes.classList.remove("show"));
     modalDetalhes.addEventListener("click", e => { if (e.target === modalDetalhes) modalDetalhes.classList.remove("show"); });
+
+    // ── Modal Gestão ──────────────────────────────────────
+    fecharGestao.addEventListener("click", () => modalGestao.classList.remove("show"));
+    modalGestao.addEventListener("click", e => { if (e.target === modalGestao) modalGestao.classList.remove("show"); });
 
     // ── Modal Nova Turma ──────────────────────────────────
     btnNovaTurma.addEventListener("click", () => modalNovaTurma.classList.add("show"));
@@ -1117,6 +1721,52 @@
         await carregarTurmas();
       } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     });
+
+    // ── Filtros custom ────────────────────────────────────
+    function initFiltroCustom(wrapId, btnId, dropId, lblId, hiddenSelectId) {
+      const wrap  = document.getElementById(wrapId);
+      const btn   = document.getElementById(btnId);
+      const drop  = document.getElementById(dropId);
+      if (!wrap || !btn || !drop) return;
+      btn.addEventListener("click", e => { e.stopPropagation(); wrap.classList.toggle("open"); });
+      drop.addEventListener("click", e => {
+        const opt = e.target.closest(".filtro-custom-option");
+        if (!opt) return;
+        const val = opt.dataset.value;
+        const lbl = document.getElementById(lblId);
+        if (lbl) lbl.textContent = opt.textContent;
+        drop.querySelectorAll(".filtro-custom-option").forEach(o => o.classList.remove("selected"));
+        opt.classList.add("selected");
+        wrap.classList.remove("open");
+        // sync hidden select
+        const sel = document.getElementById(hiddenSelectId);
+        if (sel) { sel.value = val; sel.dispatchEvent(new Event("change")); }
+      });
+      document.addEventListener("click", () => wrap.classList.remove("open"));
+    }
+
+    initFiltroCustom("wrapFiltroPeriodo","btnFiltroPeriodo","dropFiltroPeriodo","lblFiltroPeriodo","filtroPeriodo");
+    initFiltroCustom("wrapFiltroTurno",  "btnFiltroTurno",  "dropFiltroTurno",  "lblFiltroTurno",  "filtroTurno");
+
+    function atualizarDropdownPeriodo() {
+      const periodos = [...new Set(todasTurmas.map(t => t.periodo).filter(Boolean))].sort((a,b) => a-b);
+      const drop = document.getElementById("dropFiltroPeriodo");
+      if (!drop) return;
+      drop.innerHTML = `<div class="filtro-custom-option selected" data-value="">Todos os períodos</div>`;
+      periodos.forEach(p => {
+        drop.innerHTML += `<div class="filtro-custom-option" data-value="${p}">${p}º período</div>`;
+      });
+    }
+
+    function atualizarDropdownTurno() {
+      const turnos = [...new Set(todasTurmas.map(t => t.turno).filter(Boolean).map(t => t.trim()))].sort();
+      const drop = document.getElementById("dropFiltroTurno");
+      if (!drop) return;
+      drop.innerHTML = `<div class="filtro-custom-option selected" data-value="">Todos os turnos</div>`;
+      turnos.forEach(t => {
+        drop.innerHTML += `<div class="filtro-custom-option" data-value="${t.toLowerCase()}">${t}</div>`;
+      });
+    }
 
     // ── Filtros ───────────────────────────────────────────
     if (filtroPeriodo) filtroPeriodo.addEventListener("change", renderizarTurmas);

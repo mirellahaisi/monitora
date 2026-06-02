@@ -43,12 +43,6 @@
       align-items: flex-start;
     }
 
-    .sidebar {
-      height: calc(100vh - 24px);
-      min-height: auto;
-      flex-shrink: 0;
-    }
-
     .inicio-main {
       flex: 1;
       padding: 28px 36px;
@@ -302,7 +296,8 @@
   </style>
 </head>
 
-<body class="inicio-body">
+<body>
+<div class="inicio-body">
 
   {% include 'components/sidebar.html' %}
 
@@ -395,10 +390,6 @@
     const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
     const papelUsuario     = document.getElementById("papelUsuario");
     const avatarUsuario    = document.getElementById("avatarUsuario");
-    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-    const menuUsuario      = document.getElementById("menuUsuario");
-    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
-    const btnSair          = document.getElementById("btnSair");
 
     function getToken() {
       return localStorage.getItem("token");
@@ -412,11 +403,9 @@
 
     function formatarPapel(papel) {
       const p = String(papel).toLowerCase();
-
       if (p === "admin" || p === "adm" || p === "coordenador") return "Coordenador";
       if (p === "professor") return "Professor";
       if (p === "aluno") return "Aluno";
-
       return papel;
     }
 
@@ -462,22 +451,6 @@
           btnGestao.style.display = "block";
         }
       } catch { limparSessao(); window.location.href = "/"; }
-    }
-
-    async function sair() {
-      const confirmacao = await Swal.fire({
-        icon: "question",
-        title: "Deseja sair?",
-        text: "Sua sessão será encerrada.",
-        showCancelButton: true,
-        confirmButtonText: "Sim, sair",
-        cancelButtonText: "Cancelar"
-      });
-
-      if (!confirmacao.isConfirmed) return;
-
-      limparSessao();
-      window.location.href = "/";
     }
 
     function limparTabela() {
@@ -732,27 +705,12 @@
     dataAula.addEventListener("change", carregarAlunos);
     btnSalvarPresenca.addEventListener("click", salvarPresenca);
 
-    if (botaoMenuUsuario) {
-      botaoMenuUsuario.addEventListener("click", () => {
-        menuUsuario.classList.toggle("show");
-      });
-    }
-
-    if (btnEditarPerfil) {
-      btnEditarPerfil.addEventListener("click", () => {
-        window.location.href = "/perfil";
-      });
-    }
-
-    if (btnSair) {
-      btnSair.addEventListener("click", sair);
-    }
-
     carregarUsuarioLogado();
     carregarMaterias();
   </script>
 
   <script src="/static/js/darkmode.js"></script>
 
+</div>
 </body>
 </html>
