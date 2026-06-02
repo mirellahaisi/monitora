@@ -211,29 +211,7 @@
 
   <main class="inicio-main">
 
-    <!-- Header -->
-    <div class="inicio-header">
-      <div class="search-box">
-        <input type="text" placeholder="Pesquisar" id="inputBusca">
-      </div>
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div class="user-menu">
-          <button class="user-menu-button" id="btnMenuUsuario">
-            <div class="user-avatar" id="avatarUsuario">?</div>
-            <div class="user-text">
-              <span id="papelUsuario">—</span>
-              <strong id="nomeUsuarioTopo">Carregando...</strong>
-            </div>
-            <span class="user-arrow">▾</span>
-          </button>
-          <div class="user-dropdown" id="menuUsuario">
-            <button id="btnEditarPerfil">Meu perfil</button>
-            <button id="btnGestaoUsuarios" style="display:none">Gestão de usuários</button>
-            <button id="btnSair">Sair</button>
-          </div>
-        </div>
-      </div>
-    </div>
+    {% include 'components/header.html' %}
 
     <!-- Page heading -->
     <div class="page-heading">
@@ -906,18 +884,21 @@
   });
 
   // ─── Menu usuário ─────────────────────────────────
-  const botaoMenuUsuario = document.getElementById("btnMenuUsuario");
+  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
   const menuUsuarioEl    = document.getElementById("menuUsuario");
   if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuarioEl.classList.toggle("show"));
-  document.getElementById("btnEditarPerfil").addEventListener("click", () => window.location.href = "/perfil");
-  document.getElementById("btnSair").addEventListener("click", async () => {
+  const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+  if (btnEditarPerfil) btnEditarPerfil.addEventListener("click", () => window.location.href = "/perfil");
+  const btnSair = document.getElementById("btnSair");
+  if (btnSair) btnSair.addEventListener("click", async () => {
     const c = await Swal.fire({ icon:"question", title:"Deseja sair?", text:"Sua sessão será encerrada.", showCancelButton:true, confirmButtonText:"Sim, sair", cancelButtonText:"Cancelar" });
     if (!c.isConfirmed) return;
     limparSessao(); window.location.href = "/";
   });
 
   // ─── Busca local ──────────────────────────────────
-  document.getElementById("inputBusca").addEventListener("input", e => {
+  const _inputBusca = document.getElementById("inputBusca") || document.querySelector(".search-box input");
+  if (_inputBusca) _inputBusca.addEventListener("input", e => {
     const q = e.target.value.toLowerCase();
     document.querySelectorAll(".mensagem-card").forEach(card => {
       card.style.display = card.textContent.toLowerCase().includes(q) ? "" : "none";

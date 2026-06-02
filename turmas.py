@@ -292,6 +292,285 @@ def criar_turma(usuario):
             conexao.close()
 
 
+@turmas_bp.get("/api/usuarios/disponiveis")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def listar_usuarios_disponiveis(usuario):
+    """Retorna alunos e professores ativos para uso nos selects de gestão."""
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT u.id, u.nome, u.email, LOWER(p.descricao) AS papel
+            FROM usuario u
+            INNER JOIN papel p ON p.id = u.fk_papel_id
+            WHERE u.ativo = 1
+              AND LOWER(p.descricao) IN ('aluno', 'professor')
+            ORDER BY p.descricao DESC, u.nome ASC
+        """)
+
+        usuarios = cursor.fetchall()
+        return jsonify({"usuarios": usuarios}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao buscar usuários.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
+@turmas_bp.get("/api/materias/todas")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def listar_todas_materias(usuario):
+    """Retorna todas as matérias ativas."""
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT id, nome, codigo, carga_horaria
+            FROM materia
+            WHERE ativo = 1
+            ORDER BY nome ASC
+        """)
+
+        materias = cursor.fetchall()
+        return jsonify({"materias": materias}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao buscar matérias.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
+@turmas_bp.post("/api/turmas/<int:turma_id>/alunos")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def matricular_aluno(usuario, turma_id):
+    """Matricula um aluno numa turma (usuario_turma)."""
+    dados = request.get_json(silent=True) or {}
+    aluno_id = dados.get("usuario_id")
+    if not aluno_id:
+        return jsonify({"message": "Campo 'usuario_id' é obrigatório."}), 400
+
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            INSERT INTO usuario_turma (fk_usuario_id, fk_turma_id)
+            VALUES (%s, %s)
+        """, (aluno_id, turma_id))
+
+        conexao.commit()
+        return jsonify({"message": "Aluno matriculado com sucesso."}), 201
+
+    except mysql.connector.Error as erro:
+        if "Duplicate entry" in str(erro):
+            return jsonify({"message": "Aluno já matriculado nesta turma."}), 409
+        return jsonify({"message": "Erro ao matricular aluno.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
+@turmas_bp.delete("/api/turmas/<int:turma_id>/alunos/<int:aluno_id>")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def remover_aluno(usuario, turma_id, aluno_id):
+    """Remove um aluno de uma turma."""
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            DELETE FROM usuario_turma
+            WHERE fk_usuario_id = %s AND fk_turma_id = %s
+        """, (aluno_id, turma_id))
+
+        conexao.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Vínculo não encontrado."}), 404
+
+        return jsonify({"message": "Aluno removido da turma."}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao remover aluno.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
+@turmas_bp.post("/api/turmas/<int:turma_id>/materias")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def vincular_materia(usuario, turma_id):
+    """Vincula uma matéria a uma turma (materias_turma)."""
+    dados = request.get_json(silent=True) or {}
+    materia_id = dados.get("materia_id")
+    if not materia_id:
+        return jsonify({"message": "Campo 'materia_id' é obrigatório."}), 400
+
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            INSERT INTO materias_turma (fk_materia_id, fk_turma_id)
+            VALUES (%s, %s)
+        """, (materia_id, turma_id))
+
+        conexao.commit()
+        return jsonify({"message": "Matéria vinculada com sucesso."}), 201
+
+    except mysql.connector.Error as erro:
+        if "Duplicate entry" in str(erro):
+            return jsonify({"message": "Matéria já vinculada a esta turma."}), 409
+        return jsonify({"message": "Erro ao vincular matéria.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
+@turmas_bp.delete("/api/turmas/<int:turma_id>/materias/<int:materia_id>")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def desvincular_materia(usuario, turma_id, materia_id):
+    """Remove o vínculo de uma matéria com a turma."""
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            DELETE FROM materias_turma
+            WHERE fk_materia_id = %s AND fk_turma_id = %s
+        """, (materia_id, turma_id))
+
+        conexao.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Vínculo não encontrado."}), 404
+
+        return jsonify({"message": "Matéria removida da turma."}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao remover matéria.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
+@turmas_bp.post("/api/turmas/<int:turma_id>/materias/<int:materia_id>/professor")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def atribuir_professor(usuario, turma_id, materia_id):
+    """Atribui um professor a uma matéria (professor_materia)."""
+    dados = request.get_json(silent=True) or {}
+    professor_id = dados.get("professor_id")
+    if not professor_id:
+        return jsonify({"message": "Campo 'professor_id' é obrigatório."}), 400
+
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            INSERT INTO professor_materia (fk_usuario_id, fk_materia_id)
+            VALUES (%s, %s)
+        """, (professor_id, materia_id))
+
+        conexao.commit()
+        return jsonify({"message": "Professor atribuído com sucesso."}), 201
+
+    except mysql.connector.Error as erro:
+        if "Duplicate entry" in str(erro):
+            return jsonify({"message": "Professor já atribuído a esta matéria."}), 409
+        return jsonify({"message": "Erro ao atribuir professor.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
+@turmas_bp.delete("/api/turmas/<int:turma_id>/materias/<int:materia_id>/professor/<int:professor_id>")
+@token_obrigatorio
+@papel_obrigatorio("admin", "adm", "coordenador")
+def remover_professor_materia(usuario, turma_id, materia_id, professor_id):
+    """Remove o vínculo de um professor com uma matéria."""
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor()
+
+        cursor.execute("""
+            DELETE FROM professor_materia
+            WHERE fk_usuario_id = %s AND fk_materia_id = %s
+        """, (professor_id, materia_id))
+
+        conexao.commit()
+
+        if cursor.rowcount == 0:
+            return jsonify({"message": "Vínculo não encontrado."}), 404
+
+        return jsonify({"message": "Professor removido da matéria."}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao remover professor.", "erro": str(erro)}), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()
+
+
 @turmas_bp.delete("/api/turmas/<int:turma_id>")
 @token_obrigatorio
 @papel_obrigatorio("admin", "adm")
