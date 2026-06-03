@@ -4,13 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monitora+ | Perfil</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 
-
-
-<body class="inicio-body">
+<body class="inicio-body cal-page perfil-page">
 
 {% include 'components/sidebar.html' %}
 
@@ -21,6 +20,9 @@
       <h2>Perfil</h2>
 
       <form class="perfil-card" id="formPerfil" autocomplete="off">
+
+        <p class="perfil-section-label"><i class="ph ph-user"></i> Dados pessoais</p>
+
         <div class="perfil-row">
           <label class="perfil-field perfil-field-full">
             <span>Nome</span>
@@ -52,12 +54,14 @@
           </label>
         </div>
 
+        <p class="perfil-section-label" style="margin-top: 8px;"><i class="ph ph-lock"></i> Segurança</p>
+
         <div class="perfil-row">
           <label class="perfil-field">
             <span>Nova senha</span>
-            <input 
-              type="password" 
-              id="novaSenha" 
+            <input
+              type="password"
+              id="novaSenha"
               name="novaSenhaPerfil"
               autocomplete="new-password"
               placeholder="Preencha apenas se quiser alterar a senha"
@@ -66,8 +70,8 @@
         </div>
 
         <div class="perfil-actions">
-          <button type="submit" class="perfil-save-button">Salvar alterações</button>
           <button type="button" class="perfil-cancel-button" id="btnCancelar">Cancelar</button>
+          <button type="submit" class="perfil-save-button">Salvar alterações</button>
         </div>
       </form>
     </section>
@@ -78,38 +82,30 @@
   <script>
     const formPerfil = document.getElementById("formPerfil");
 
-    const nomeInput = document.getElementById("nome");
-    const emailInput = document.getElementById("email");
-    const telefoneInput = document.getElementById("telefone");
-    const dataNascimentoInput = document.getElementById("dataNascimento");
-    const cpfInput = document.getElementById("cpf");
-    const novaSenhaInput = document.getElementById("novaSenha");
+    const nomeInput          = document.getElementById("nome");
+    const emailInput         = document.getElementById("email");
+    const telefoneInput      = document.getElementById("telefone");
+    const dataNascimentoInput= document.getElementById("dataNascimento");
+    const cpfInput           = document.getElementById("cpf");
+    const novaSenhaInput     = document.getElementById("novaSenha");
+    const btnCancelar        = document.getElementById("btnCancelar");
 
-    const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
-    const papelUsuario = document.getElementById("papelUsuario");
-    const avatarUsuario = document.getElementById("avatarUsuario");
-
+    // Elementos do header/sidebar — injetados pelos includes; guards evitam erros
+    const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
+    const papelUsuario     = document.getElementById("papelUsuario");
+    const avatarUsuario    = document.getElementById("avatarUsuario");
     const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-    const menuUsuario = document.getElementById("menuUsuario");
-    const btnSair = document.getElementById("btnSair");
-    const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-    const btnGestaoUsuarios = document.getElementById("btnGestaoUsuarios");
-    const btnCancelar = document.getElementById("btnCancelar");
+    const menuUsuario      = document.getElementById("menuUsuario");
+    const btnSair          = document.getElementById("btnSair");
+    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
+    const btnGestaoUsuarios= document.getElementById("btnGestaoUsuarios");
 
+    // ── Helpers ────────────────────────────────────────────────────────
     function formatarPapel(papel) {
-      const papelNormalizado = String(papel).toLowerCase();
-
-      if (
-        papelNormalizado === "admin" ||
-        papelNormalizado === "adm" ||
-        papelNormalizado === "coordenador"
-      ) {
-        return "Coordenador";
-      }
-
-      if (papelNormalizado === "professor") return "Professor";
-      if (papelNormalizado === "aluno") return "Aluno";
-
+      const n = String(papel).toLowerCase();
+      if (n === "admin" || n === "adm" || n === "coordenador") return "Coordenador";
+      if (n === "professor") return "Professor";
+      if (n === "aluno") return "Aluno";
       return papel;
     }
 
@@ -119,141 +115,93 @@
       localStorage.removeItem("sessaoExpiracao");
     }
 
-    function obterToken() {
-      return localStorage.getItem("token");
-    }
+    function obterToken()  { return localStorage.getItem("token"); }
 
-    function tokenExpirado(sessaoExpiracao) {
-      const agora = Math.floor(Date.now() / 1000);
-      return Number(sessaoExpiracao) < agora;
+    function tokenExpirado(exp) {
+      return Number(exp) < Math.floor(Date.now() / 1000);
     }
 
     function verificarTokenFront() {
       const token = obterToken();
-      const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
-
-      if (!token || !sessaoExpiracao || tokenExpirado(sessaoExpiracao)) {
+      const exp   = localStorage.getItem("sessaoExpiracao");
+      if (!token || !exp || tokenExpirado(exp)) {
         limparSessaoFront();
         window.location.href = "/";
         return false;
       }
-
       return true;
     }
 
+    function somenteNumeros(v)  { return v.replace(/\D/g, ""); }
+
+    function formatarCpf(v) {
+      const n = somenteNumeros(v).slice(0, 11);
+      if (n.length <= 3) return n;
+      if (n.length <= 6) return `${n.slice(0,3)}.${n.slice(3)}`;
+      if (n.length <= 9) return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6)}`;
+      return `${n.slice(0,3)}.${n.slice(3,6)}.${n.slice(6,9)}-${n.slice(9)}`;
+    }
+
+    function formatarTelefone(v) {
+      let n = v.replace(/\D/g, "").slice(0, 11);
+      if (n.length <= 2)  return n;
+      if (n.length <= 6)  return `(${n.slice(0,2)})${n.slice(2)}`;
+      if (n.length <= 10) return `(${n.slice(0,2)})${n.slice(2,6)}-${n.slice(6)}`;
+      return `(${n.slice(0,2)})${n.slice(2,7)}-${n.slice(7)}`;
+    }
+
+    function telefoneValido(v) {
+      const n = v.replace(/\D/g, "");
+      return n.length === 10 || n.length === 11;
+    }
+
+    function emailValido(e) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+    }
+
+    // ── Preenche dados no topo (header component) ──────────────────────
     function preencherTopo(usuario) {
-      nomeUsuarioTopo.textContent = usuario.nome;
-      papelUsuario.textContent = formatarPapel(usuario.papel);
-      avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
 
-      // Mostrar botão Gestão de usuários apenas para coordenadores
-      if (usuario.papel.toLowerCase() === 'coordenador' || usuario.papel.toLowerCase() === 'admin' || usuario.papel.toLowerCase() === 'adm') {
-        document.getElementById("btnGestaoUsuarios").style.display = "block";
+      const isCoord = ["coordenador","admin","adm"].includes(usuario.papel.toLowerCase());
+      if (isCoord && btnGestaoUsuarios) {
+        btnGestaoUsuarios.style.display = "block";
       }
     }
 
-    function somenteNumeros(valor) {
-      return valor.replace(/\D/g, "");
-    }
-
-    function formatarCpf(valor) {
-      const numeros = somenteNumeros(valor).slice(0, 11);
-
-      if (numeros.length <= 3) {
-        return numeros;
-      }
-
-      if (numeros.length <= 6) {
-        return `${numeros.slice(0, 3)}.${numeros.slice(3)}`;
-      }
-
-      if (numeros.length <= 9) {
-        return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6)}`;
-      }
-
-      return `${numeros.slice(0, 3)}.${numeros.slice(3, 6)}.${numeros.slice(6, 9)}-${numeros.slice(9)}`;
-    }
-
-    function formatarTelefone(valor) {
-      let numeros = valor.replace(/\D/g, "").slice(0, 11);
-
-      if (numeros.length <= 2) {
-        return numeros;
-      }
-
-      if (numeros.length <= 6) {
-        return `(${numeros.slice(0, 2)})${numeros.slice(2)}`;
-      }
-
-      if (numeros.length <= 10) {
-        return `(${numeros.slice(0, 2)})${numeros.slice(2, 6)}-${numeros.slice(6)}`;
-      }
-
-      return `(${numeros.slice(0, 2)})${numeros.slice(2, 7)}-${numeros.slice(7)}`;
-    }
-
-    function telefoneValido(telefone) {
-      const numeros = telefone.replace(/\D/g, "");
-      return numeros.length === 10 || numeros.length === 11;
-    }
-
-    function emailValido(email) {
-      const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      return regex.test(email);
-    }
-
+    // ── Validações ─────────────────────────────────────────────────────
     function validarCampos() {
-      const nome = nomeInput.value.trim();
-      const email = emailInput.value.trim();
+      const nome     = nomeInput.value.trim();
+      const email    = emailInput.value.trim();
       const telefone = telefoneInput.value.trim();
 
       if (nome.length < 3) {
-        Swal.fire({
-          icon: "warning",
-          title: "Nome inválido",
-          text: "O nome deve ter pelo menos 3 letras."
-        });
-
+        Swal.fire({ icon:"warning", title:"Nome inválido", text:"O nome deve ter pelo menos 3 letras." });
         return false;
       }
-
       if (!emailValido(email)) {
-        Swal.fire({
-          icon: "warning",
-          title: "E-mail inválido",
-          text: "Digite um e-mail válido, contendo @ e domínio."
-        });
-
+        Swal.fire({ icon:"warning", title:"E-mail inválido", text:"Digite um e-mail válido, contendo @ e domínio." });
         return false;
       }
-
       if (!telefoneValido(telefone)) {
-        Swal.fire({
-          icon: "warning",
-          title: "Telefone inválido",
-          text: "Digite um telefone com DDD, no formato (xx)xxxxx-xxxx."
-        });
-
+        Swal.fire({ icon:"warning", title:"Telefone inválido", text:"Digite um telefone com DDD, no formato (xx)xxxxx-xxxx." });
         return false;
       }
-
       if (!dataNascimentoInput.value) {
-        Swal.fire({
-          icon: "warning",
-          title: "Data obrigatória",
-          text: "Informe a data de nascimento."
-        });
-
+        Swal.fire({ icon:"warning", title:"Data obrigatória", text:"Informe a data de nascimento." });
         return false;
       }
-
       return true;
     }
 
+    // ── Máscara telefone ───────────────────────────────────────────────
     telefoneInput.addEventListener("input", function() {
       telefoneInput.value = formatarTelefone(telefoneInput.value);
     });
 
+    // ── Carrega perfil via API ─────────────────────────────────────────
     async function carregarPerfil() {
       if (!verificarTokenFront()) return;
 
@@ -262,9 +210,7 @@
       try {
         const resposta = await fetch("/api/perfil", {
           method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
+          headers: { "Authorization": `Bearer ${token}` }
         });
 
         if (!resposta.ok) {
@@ -273,95 +219,74 @@
           return;
         }
 
-        const dados = await resposta.json();
+        const dados   = await resposta.json();
         const usuario = dados.usuario;
 
         preencherTopo(usuario);
 
-        nomeInput.value = usuario.nome || "";
-        emailInput.value = usuario.email || "";
-        telefoneInput.value = formatarTelefone(usuario.telefone || "");
-        cpfInput.value = formatarCpf(usuario.cpf || "");
+        nomeInput.value           = usuario.nome            || "";
+        emailInput.value          = usuario.email           || "";
+        telefoneInput.value       = formatarTelefone(usuario.telefone || "");
+        cpfInput.value            = formatarCpf(usuario.cpf || "");
         dataNascimentoInput.value = usuario.data_nascimento || "";
-        novaSenhaInput.value = "";
+        novaSenhaInput.value      = "";
 
       } catch (erro) {
         console.error("Erro ao carregar perfil:", erro);
-
-        Swal.fire({
-          icon: "error",
-          title: "Erro",
-          text: "Não foi possível carregar os dados do perfil."
-        });
+        Swal.fire({ icon:"error", title:"Erro", text:"Não foi possível carregar os dados do perfil." });
       }
     }
 
+    // ── Submit ─────────────────────────────────────────────────────────
     formPerfil.addEventListener("submit", async function(event) {
       event.preventDefault();
-
       if (!verificarTokenFront()) return;
-
       if (!validarCampos()) return;
 
       let senhaAtual = "";
       const novaSenha = novaSenhaInput.value.trim();
 
       if (novaSenha) {
-        const respostaSenha = await Swal.fire({
+        const res = await Swal.fire({
           title: "Confirme sua senha atual",
-          text: "Para alterar a senha, digite sua senha atual.",
+          text:  "Para alterar a senha, digite sua senha atual.",
           input: "password",
           inputPlaceholder: "Senha atual",
-          inputAttributes: {
-            autocapitalize: "off",
-            autocorrect: "off"
-          },
+          inputAttributes: { autocapitalize:"off", autocorrect:"off" },
           showCancelButton: true,
           confirmButtonText: "Confirmar",
-          cancelButtonText: "Cancelar",
-          inputValidator: (value) => {
-            if (!value) {
-              return "Digite sua senha atual para continuar.";
-            }
-          }
+          cancelButtonText:  "Cancelar",
+          inputValidator: (v) => !v ? "Digite sua senha atual para continuar." : null
         });
-
-        if (!respostaSenha.isConfirmed) {
-          return;
-        }
-
-        senhaAtual = respostaSenha.value;
+        if (!res.isConfirmed) return;
+        senhaAtual = res.value;
       }
 
       const confirmacao = await Swal.fire({
         icon: "question",
         title: "Salvar alterações?",
-        text: "Deseja realmente alterar os dados do perfil?",
+        text:  "Deseja realmente alterar os dados do perfil?",
         showCancelButton: true,
         confirmButtonText: "Sim, salvar",
-        cancelButtonText: "Cancelar"
+        cancelButtonText:  "Cancelar"
       });
-
-      if (!confirmacao.isConfirmed) {
-        return;
-      }
+      if (!confirmacao.isConfirmed) return;
 
       const token = obterToken();
-
       const dadosPerfil = {
-        nome: nomeInput.value.trim(),
-        email: emailInput.value.trim(),
-        telefone: somenteNumeros(telefoneInput.value),
-        data_nascimento: dataNascimentoInput.value,
-        senha_atual: senhaAtual,
-        nova_senha: novaSenha
+        nome:           nomeInput.value.trim(),
+        email:          emailInput.value.trim(),
+        telefone:       somenteNumeros(telefoneInput.value),
+        data_nascimento:dataNascimentoInput.value,
+        senha_atual:    senhaAtual,
+        nova_senha:     novaSenha
       };
 
       try {
         const resposta = await fetch("/api/perfil", {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type":  "application/json",
             "Authorization": `Bearer ${token}`
           },
           body: JSON.stringify(dadosPerfil)
@@ -370,45 +295,33 @@
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-          Swal.fire({
-            icon: "error",
-            title: "Erro",
-            text: dados.message || "Não foi possível atualizar o perfil."
-          });
-
+          Swal.fire({ icon:"error", title:"Erro", text: dados.message || "Não foi possível atualizar o perfil." });
           return;
         }
 
-        localStorage.setItem("token", dados.token);
-        localStorage.setItem("usuario", JSON.stringify(dados.usuario));
-        localStorage.setItem("sessaoExpiracao", String(dados.sessao.expiracao));
+        localStorage.setItem("token",          dados.token);
+        localStorage.setItem("usuario",        JSON.stringify(dados.usuario));
+        localStorage.setItem("sessaoExpiracao",String(dados.sessao.expiracao));
 
         novaSenhaInput.value = "";
-
         preencherTopo(dados.usuario);
 
         Swal.fire({
           icon: "success",
           title: "Perfil atualizado!",
-          text: dados.message,
+          text:  dados.message,
           timer: 1500,
           showConfirmButton: false,
-          didClose: () => {
-            window.location.href = "/inicio";
-          }
+          didClose: () => { window.location.href = "/inicio"; }
         });
 
       } catch (erro) {
         console.error("Erro ao atualizar perfil:", erro);
-
-        Swal.fire({
-          icon: "error",
-          title: "Erro inesperado",
-          text: "Não foi possível conectar ao servidor."
-        });
+        Swal.fire({ icon:"error", title:"Erro inesperado", text:"Não foi possível conectar ao servidor." });
       }
     });
 
+    // ── Sair ───────────────────────────────────────────────────────────
     async function sair() {
       const confirmacao = await Swal.fire({
         icon: "question",
@@ -416,20 +329,16 @@
         text: "Sua sessão será encerrada.",
         showCancelButton: true,
         confirmButtonText: "Sim, sair",
-        cancelButtonText: "Cancelar"
+        cancelButtonText:  "Cancelar"
       });
-
       if (!confirmacao.isConfirmed) return;
 
       const token = obterToken();
-
       try {
         if (token) {
           await fetch("/api/logout", {
             method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`
-            }
+            headers: { "Authorization": `Bearer ${token}` }
           });
         }
       } catch (erro) {
@@ -440,27 +349,26 @@
       window.location.href = "/";
     }
 
-    botaoMenuUsuario.addEventListener("click", function() {
-      menuUsuario.classList.toggle("show");
-    });
+    // ── Eventos do header/menu (com guards) ────────────────────────────
+    if (botaoMenuUsuario) {
+      botaoMenuUsuario.addEventListener("click", function() {
+        menuUsuario.classList.toggle("show");
+      });
+    }
 
     window.addEventListener("click", function(event) {
-      const clicouDentroMenu = event.target.closest(".user-menu");
-
-      if (!clicouDentroMenu) {
+      if (!event.target.closest(".user-menu") && menuUsuario) {
         menuUsuario.classList.remove("show");
       }
     });
 
-    btnSair.addEventListener("click", sair);
-
-    btnEditarPerfil.addEventListener("click", function() {
-      menuUsuario.classList.remove("show");
+    if (btnSair)          btnSair.addEventListener("click", sair);
+    if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click", function() {
+      if (menuUsuario) menuUsuario.classList.remove("show");
       window.location.href = "/perfil";
     });
-
-    btnGestaoUsuarios.addEventListener("click", function() {
-      menuUsuario.classList.remove("show");
+    if (btnGestaoUsuarios) btnGestaoUsuarios.addEventListener("click", function() {
+      if (menuUsuario) menuUsuario.classList.remove("show");
       window.location.href = "/gestao-usuarios";
     });
 
@@ -472,10 +380,11 @@
       novaSenhaInput.value = "";
     });
 
+    // ── Init ───────────────────────────────────────────────────────────
     carregarPerfil();
   </script>
 
   <script src="/static/js/darkmode.js"></script>
-  
+
 </body>
 </html>
