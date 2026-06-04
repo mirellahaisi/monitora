@@ -26,11 +26,17 @@
             <span class="nav-title">Monitora<span>+</span></span>
         </a>
 
-        <ul class="nav-links">
-            <li><a href="#funcionalidades">Funcionalidades</a></li>
-            <li><a href="#equipe">Equipe</a></li>
-            <a href="/login" class="nav-cta">Acessar sistema →</a>
-        </ul>
+        <div class="nav-actions">
+            <button class="btn-dark-mode nav-theme-toggle" id="btnDarkMode" type="button" title="Alternar tema" aria-label="Ativar modo escuro" aria-pressed="false">
+                <span id="iconeDarkMode" data-theme-icon-text aria-hidden="true">🌙</span>
+            </button>
+
+            <ul class="nav-links">
+                <li><a href="#funcionalidades">Funcionalidades</a></li>
+                <li><a href="#equipe">Equipe</a></li>
+                <li><a href="/login" class="nav-cta">Acessar sistema →</a></li>
+            </ul>
+        </div>
     </nav>
 
     <!-- HERO -->
@@ -259,6 +265,7 @@
         <div class="footer-copy">© 2026 · Todos os direitos reservados</div>
     </footer>
 
+    <script src="/static/js/darkmode.js"></script>
 </body>
 
 </html>
