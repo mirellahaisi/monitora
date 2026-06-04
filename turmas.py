@@ -47,12 +47,14 @@ def listar_turmas(usuario):
                     t.semestre,
                     t.capacidade,
                     COUNT(DISTINCT ut.fk_usuario_id) AS total_alunos,
-                    GROUP_CONCAT(DISTINCT m.nome ORDER BY m.nome SEPARATOR ', ') AS materias
+                    GROUP_CONCAT(DISTINCT m.nome ORDER BY m.nome SEPARATOR ', ') AS materias,
+                    ROUND(AVG(n.valor), 2) AS media_geral
                 FROM turma t
                 INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
                 INNER JOIN professor_materia pm ON pm.fk_materia_id = mt.fk_materia_id
                 LEFT JOIN usuario_turma ut ON ut.fk_turma_id = t.id
                 LEFT JOIN materia m ON m.id = mt.fk_materia_id AND m.ativo = 1
+                LEFT JOIN nota n ON n.fk_usuario_id = ut.fk_usuario_id
                 WHERE pm.fk_usuario_id = %s AND t.ativo = 1
                 GROUP BY t.id, t.nome, t.codigo, t.periodo, t.turno, t.ano, t.semestre, t.capacidade
                 ORDER BY t.periodo, t.nome
@@ -69,17 +71,22 @@ def listar_turmas(usuario):
                     t.semestre,
                     t.capacidade,
                     COUNT(DISTINCT ut.fk_usuario_id) AS total_alunos,
-                    GROUP_CONCAT(DISTINCT m.nome ORDER BY m.nome SEPARATOR ', ') AS materias
+                    GROUP_CONCAT(DISTINCT m.nome ORDER BY m.nome SEPARATOR ', ') AS materias,
+                    ROUND(AVG(n.valor), 2) AS media_geral
                 FROM turma t
                 LEFT JOIN materias_turma mt ON mt.fk_turma_id = t.id
                 LEFT JOIN usuario_turma ut ON ut.fk_turma_id = t.id
                 LEFT JOIN materia m ON m.id = mt.fk_materia_id AND m.ativo = 1
+                LEFT JOIN nota n ON n.fk_usuario_id = ut.fk_usuario_id
                 WHERE t.ativo = 1
                 GROUP BY t.id, t.nome, t.codigo, t.periodo, t.turno, t.ano, t.semestre, t.capacidade
                 ORDER BY t.periodo, t.nome
             """)
 
         turmas = cursor.fetchall()
+        for t in turmas:
+            if t.get("media_geral") is not None:
+                t["media_geral"] = float(t["media_geral"])
         return jsonify({"turmas": turmas}), 200
 
     except mysql.connector.Error as erro:

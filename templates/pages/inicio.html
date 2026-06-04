@@ -1,188 +1,903 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitora+ | Página Inicial</title>
+  <title>Monitora+ | Início</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
 </head>
 
-
-<body class="inicio-body cal-page">
-
+<body class="inicio-body">
 {% include 'components/sidebar.html' %}
+<main class="inicio-main">
+  {% include 'components/header.html' %}
 
-  <main class="inicio-main">
-    {% include 'components/header.html' %}
+  <section class="notas-content">
 
-    <section class="inicio-content">
-      <h2 id="saudacaoUsuario">Olá, Bem-vindo(a) ao Monitora+</h2>
-    </section>
-  </main>
+    <!-- ══════════════════════════════════════════
+         VIEW: ALUNO
+    ══════════════════════════════════════════ -->
+    <div class="role-view" id="viewAluno">
 
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+      <div class="dv-hero dv-hero--aluno dv-mb16">
+        <div class="dv-hero-badge"><span class="dv-badge-dot"></span><span id="alunoHeroBadge">Aluno</span></div>
+        <div class="dv-hero-body">
+          <div class="dv-hero-text">
+            <span class="dv-turno" id="alunoTurno">Bem-vindo,</span>
+            <h1>Acompanhe seu<br>desempenho e <em>evolua</em></h1>
+            <p>Suas notas, frequência e agenda reunidos num só painel</p>
+          </div>
+          <div class="dv-hero-pills">
+            <div class="dv-hero-pill"><i class="ph ph-books"></i><span><strong id="alunoHeroDisc">—</strong> disciplinas</span></div>
+            <div class="dv-hero-pill"><i class="ph ph-chart-line-up"></i><span>Média <strong id="alunoHeroMed">—</strong></span></div>
+            <div class="dv-hero-pill"><i class="ph ph-check-square"></i><span>Freq. <strong id="alunoHeroFreq">—</strong></span></div>
+          </div>
+        </div>
+      </div>
 
-  <script>
-    const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
-    const papelUsuario = document.getElementById("papelUsuario");
-    const saudacaoUsuario = document.getElementById("saudacaoUsuario");
-    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-    const menuUsuario = document.getElementById("menuUsuario");
-    const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-    const btnSair = document.getElementById("btnSair");
-    const avatarUsuario = document.getElementById("avatarUsuario");
-    const btnGestaoUsuarios = document.getElementById("btnGestaoUsuarios");
+      <div class="dv-stats dv-stats--3 dv-mb16">
+        <div class="dv-stat c-blue">
+          <div class="dv-stat-top">
+            <div class="dv-stat-icon si-blue"><i class="ph ph-books"></i></div>
+            <span class="dv-pill dp-neu" id="alunoDiscPill">semestre</span>
+          </div>
+          <div class="dv-stat-val" id="alunoStatDisc">—</div>
+          <div class="dv-stat-lbl">Disciplinas cursando</div>
+        </div>
+        <div class="dv-stat c-green">
+          <div class="dv-stat-top">
+            <div class="dv-stat-icon si-green"><i class="ph ph-trend-up"></i></div>
+            <span class="dv-pill dp-neu" id="alunoMedPill">—</span>
+          </div>
+          <div class="dv-stat-val" id="alunoStatMed">—</div>
+          <div class="dv-stat-lbl">Média geral</div>
+        </div>
+        <div class="dv-stat c-orange">
+          <div class="dv-stat-top">
+            <div class="dv-stat-icon si-orange"><i class="ph ph-check-square"></i></div>
+            <span class="dv-pill dp-neu" id="alunoFreqPill">—</span>
+          </div>
+          <div class="dv-stat-val" id="alunoStatFreq">—</div>
+          <div class="dv-stat-lbl">Frequência geral</div>
+        </div>
+      </div>
+
+      <!-- Notas | Frequência + Desempenho -->
+      <div class="dv-gw">
+        <div class="dv-card" style="display:flex;flex-direction:column;height:100%">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-blue"><i class="ph ph-star"></i></div><span class="dv-card-title">Notas por Matéria</span></div>
+            <a class="dv-card-link" href="/notas">Ver todas <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body" style="flex:1;display:flex;flex-direction:column">
+            <div class="dv-prog-list" id="alunoNotas">
+              <div class="dv-skel dv-skel-ln tall"></div>
+              <div class="dv-skel dv-skel-ln tall"></div>
+              <div class="dv-skel dv-skel-ln tall short"></div>
+            </div>
+            <!-- Rodapé resumo — preenche espaço restante -->
+            <div id="alunoNotasRodape" style="flex:1;display:flex;align-items:flex-end;padding-top:14px;border-top:1px solid #f1f5f9;margin-top:14px">
+              <div style="width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px">
+                <span style="font-size:.75rem;color:#64748b">Média geral das disciplinas</span>
+                <span id="alunoNotasRodapeMed" style="font-family:'Sora',sans-serif;font-size:1.15rem;font-weight:900;color:#0f172a">—</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dv-card" style="display:flex;flex-direction:column;height:100%">
+            <div class="dv-card-head">
+              <div class="dv-card-hl"><div class="dv-card-ico si-blue"><i class="ph ph-chart-bar"></i></div><span class="dv-card-title">Desempenho</span></div>
+              <div class="dv-media-box" style="background:linear-gradient(135deg,#0ea5e9,#0284c7)">
+                <div class="mv" id="alunoMedBox">—</div>
+                <div class="ml">média</div>
+              </div>
+            </div>
+            <div class="dv-card-body dv-card-body--bottom" style="flex:1;padding-top:10px;padding-bottom:16px">
+              <div class="dv-bars" id="alunoChartBars" style="flex:1;height:auto;min-height:80px"><div style="color:#94a3b8;font-size:.73rem;width:100%;text-align:center;align-self:center">Carregando...</div></div>
+              <div class="dv-bars-lbl" id="alunoChartLbls" style="margin-top:8px"></div>
+            </div>
+          </div>
+      </div>
+
+      <!-- Agenda + Mensagens -->
+      <div class="dv-g2">
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-teal"><i class="ph ph-calendar-dots"></i></div><span class="dv-card-title">Agenda da Semana</span></div>
+            <a class="dv-card-link" href="/calendario">Calendário <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body">
+            <div class="dv-week" id="alunoAgenda">
+              <div class="dv-empty" style="grid-column:1/-1"><i class="ph ph-spinner"></i>Carregando...</div>
+            </div>
+          </div>
+        </div>
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-blue"><i class="ph ph-bell-ringing"></i></div><span class="dv-card-title">Mensagens Recentes</span></div>
+            <a class="dv-card-link" href="/mensagens">Ver todas <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body" style="padding:6px 8px">
+            <div class="dv-list" id="alunoMensagens">
+              <div class="dv-empty"><i class="ph ph-spinner"></i>Carregando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /viewAluno -->
 
 
-    function formatarPapel(papel) {
-      const papelNormalizado = String(papel).toLowerCase();
+    <!-- ══════════════════════════════════════════
+         VIEW: PROFESSOR
+    ══════════════════════════════════════════ -->
+    <div class="role-view" id="viewProfessor">
 
-      if (
-        papelNormalizado === "admin" ||
-        papelNormalizado === "adm" ||
-        papelNormalizado === "coordenador"
-      ) {
-        return "Coordenador";
-      }
+      <div class="dv-hero dv-hero--prof dv-mb16">
+        <div class="dv-hero-badge"><span class="dv-badge-dot"></span><span>Professor</span></div>
+        <div class="dv-hero-body">
+          <div class="dv-hero-text">
+            <span class="dv-turno" id="profTurno">Bem-vindo,</span>
+            <h1>Gerencie turmas<br>e <em>acompanhe</em> o progresso</h1>
+            <p>Notas, frequências e alertas das suas turmas em tempo real</p>
+          </div>
+          <div class="dv-hero-pills">
+            <div class="dv-hero-pill"><i class="ph ph-chalkboard-teacher"></i><span><strong id="profHeroTurmas">—</strong> turmas ativas</span></div>
+            <div class="dv-hero-pill"><i class="ph ph-student"></i><span><strong id="profHeroAlunos">—</strong> alunos</span></div>
+            <div class="dv-hero-pill"><i class="ph ph-warning"></i><span><strong id="profHeroAlertas">—</strong> em alerta</span></div>
+          </div>
+        </div>
+      </div>
 
-      if (papelNormalizado === "professor") {
-        return "Professor";
-      }
+      <div class="dv-stats dv-stats--3 dv-mb16">
+        <div class="dv-stat c-purple">
+          <div class="dv-stat-top"><div class="dv-stat-icon si-purple"><i class="ph ph-chalkboard-teacher"></i></div><span class="dv-pill dp-neu">semestre</span></div>
+          <div class="dv-stat-val" id="profStatTurmas">—</div>
+          <div class="dv-stat-lbl">Turmas ativas</div>
+        </div>
+        <div class="dv-stat c-blue">
+          <div class="dv-stat-top"><div class="dv-stat-icon si-blue"><i class="ph ph-student"></i></div><span class="dv-pill dp-neu">total</span></div>
+          <div class="dv-stat-val" id="profStatAlunos">—</div>
+          <div class="dv-stat-lbl">Alunos sob responsabilidade</div>
+        </div>
+        <div class="dv-stat c-orange">
+          <div class="dv-stat-top"><div class="dv-stat-icon si-yellow"><i class="ph ph-book-bookmark"></i></div><span class="dv-pill dp-neu">leciona</span></div>
+          <div class="dv-stat-val" id="profStatMaterias">—</div>
+          <div class="dv-stat-lbl">Matérias</div>
+        </div>
+      </div>
 
-      if (papelNormalizado === "aluno") {
-        return "Aluno";
-      }
+      <!-- Matérias + Agenda -->
+      <div class="dv-gw">
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-purple"><i class="ph ph-book-open"></i></div><span class="dv-card-title">Minhas Matérias</span></div>
+            <a class="dv-card-link" href="/turmas">Ver turmas <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body">
+            <div class="dv-prog-list" id="profMaterias">
+              <div class="dv-skel dv-skel-ln tall"></div>
+              <div class="dv-skel dv-skel-ln tall"></div>
+            </div>
+          </div>
+        </div>
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-teal"><i class="ph ph-calendar-dots"></i></div><span class="dv-card-title">Agenda da Semana</span></div>
+            <a class="dv-card-link" href="/calendario">Calendário <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body">
+            <div class="dv-week" id="profAgenda">
+              <div class="dv-empty" style="grid-column:1/-1"><i class="ph ph-spinner"></i>Carregando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      return papel;
-    }
+      <!-- Alertas | Mensagens | Desempenho por turma -->
+      <div class="dv-g3">
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-red"><i class="ph ph-warning-circle"></i></div><span class="dv-card-title">Alertas de Frequência</span></div>
+            <a class="dv-card-link" href="/frequencia">Frequência <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body">
+            <div class="dv-alert-strip das-warn"><i class="ph ph-info"></i> Alunos abaixo de 75%</div>
+            <div class="dv-list" id="profAlertas">
+              <div class="dv-empty"><i class="ph ph-spinner"></i>Carregando...</div>
+            </div>
+          </div>
+        </div>
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-blue"><i class="ph ph-bell-ringing"></i></div><span class="dv-card-title">Mensagens</span></div>
+            <a class="dv-card-link" href="/mensagens">Ver todas <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body" style="padding:6px 8px">
+            <div class="dv-list" id="profMensagens">
+              <div class="dv-empty"><i class="ph ph-spinner"></i>Carregando...</div>
+            </div>
+          </div>
+        </div>
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-purple"><i class="ph ph-chart-bar"></i></div><span class="dv-card-title">Desempenho por Turma</span></div>
+          </div>
+          <div class="dv-card-body dv-card-body--bottom" style="min-height:180px">
+            <div id="profDesempenho">
+              <div class="dv-skel dv-skel-ln tall"></div>
+              <div class="dv-skel dv-skel-ln tall short"></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-    function tokenExpirado(sessaoExpiracao) {
-      const agora = Math.floor(Date.now() / 1000);
-      return Number(sessaoExpiracao) < agora;
-    }
+    </div><!-- /viewProfessor -->
 
-    function limparSessaoFront() {
-      localStorage.removeItem("token");
-      localStorage.removeItem("usuario");
-      localStorage.removeItem("sessaoExpiracao");
-    }
 
-    async function verificarUsuarioLogado() {
-      const token = localStorage.getItem("token");
-      const sessaoExpiracao = localStorage.getItem("sessaoExpiracao");
+    <!-- ══════════════════════════════════════════
+         VIEW: COORDENADOR
+    ══════════════════════════════════════════ -->
+    <div class="role-view" id="viewCoordenador">
 
-      if (!token || !sessaoExpiracao || tokenExpirado(sessaoExpiracao)) {
-        limparSessaoFront();
-        window.location.href = "/";
-        return;
-      }
+      <div class="dv-hero dv-hero--coord dv-mb16">
+        <div class="dv-hero-badge"><span class="dv-badge-dot"></span><span>Coordenação</span></div>
+        <div class="dv-hero-body">
+          <div class="dv-hero-text">
+            <span class="dv-turno" id="coordTurno">Painel de gestão</span>
+            <h1>Visão geral<br>da <em>instituição</em></h1>
+            <p>Gestão completa de turmas, professores, alunos e desempenho acadêmico</p>
+          </div>
+          <div class="dv-hero-pills">
+            <div class="dv-hero-pill"><i class="ph ph-chalkboard-teacher"></i><span><strong id="coordHeroTurmas">—</strong> turmas</span></div>
+            <div class="dv-hero-pill"><i class="ph ph-users-three"></i><span><strong id="coordHeroAlunos">—</strong> alunos</span></div>
+            <div class="dv-hero-pill"><i class="ph ph-medal"></i><span>Média <strong id="coordHeroMed">—</strong></span></div>
+          </div>
+        </div>
+      </div>
 
-      try {
-        const resposta = await fetch("/api/usuario-logado", {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`
-          }
-        });
+      <div class="dv-stats dv-stats--4 dv-mb16">
+        <div class="dv-stat c-orange">
+          <div class="dv-stat-top"><div class="dv-stat-icon si-orange"><i class="ph ph-chalkboard-teacher"></i></div><span class="dv-pill dp-neu">ativas</span></div>
+          <div class="dv-stat-val" id="coordStatTurmas">—</div>
+          <div class="dv-stat-lbl">Turmas</div>
+        </div>
+        <div class="dv-stat c-purple">
+          <div class="dv-stat-top"><div class="dv-stat-icon si-purple"><i class="ph ph-user-circle"></i></div><span class="dv-pill dp-neu">cadastrados</span></div>
+          <div class="dv-stat-val" id="coordStatProfs">—</div>
+          <div class="dv-stat-lbl">Professores</div>
+        </div>
+        <div class="dv-stat c-blue">
+          <div class="dv-stat-top"><div class="dv-stat-icon si-blue"><i class="ph ph-student"></i></div><span class="dv-pill dp-neu">matriculados</span></div>
+          <div class="dv-stat-val" id="coordStatAlunos">—</div>
+          <div class="dv-stat-lbl">Alunos</div>
+        </div>
+        <div class="dv-stat c-green">
+          <div class="dv-stat-top"><div class="dv-stat-icon si-green"><i class="ph ph-medal"></i></div><span class="dv-pill dp-neu" id="coordMedPill">—</span></div>
+          <div class="dv-stat-val" id="coordStatMed">—</div>
+          <div class="dv-stat-lbl">Média geral instituição</div>
+        </div>
+      </div>
 
-        if (!resposta.ok) {
-          limparSessaoFront();
-          window.location.href = "/";
-          return;
-        }
+      <!-- Turmas | Alertas | Agenda -->
+      <div class="dv-g3">
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-orange"><i class="ph ph-buildings"></i></div><span class="dv-card-title">Turmas</span></div>
+            <a class="dv-card-link" href="/turmas">Ver todas <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body">
+            <div id="coordTurmas">
+              <div class="dv-skel dv-skel-ln tall"></div>
+              <div class="dv-skel dv-skel-ln tall"></div>
+              <div class="dv-skel dv-skel-ln short"></div>
+            </div>
+          </div>
+        </div>
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-red"><i class="ph ph-warning-octagon"></i></div><span class="dv-card-title">Alertas</span></div>
+          </div>
+          <div class="dv-card-body">
+            <div class="dv-alert-strip das-warn"><i class="ph ph-info"></i> Situações que precisam de atenção</div>
+            <div class="dv-list" id="coordAlertas">
+              <div class="dv-empty"><i class="ph ph-spinner"></i>Carregando...</div>
+            </div>
+          </div>
+        </div>
+        <div class="dv-card">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-teal"><i class="ph ph-calendar-dots"></i></div><span class="dv-card-title">Agenda da Semana</span></div>
+            <a class="dv-card-link" href="/calendario">Calendário <i class="ph ph-arrow-right"></i></a>
+          </div>
+          <div class="dv-card-body">
+            <div class="dv-week" id="coordAgenda">
+              <div class="dv-empty" style="grid-column:1/-1"><i class="ph ph-spinner"></i>Carregando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        const dados = await resposta.json();
-        const usuario = dados.usuario;
+      <!-- Desempenho por turma | Frequência donut + Métricas -->
+      <div class="dv-g2">
+        <div class="dv-card" style="display:flex;flex-direction:column;height:100%">
+          <div class="dv-card-head">
+            <div class="dv-card-hl"><div class="dv-card-ico si-orange"><i class="ph ph-chart-bar"></i></div><span class="dv-card-title">Desempenho Médio por Turma</span></div>
+          </div>
+          <div class="dv-card-body dv-card-body--bottom" style="flex:1">
+            <div id="coordDesempenho" style="flex:1;display:flex;align-items:flex-end;justify-content:center;">
+              <div class="dv-skel dv-skel-ln tall"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="dv-card">
+            <div class="dv-card-head">
+              <div class="dv-card-hl"><div class="dv-card-ico si-purple"><i class="ph ph-chart-donut"></i></div><span class="dv-card-title">Frequência Geral</span></div>
+            </div>
+            <div class="dv-card-body">
+              <div class="dv-donut-wrap">
+                <div class="dv-donut-svg">
+                  <svg viewBox="0 0 100 100" width="110" height="110">
+                    <circle class="dv-circle-bg" cx="50" cy="50" r="38" style="stroke-width:13"/>
+                    <circle class="dv-circle-fill" id="coordFreqCircle" cx="50" cy="50" r="38"
+                      stroke="#f97316" />
+                  </svg>
+                  <div class="dv-donut-lbl">
+                    <div class="dv-donut-pct" id="coordFreqPct" style="font-size:1.05rem">—</div>
+                    <div class="dv-donut-sub2">presença</div>
+                  </div>
+                </div>
+                <div class="dv-donut-info">
+                  <div class="dv-donut-meta" id="coordFreqMeta">Frequência média institucional.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="dv-card">
+            <div class="dv-card-head">
+              <div class="dv-card-hl"><div class="dv-card-ico si-teal"><i class="ph ph-users-three"></i></div><span class="dv-card-title">Distribuição de Usuários</span></div>
+            </div>
+            <div class="dv-card-body">
+              <div class="dv-metric"><span class="dv-metric-nm"><i class="ph ph-student" style="color:#0ea5e9"></i> Alunos</span><span class="dv-metric-vl" id="coordMetAlunos">—</span></div>
+              <div class="dv-metric"><span class="dv-metric-nm"><i class="ph ph-chalkboard-teacher" style="color:#8b5cf6"></i> Professores</span><span class="dv-metric-vl" id="coordMetProfs">—</span></div>
+              <div class="dv-metric"><span class="dv-metric-nm"><i class="ph ph-buildings" style="color:#f97316"></i> Turmas</span><span class="dv-metric-vl" id="coordMetTurmas">—</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        localStorage.setItem("usuario", JSON.stringify(usuario));
+    </div><!-- /viewCoordenador -->
 
-        nomeUsuarioTopo.textContent = usuario.nome;
-        papelUsuario.textContent = formatarPapel(usuario.papel);
-        avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+  </section>
+</main>
 
-        // Mostrar botão Gestão de usuários apenas para coordenadores
-        if (usuario.papel.toLowerCase() === 'coordenador' || usuario.papel.toLowerCase() === 'admin' || usuario.papel.toLowerCase() === 'adm') {
-          document.getElementById("btnGestaoUsuarios").style.display = "block";
-        }
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  // ══════════════════════════════════════════════
+  //  UTILS — mantém compatibilidade com o projeto
+  // ══════════════════════════════════════════════
+  const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
+  const papelUsuario     = document.getElementById("papelUsuario");
+  const avatarUsuario    = document.getElementById("avatarUsuario");
+  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+  const menuUsuario      = document.getElementById("menuUsuario");
+  const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
+  const btnSair          = document.getElementById("btnSair");
 
-        saudacaoUsuario.textContent =
-          `Olá ${usuario.nome}, Bem-vindo(a) ao Monitora+`;
+  function getToken()     { return localStorage.getItem("token"); }
+  function limparSessao() { ["token","usuario","sessaoExpiracao"].forEach(k=>localStorage.removeItem(k)); }
+  function tokenExpirado(){ const e=Number(localStorage.getItem("sessaoExpiracao")); return !e||e<Math.floor(Date.now()/1000); }
 
-      } catch (erro) {
-        console.error("Erro ao verificar usuário:", erro);
-        limparSessaoFront();
-        window.location.href = "/";
-      }
-    }
+  async function apiFetch(url) {
+    const r = await fetch(url, { headers:{ "Authorization":`Bearer ${getToken()}` } });
+    if (!r.ok) throw new Error(r.status);
+    return r.json();
+  }
 
-    function abrirFecharMenuUsuario() {
-      menuUsuario.classList.toggle("show");
-    }
+  const fmtNota = v => {
+    if (v===null||v===undefined) return "—";
+    return String(Number(Number(v).toFixed(2))).replace(".",",");
+  };
 
-    function editarPerfil() {
-      window.location.href = "/perfil";
-    }
+  const isProfessor = p => { const s=String(p||"").toLowerCase(); return s==="professor"||Number(p)===2; };
+  const isAluno     = p => { const s=String(p||"").toLowerCase(); return s==="aluno"    ||Number(p)===3; };
+  const formatarPapel = p => {
+    const s=String(p||"").toLowerCase();
+    if(["admin","adm","coordenador"].includes(s)) return "Coordenador";
+    if(s==="professor") return "Professor";
+    if(s==="aluno")     return "Aluno";
+    return p;
+  };
+  const turnoAtual = () => { const h=new Date().getHours(); return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"; };
 
-    function gestaoUsuarios() {
-      window.location.href = "/gestao-usuarios";
-    }
+  // Header
+  if (botaoMenuUsuario) {
+    botaoMenuUsuario.addEventListener("click",()=>menuUsuario?.classList.toggle("show"));
+    document.addEventListener("click",e=>{ if(!e.target.closest?.(".user-menu")) menuUsuario?.classList.remove("show"); });
+  }
+  if (btnEditarPerfil) btnEditarPerfil.addEventListener("click",()=>window.location.href="/perfil");
+  if (btnSair) btnSair.addEventListener("click", sair);
 
-    async function sair() {
-      const confirmacao = await Swal.fire({
-        icon: "question",
-        title: "Deseja sair?",
-        text: "Sua sessão será encerrada.",
-        showCancelButton: true,
-        confirmButtonText: "Sim, sair",
-        cancelButtonText: "Cancelar"
-      });
-
-      if (!confirmacao.isConfirmed) {
-        return;
-      }
-
-      const token = localStorage.getItem("token");
-
-      try {
-        if (token) {
-          await fetch("/api/logout", {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`
-            }
-          });
-        }
-      } catch (erro) {
-        console.error("Erro ao chamar logout:", erro);
-      }
-
-      limparSessaoFront();
-      window.location.href = "/";
-    }
-
-    botaoMenuUsuario.addEventListener("click", abrirFecharMenuUsuario);
-    btnEditarPerfil.addEventListener("click", editarPerfil);
-    btnGestaoUsuarios.addEventListener("click", gestaoUsuarios);
-    btnSair.addEventListener("click", sair);
-
-    window.addEventListener("click", function (event) {
-      const clicouDentroMenu = event.target.closest(".user-menu");
-
-      if (!clicouDentroMenu) {
-        menuUsuario.classList.remove("show");
-      }
+  async function sair() {
+    const c = await Swal.fire({
+      icon:"question",title:"Deseja sair?",text:"Sua sessão será encerrada.",
+      showCancelButton:true,confirmButtonText:"Sim, sair",cancelButtonText:"Cancelar",
+      confirmButtonColor:"#0ea5e9"
     });
+    if (!c.isConfirmed) return;
+    try { if(getToken()) await fetch("/api/logout",{method:"POST",headers:{"Authorization":`Bearer ${getToken()}`}}); } catch(e){}
+    limparSessao();
+    window.location.href = "/";
+  }
 
-    verificarUsuarioLogado();
-  </script>
+  // ══════════════════════════════════════════════
+  //  HELPERS DE DATA
+  // ══════════════════════════════════════════════
+  const DIAS_PT = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
-  <script src="/static/js/darkmode.js"></script>
-  
+  function semanaAtual() {
+    const hoje=new Date(), dow=hoje.getDay();
+    const seg=new Date(hoje); seg.setDate(hoje.getDate()-(dow===0?6:dow-1));
+    return Array.from({length:5},(_,i)=>{ const d=new Date(seg); d.setDate(seg.getDate()+i); return d; });
+  }
+  function toLocalStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+  function parseEvDate(s){ if(!s)return null; return s.length===10?new Date(s+"T00:00:00"):new Date(s); }
+
+  // ══════════════════════════════════════════════
+  //  RENDER: AGENDA SEMANAL
+  // ══════════════════════════════════════════════
+  function renderAgenda(eventos, id) {
+    const dias=semanaAtual(), hojeStr=toLocalStr(new Date());
+    const el=document.getElementById(id); if(!el)return;
+    el.innerHTML = dias.map((d,i)=>{
+      const dStr=toLocalStr(d), isHoje=dStr===hojeStr;
+      const evs=(eventos||[]).filter(ev=>{ const dt=parseEvDate(ev.data_inicio||ev.data_publicacao||""); return dt&&toLocalStr(dt)===dStr; });
+      const evsHtml=evs.length
+        ? evs.map(ev=>{ const dt=parseEvDate(ev.data_inicio); const hora=dt?dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""; const cor=ev.cor||"#0ea5e9"; return `<div class="dv-ev" style="border-left-color:${cor}"><div class="dv-ev-t">${ev.titulo}</div>${hora?`<div class="dv-ev-h">${hora}</div>`:""}</div>`; }).join("")
+        : `<div class="dv-ag-empty">—</div>`;
+      return `<div class="dv-day${isHoje?" today":""}"><div class="dv-dayname">${DIAS_PT[i+1]}</div><div class="dv-daynum">${d.getDate()}/${String(d.getMonth()+1).padStart(2,"0")}</div>${evsHtml}</div>`;
+    }).join("");
+  }
+
+  // ══════════════════════════════════════════════
+  //  RENDER: MENSAGENS
+  // ══════════════════════════════════════════════
+  function renderMensagens(msgs, id) {
+    const el=document.getElementById(id); if(!el)return;
+    if(!msgs||!msgs.length){ el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem recente.</div>`; return; }
+    const bgs=["#dbeafe","#dcfce7","#fef9c3","#fce7f3","#ede9fe"];
+    const ics=["#1d4ed8","#166534","#854d0e","#9d174d","#5b21b6"];
+    el.innerHTML=msgs.slice(0,5).map((m,i)=>{
+      const ci=i%bgs.length;
+      const data=m.data_publicacao?new Date(m.data_publicacao).toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}):"";
+      const lido=m.lido!==false;
+      return `<div class="dv-msg${lido?"":" unread"}">
+        <div class="dv-msg-dot" style="background:${bgs[ci]};color:${ics[ci]}"><i class="ph ph-bell"></i></div>
+        <div class="dv-msg-body"><div class="dv-msg-title">${m.titulo}</div><div class="dv-msg-meta">${m.remetente_nome?m.remetente_nome+" · ":""}${data}</div></div>
+        ${!lido?`<div class="dv-msg-udot"></div>`:""}
+      </div>`;
+    }).join("");
+  }
+
+  // ══════════════════════════════════════════════
+  //  RENDER: DONUT
+  // ══════════════════════════════════════════════
+  function renderDonut(circleId, pctId, pct) {
+    const circle=document.getElementById(circleId), pctEl=document.getElementById(pctId);
+    if(!circle)return;
+    const r=parseFloat(circle.getAttribute("r"))||38;
+    const circ=+(2*Math.PI*r).toFixed(2);
+    const num=Math.min(100,Math.max(0,Number(pct)||0));
+    const color=num>=75?"#22c55e":num>=60?"#f59e0b":"#ef4444";
+    circle.setAttribute("stroke",color);
+    circle.style.stroke = color;
+    circle.setAttribute("stroke-dasharray",circ);
+    circle.style.strokeDasharray = circ;
+    circle.setAttribute("stroke-dashoffset",circ);
+    circle.style.strokeDashoffset = circ;
+    if(pctEl) pctEl.textContent=`${Math.round(num)}%`;
+    void circle.getBoundingClientRect();
+    const dash = +(circ*(1-num/100)).toFixed(2);
+    circle.setAttribute("stroke-dashoffset",dash);
+    circle.style.strokeDashoffset = dash;
+  }
+
+  // ══════════════════════════════════════════════
+  //  RENDER: MINI BAR CHART (colunas finas)
+  // ══════════════════════════════════════════════
+  function renderBarChart(data, barsId, lblsId) {
+    const el=document.getElementById(barsId), lel=document.getElementById(lblsId);
+    if(!el||!data.length)return;
+    const maxV=10; // always out of 10
+    el.innerHTML=data.map((d)=>{
+      const h=Math.max(6,Math.round((d.val/maxV)*100));
+      const col=d.val>=7?"#0ea5e9":d.val>=5?"#f59e0b":"#ef4444";
+      return `<div class="dv-bar" title="${d.label}: ${fmtNota(d.val)}" style="height:${h}%;background:${col}"></div>`;
+    }).join("");
+    if(lel) lel.innerHTML=data.map(d=>`<span title="${d.label}">${(d.label||"").split(" ")[0]}</span>`).join("");
+  }
+
+  // ══════════════════════════════════════════════
+  //  VIEW: ALUNO
+  // ══════════════════════════════════════════════
+  async function carregarAluno(usuario) {
+    document.getElementById("viewAluno").classList.add("ativo");
+    const nome=usuario.nome.split(" ")[0], t=turnoAtual();
+    const dvTurno=document.getElementById("alunoTurno"); if(dvTurno) dvTurno.textContent=`${t}, ${nome}!`;
+
+    // Notas — ordenadas maior→menor média
+    try {
+      const dados=await apiFetch("/api/notas/minhas-notas");
+      const mats=(dados.materias||[]).slice().sort((a,b)=>{
+        const va=a.media!==null&&a.media!==undefined?Number(a.media):-Infinity;
+        const vb=b.media!==null&&b.media!==undefined?Number(b.media):-Infinity;
+        return vb-va;
+      });
+      const ids=["alunoStatDisc","alunoHeroDisc"]; ids.forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=mats.length||"0";});
+      document.getElementById("alunoDiscPill").textContent="semestre";
+
+      const comMedia=mats.filter(m=>m.media!==null&&m.media!==undefined);
+      const mgVal=comMedia.length?comMedia.reduce((s,m)=>s+Number(m.media),0)/comMedia.length:null;
+
+      if(mgVal!==null){
+        const mg=Number(mgVal.toFixed(2));
+        ["alunoStatMed","alunoHeroMed","alunoMedBox","alunoNotasRodapeMed"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmtNota(mg);});
+        const pill=document.getElementById("alunoMedPill");
+        if(pill){ if(mg>=7){pill.className="dv-pill dp-up";pill.textContent="✓ Aprovado";}else if(mg>=5){pill.className="dv-pill dp-warn";pill.textContent="⚠ Recuperação";}else{pill.className="dv-pill dp-bad";pill.textContent="✗ Reprovado";} }
+      }
+
+      const notasEl=document.getElementById("alunoNotas");
+      if(!mats.length){
+        notasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-note"></i>Nenhuma nota lançada ainda.</div>`;
+        const rp=document.getElementById("alunoNotasRodapeMed");if(rp)rp.textContent="—";
+      } else {
+        notasEl.innerHTML=mats.map(m=>{
+          const med=m.media!==null&&m.media!==undefined?Number(m.media):null;
+          const pct=med!==null?Math.min(100,(med/10)*100):0;
+          const cls=med===null?"":pct>=70?"":pct>=50?"warn":"bad";
+          const n1=m.nota1!==null&&m.nota1!==undefined?fmtNota(m.nota1):"—";
+          const n2=m.nota2!==null&&m.nota2!==undefined?fmtNota(m.nota2):"—";
+          return `<div class="dv-prog-item">
+            <div class="dv-prog-hd"><span>${m.nome||m.materia_nome}</span><strong>${med!==null?fmtNota(med):"—"}</strong></div>
+            <div class="dv-track"><div class="dv-fill ${cls}" style="width:${pct}%"></div></div>
+            <div class="dv-prog-sub">N1: ${n1} · N2: ${n2}</div>
+          </div>`;
+        }).join("");
+      }
+
+      if(comMedia.length) renderBarChart(comMedia.map(m=>({val:Number(m.media),label:m.nome||m.materia_nome})),"alunoChartBars","alunoChartLbls");
+    } catch(e){
+      const el=document.getElementById("alunoNotas"); if(el) el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>Erro ao carregar notas.</div>`;
+    }
+
+    // Frequência — donut geral + barras por matéria
+    try {
+      const [resumo, proprios] = await Promise.all([
+        apiFetch("/api/frequencia/aluno/resumo"),
+        apiFetch(`/api/frequencia/dados-proprios?aluno_id=${usuario.id}`).catch(()=>null)
+      ]);
+      if(resumo.percentual!==undefined){
+        const pct=resumo.percentual, pctStr=`${Math.round(pct)}%`;
+        ["alunoStatFreq","alunoHeroFreq"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=pctStr;});
+        renderDonut("alunoFreqCircle","alunoFreqPct",pct);
+        const pill=document.getElementById("alunoFreqPill");
+        const statusEl=document.getElementById("alunoFreqStatus");
+        const detEl=document.getElementById("alunoFreqDetalhe");
+        if(pct>=75){
+          if(pill){pill.className="dv-pill dp-up";pill.textContent="✓ Regular";}
+          if(statusEl){statusEl.textContent="✓ Frequência regular";statusEl.style.color="#166534";}
+          if(detEl) detEl.textContent=`${Math.round(pct)}% de presença nas aulas`;
+        }else if(pct>=60){
+          if(pill){pill.className="dv-pill dp-warn";pill.textContent="⚠ Atenção";}
+          if(statusEl){statusEl.textContent="⚠ Atenção à frequência";statusEl.style.color="#92400e";}
+          if(detEl) detEl.textContent=`Faltam ${(75-pct).toFixed(0)}pp para o mínimo`;
+        }else{
+          if(pill){pill.className="dv-pill dp-bad";pill.textContent="✗ Crítica";}
+          if(statusEl){statusEl.textContent="✗ Frequência crítica";statusEl.style.color="#991b1b";}
+          if(detEl) detEl.textContent="Abaixo do mínimo exigido de 75%";
+        }
+      }
+      // Barras por matéria (ordenadas maior→menor)
+      const freqEl=document.getElementById("alunoFreqMaterias");
+      if(freqEl){
+        const mats=(proprios&&proprios.materias)||[];
+        const sorted=mats.slice().sort((a,b)=>b.presenca_raw-a.presenca_raw);
+        if(!sorted.length){
+          freqEl.innerHTML="";
+        } else {
+          freqEl.innerHTML=sorted.map(m=>{
+            const p=m.presenca_raw, cls=p>=75?"dv-freq-ok":p>=60?"dv-freq-warn":"dv-freq-bad", cor=p>=75?"#166534":p>=60?"#854d0e":"#991b1b";
+            return `<div class="dv-freq-item">
+              <span class="dv-freq-nome" title="${m.materia}">${m.materia}</span>
+              <div class="dv-freq-track"><div class="dv-freq-fill ${cls}" style="width:${Math.min(100,p)}%"></div></div>
+              <span class="dv-freq-pct" style="color:${cor}">${Math.round(p)}%</span>
+            </div>`;
+          }).join("");
+        }
+      }
+    } catch(e){ const el=document.getElementById("alunoFreqStatus");if(el)el.textContent="Sem dados"; }
+
+    try { const ev=await apiFetch("/api/calendario"); renderAgenda(ev.eventos||[],"alunoAgenda"); }
+    catch(e){ renderAgenda([],"alunoAgenda"); }
+
+    try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"alunoMensagens"); }
+    catch(e){ const el=document.getElementById("alunoMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem.</div>`; }
+  }
+
+  // ══════════════════════════════════════════════
+  //  VIEW: PROFESSOR
+  // ══════════════════════════════════════════════
+  async function carregarProfessor(usuario) {
+    document.getElementById("viewProfessor").classList.add("ativo");
+    const nome=usuario.nome.split(" ")[0], t=turnoAtual();
+    const el=document.getElementById("profTurno"); if(el)el.textContent=`${t}, ${nome}!`;
+
+    // Matérias + turmas — ordenadas maior→menor média
+    try {
+      const [mDados,tDados]=await Promise.all([apiFetch("/api/notas/materias"),apiFetch("/api/turmas")]);
+      const mats=(mDados.materias||[]).slice().sort((a,b)=>{
+        const va=a.media_turma!==null&&a.media_turma!==undefined?Number(a.media_turma):-Infinity;
+        const vb=b.media_turma!==null&&b.media_turma!==undefined?Number(b.media_turma):-Infinity;
+        return vb-va;
+      });
+      const turmas=tDados.turmas||[];
+      const totalAlunos=turmas.reduce((s,t)=>s+(t.total_alunos||0),0);
+
+      document.getElementById("profStatMaterias").textContent=mats.length||"0";
+      document.getElementById("profStatTurmas").textContent=turmas.length||"0";
+      document.getElementById("profStatAlunos").textContent=totalAlunos||"0";
+      document.getElementById("profHeroTurmas").textContent=turmas.length||"0";
+      document.getElementById("profHeroAlunos").textContent=totalAlunos||"0";
+
+      const matsEl=document.getElementById("profMaterias");
+      if(!mats.length){
+        matsEl.innerHTML=`<div class="dv-empty"><i class="ph ph-book"></i>Nenhuma matéria atribuída.</div>`;
+      } else {
+        matsEl.innerHTML=mats.map(m=>{
+          const med=m.media_turma!==undefined&&m.media_turma!==null?Number(m.media_turma):null;
+          const pct=med!==null?Math.min(100,(med/10)*100):0;
+          const cls=med===null?"":pct>=70?"purple":pct>=50?"warn":"bad";
+          const bc=med===null?"db-gray":pct>=70?"db-purple":pct>=50?"db-yellow":"db-red";
+          return `<div class="dv-prog-item">
+            <div class="dv-prog-hd">
+              <span><strong>${m.nome}</strong>${m.turma?` <span class="dv-tag">${m.turma}</span>`:""}</span>
+              ${med!==null?`<span class="dv-badge ${bc}">${fmtNota(med)}</span>`:""}
+            </div>
+            ${med!==null?`<div class="dv-track"><div class="dv-fill ${cls}" style="width:${pct}%"></div></div>`:`<div class="dv-track"><div class="dv-fill" style="width:0%"></div></div>`}
+          </div>`;
+        }).join("");
+      }
+
+      // Desempenho por turma — gráfico de colunas
+      const desempEl=document.getElementById("profDesempenho");
+
+      // Tentar calcular media_geral para turmas que não têm (fallback por notas dos alunos)
+      const turmasParaCalcular=turmas.filter(t=>t.media_geral===null||t.media_geral===undefined);
+      if(turmasParaCalcular.length){
+        await Promise.all(turmasParaCalcular.map(async t=>{
+          try {
+            const alunosDados=await apiFetch(`/api/turmas/${t.id}/alunos`);
+            const alunos=alunosDados.alunos||[];
+            const comNota=alunos.filter(a=>a.media_geral!==null&&a.media_geral!==undefined);
+            if(comNota.length){
+              t.media_geral=+(comNota.reduce((s,a)=>s+Number(a.media_geral),0)/comNota.length).toFixed(2);
+            }
+          } catch(_){}
+        }));
+      }
+
+      const tcm=turmas.filter(t=>t.media_geral!==null&&t.media_geral!==undefined);
+      if(!tcm.length){
+        desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>Ainda não há médias calculadas.</div>`;
+      } else {
+        desempEl.innerHTML=`<div class="dv-col-chart">${
+          tcm.map(t=>{
+            const med=Number(t.media_geral);
+            const hPx=Math.max(4,Math.round((med/10)*120));
+            const col=med>=7?"#8b5cf6":med>=5?"#f59e0b":"#ef4444";
+            const turmaLabel=(t.nome||"").replace(/Turma\s*/i,"").trim()||t.nome||"T";
+            return `<div class="dv-col-wrap">
+              <span class="dv-col-val">${fmtNota(med)}</span>
+              <div class="dv-col-bar-wrap"><div class="dv-col-bar" title="${t.nome}: ${fmtNota(med)}" style="height:${hPx}px;background:${col}"></div></div>
+              <span class="dv-col-lbl" title="${t.nome}">${turmaLabel}</span>
+            </div>`;
+          }).join("")
+        }</div><div class="dv-col-axis"></div>`;
+      }
+    } catch(e){ const el=document.getElementById("profMaterias");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>Erro ao carregar matérias.</div>`; }
+
+    // Alertas
+    try {
+      const freq=await apiFetch("/api/frequencia/professor/alertas");
+      const alertas=freq.alertas||[];
+      document.getElementById("profHeroAlertas").textContent=alertas.length||"0";
+      const el=document.getElementById("profAlertas");
+      if(!alertas.length){
+        el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Nenhum aluno em alerta.</div>`;
+      } else {
+        el.innerHTML=alertas.map(a=>{ const pct=Math.round(a.percentual||0),cl=pct<60?"db-red":"db-yellow"; return `<div class="dv-row"><div class="dv-avatar" style="background:${pct<60?"#fee2e2":"#fef9c3"};color:${pct<60?"#991b1b":"#854d0e"}"><i class="ph ph-user"></i></div><div class="dv-info"><div class="dv-name">${a.nome}</div><div class="dv-sub"><span class="dv-tag">${a.turma||""}</span> · ${a.materia||""}</div></div><span class="dv-badge ${cl}">${pct}%</span></div>`; }).join("");
+      }
+    } catch(e){ const el=document.getElementById("profAlertas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Sem dados.</div>`; }
+
+    try { const ev=await apiFetch("/api/calendario"); renderAgenda(ev.eventos||[],"profAgenda"); }
+    catch(e){ renderAgenda([],"profAgenda"); }
+
+    try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"profMensagens"); }
+    catch(e){ const el=document.getElementById("profMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem.</div>`; }
+  }
+
+  // ══════════════════════════════════════════════
+  //  VIEW: COORDENADOR
+  // ══════════════════════════════════════════════
+  async function carregarCoordenador(usuario) {
+    document.getElementById("viewCoordenador").classList.add("ativo");
+    const nome=usuario.nome.split(" ")[0], t=turnoAtual();
+    const el=document.getElementById("coordTurno"); if(el)el.textContent=`${t}, ${nome} —`;
+
+    try {
+      const [tDados,aDados,pDados]=await Promise.all([apiFetch("/api/turmas"),apiFetch("/api/usuarios/alunos"),apiFetch("/api/usuarios/professores")]);
+      const turmas=tDados.turmas||[], alunos=aDados.usuarios||[], profs=pDados.usuarios||[];
+      const nT=turmas.length, nA=alunos.length, nP=profs.length;
+
+      [["coordStatTurmas",nT],["coordHeroTurmas",nT],["coordMetTurmas",nT],
+       ["coordStatAlunos",nA],["coordHeroAlunos",nA],["coordMetAlunos",nA],
+       ["coordStatProfs",nP],["coordMetProfs",nP]].forEach(([id,v])=>{ const e=document.getElementById(id);if(e)e.textContent=v||"0"; });
+
+      // Turmas list — nome truncado, badge preservado
+      const turmasEl=document.getElementById("coordTurmas");
+      // ordenar: com média primeiro (maior→menor), sem média depois
+      const turmasOrdenadas=turmas.slice().sort((a,b)=>{
+        const va=a.media_geral!==null&&a.media_geral!==undefined?Number(a.media_geral):-Infinity;
+        const vb=b.media_geral!==null&&b.media_geral!==undefined?Number(b.media_geral):-Infinity;
+        return vb-va;
+      });
+      if(!turmasOrdenadas.length){
+        turmasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-users"></i>Nenhuma turma.</div>`;
+      } else {
+        turmasEl.innerHTML=turmasOrdenadas.slice(0,5).map(t=>{
+          const med=t.media_geral, cl=med===null||med===undefined?"db-gray":Number(med)>=7?"db-green":Number(med)>=5?"db-yellow":"db-red";
+          return `<div class="dv-row">
+            <div class="dv-avatar" style="background:#ede9fe;color:#5b21b6;font-weight:900">${(t.nome||"T").charAt(0)}</div>
+            <div class="dv-info" style="min-width:0">
+              <div class="dv-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.nome} <span style="font-size:.66rem;color:#64748b">· ${t.periodo||""}º per.</span></div>
+              <div class="dv-sub">${t.total_alunos||t.capacidade||"—"} alunos</div>
+            </div>
+            ${med!==null&&med!==undefined?`<span class="dv-badge ${cl}" style="flex-shrink:0">${fmtNota(med)}</span>`:""}
+          </div>`;
+        }).join("");
+      }
+
+      // Média geral
+      const tcm=turmas.filter(t=>t.media_geral!==null&&t.media_geral!==undefined);
+      if(tcm.length){
+        const mg=tcm.reduce((s,t)=>s+Number(t.media_geral),0)/tcm.length;
+        const mgFmt=fmtNota(Number(mg.toFixed(2)));
+        ["coordStatMed","coordHeroMed"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=mgFmt;});
+        const pill=document.getElementById("coordMedPill");
+        if(pill){ const n=Number(mg.toFixed(2));pill.className=`dv-pill ${n>=7?"dp-up":n>=5?"dp-warn":"dp-bad"}`;pill.textContent=n>=7?"✓ Boa":"⚠ Atenção"; }
+      }
+
+      // Desempenho por turma — gráfico de colunas
+      const desempEl=document.getElementById("coordDesempenho");
+      const tcm2=turmas.filter(t=>t.media_geral!==null&&t.media_geral!==undefined);
+      if(!tcm2.length){
+        desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>Ainda não há médias calculadas.</div>`;
+      } else {
+        const maxV=10; // always scale to 10 so bars are proportional to grade
+        desempEl.innerHTML=`<div class="dv-col-chart">${
+          tcm2.map(t=>{
+            const med=Number(t.media_geral);
+            const hPct=Math.max(8,Math.round((med/10)*100)); // relative to 10, min 8%
+            const col=med>=7?"#f97316":med>=5?"#f59e0b":"#ef4444";
+            const turmaLabel=(t.nome||"").replace(/Turma\s*/i,"").trim()||t.nome||"T";
+            return `<div class="dv-col-wrap">
+              <span class="dv-col-val">${fmtNota(med)}</span>
+              <div class="dv-col-bar-wrap"><div class="dv-col-bar" title="${t.nome}: ${fmtNota(med)}" style="height:${hPct}%;background:${col}"></div></div>
+              <span class="dv-col-lbl" title="${t.nome}">${turmaLabel}</span>
+            </div>`;
+          }).join("")
+        }</div><div class="dv-col-axis"></div>`;
+      }
+    } catch(e){ const el=document.getElementById("coordTurmas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>Erro ao carregar turmas.</div>`; }
+
+    // Alertas
+    try {
+      const freq=await apiFetch("/api/frequencia/coordenador/alertas");
+      const alertasFreq=freq.alertas||[];
+
+      // Alertas de nota baixa: turmas com média < 5
+      const alertasNota=[];
+      try {
+        const tDados=await apiFetch("/api/turmas");
+        const turmas=tDados.turmas||[];
+        for(const t of turmas){
+          if(t.media_geral!==null&&t.media_geral!==undefined&&Number(t.media_geral)<5){
+            alertasNota.push({
+              tipo: "nota",
+              nome: t.nome,
+              turma: t.nome,
+              materia: "Média geral da turma",
+              percentual: Number(t.media_geral),
+              mensagem: `${t.nome}: média ${fmtNota(t.media_geral)}`
+            });
+          }
+        }
+      } catch(_){}
+
+      const alertas=[...alertasNota, ...alertasFreq];
+      const presencaAlerts=(alertasFreq||[]).filter(a=>Number(a.percentual)<75);
+
+      const el=document.getElementById("coordAlertas");
+      if(!alertas.length){
+        el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Nenhum alerta no momento.</div>`;
+      } else {
+        el.innerHTML=alertas.slice(0,5).map(a=>{
+          if(a.tipo==="nota"){
+            return `<div class="dv-row">
+              <div class="dv-avatar" style="background:#ede9fe;color:#5b21b6"><i class="ph ph-chart-bar"></i></div>
+              <div class="dv-info">
+                <div class="dv-name">${a.nome}</div>
+                <div class="dv-sub"><span class="dv-tag">${a.turma}</span> · Média abaixo de 5,0</div>
+              </div>
+              <span class="dv-badge db-red">${fmtNota(a.percentual)}</span>
+            </div>`;
+          }
+          return `<div class="dv-row"><div class="dv-avatar" style="background:#fff7ed;color:#c2410c"><i class="ph ph-warning"></i></div><div class="dv-info"><div class="dv-name">${a.nome}</div><div class="dv-sub"><span class="dv-tag">${a.turma||""}</span> · ${a.materia||""}</div></div><span class="dv-badge db-red">${Math.round(a.percentual)}%</span></div>`;
+        }).join("");
+      }
+      // Donut freq geral — fetch real value, fall back to alert avg or 95%
+      try {
+        const freqGeral=await apiFetch("/api/frequencia/coordenador/resumo").catch(()=>null);
+        const pctGeral=freqGeral&&freqGeral.percentual!==undefined?Number(freqGeral.percentual):
+          (alertas.length?alertas.reduce((s,a)=>s+a.percentual,0)/alertas.length:95);
+        renderDonut("coordFreqCircle","coordFreqPct",pctGeral);
+        const meta=document.getElementById("coordFreqMeta");
+        if(meta) meta.textContent=presencaAlerts.length?`${presencaAlerts.length} aluno(s) abaixo de 75% de presença.`:"Frequência geral dentro do esperado.";
+      } catch(_){
+        const pctFb=alertas.length?alertas.reduce((s,a)=>s+a.percentual,0)/alertas.length:95;
+        renderDonut("coordFreqCircle","coordFreqPct",pctFb);
+      }
+    } catch(e){ const el=document.getElementById("coordAlertas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-info"></i>Sem alertas disponíveis.</div>`; }
+
+    // Agenda semanal
+    try {
+      const ev=await apiFetch("/api/calendario");
+      renderAgenda(ev.eventos||[],"coordAgenda");
+    } catch(e){ renderAgenda([],"coordAgenda"); }
+  }
+
+  // ══════════════════════════════════════════════
+  //  INIT
+  // ══════════════════════════════════════════════
+  async function carregarUsuarioLogado() {
+    if (!getToken()||tokenExpirado()) { limparSessao(); window.location.href="/"; return; }
+    try {
+      const dados=await apiFetch("/api/usuario-logado");
+      const usuario=dados.usuario;
+      localStorage.setItem("usuario",JSON.stringify(usuario));
+
+      if(nomeUsuarioTopo) nomeUsuarioTopo.textContent=usuario.nome;
+      if(papelUsuario)    papelUsuario.textContent=formatarPapel(usuario.papel);
+      if(avatarUsuario)   avatarUsuario.textContent=usuario.nome.charAt(0).toUpperCase();
+
+      const papel=usuario.papel, papelId=Number(usuario.papel_id);
+      if     (isAluno(papel)    ||papelId===3) await carregarAluno(usuario);
+      else if(isProfessor(papel)||papelId===2) await carregarProfessor(usuario);
+      else                                      await carregarCoordenador(usuario);
+    } catch(e) {
+      console.error("Erro ao carregar usuário:",e);
+      limparSessao();
+      window.location.href="/";
+    }
+  }
+
+  carregarUsuarioLogado();
+</script>
+
+<script src="/static/js/darkmode.js"></script>
 </body>
-
 </html>
