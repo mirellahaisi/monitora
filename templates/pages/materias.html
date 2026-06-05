@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Matérias</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    .materias-content {
+      padding: 28px 32px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .page-heading {
+      display: flex; align-items: center; gap: 16px;
+    }
+    .page-heading-icon {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary, #4caebe), var(--primary-dark, #3a9aaa));
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(76,174,190,.35);
+    }
+    .page-heading-icon svg { width: 24px; height: 24px; stroke: #fff; }
+    .page-heading h2 { font-size: 1.45rem; font-weight: 700; color: var(--text, #1a2e3b); }
+    .page-heading p  { font-size: .875rem; color: var(--muted, #6b7c8d); margin-top: 2px; }
+
+    .materias-toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+    }
+    .materias-search-wrap {
+      position: relative; flex: 1 1 260px; max-width: 380px;
+    }
+    .materias-search-wrap i {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--muted, #6b7c8d); font-size: 1rem; pointer-events: none;
+    }
+    .materias-search {
+      width: 100%; padding: 9px 14px 9px 36px;
+      border: 1.5px solid var(--border, #dde3ea); border-radius: 10px;
+      font-size: .875rem; font-family: inherit;
+      background: var(--card-bg, #fff); color: var(--text, #1a2e3b);
+      transition: border-color .2s;
+    }
+    .materias-search:focus { outline: none; border-color: var(--primary, #4caebe); }
+
+    .btn-nova-materia {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 20px;
+      background: linear-gradient(135deg, var(--primary, #4caebe), var(--primary-dark, #3a9aaa));
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .875rem; font-weight: 600; font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(76,174,190,.35);
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-nova-materia:hover { opacity: .9; transform: translateY(-1px); }
+
+    .materias-card {
+      background: var(--card-bg, #fff); border-radius: 16px;
+      border: 1.5px solid var(--border, #dde3ea); overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    }
+    .materias-table-wrap { overflow-x: auto; }
+    .materias-table {
+      width: 100%; border-collapse: collapse; font-size: .875rem;
+    }
+    .materias-table thead tr {
+      background: var(--table-head-bg, #f4f7fa);
+      border-bottom: 1.5px solid var(--border, #dde3ea);
+    }
+    .materias-table th {
+      padding: 13px 16px; text-align: left;
+      font-size: .75rem; font-weight: 700;
+      color: var(--muted, #6b7c8d);
+      text-transform: uppercase; letter-spacing: .05em; white-space: nowrap;
+    }
+    .materias-table td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border, #dde3ea);
+      color: var(--text, #1a2e3b); vertical-align: middle;
+    }
+    .materias-table tbody tr:last-child td { border-bottom: none; }
+    .materias-table tbody tr:hover { background: var(--row-hover, #f9fbfc); }
+
+    .col-num    { width: 52px; text-align: center; color: var(--muted); font-size: .8rem; }
+    .col-codigo { width: 140px; }
+    .col-ch     { width: 110px; text-align: center; }
+    .col-ativo  { width: 100px; text-align: center; }
+    .col-acoes  { width: 120px; text-align: center; }
+
+    .badge-ativo   { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: .75rem; font-weight: 600; background: #d1fae5; color: #065f46; }
+    .badge-inativo { display: inline-block; padding: 3px 12px; border-radius: 20px; font-size: .75rem; font-weight: 600; background: #fee2e2; color: #991b1b; }
+
+    .codigo-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 8px;
+      background: rgba(76,174,190,.12); color: var(--primary, #4caebe);
+      font-size: .78rem; font-weight: 700; letter-spacing: .03em;
+    }
+
+    .ch-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .82rem; color: var(--muted, #6b7c8d);
+    }
+
+    .desc-cell {
+      max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      font-size: .83rem; color: var(--muted, #6b7c8d);
+    }
+
+    .btn-acao {
+      background: none; border: none; cursor: pointer;
+      padding: 6px 8px; border-radius: 8px; font-size: 1.1rem;
+      transition: background .15s, color .15s;
+    }
+    .btn-editar  { color: var(--primary, #4caebe); }
+    .btn-editar:hover { background: rgba(76,174,190,.12); }
+    .btn-excluir { color: #ef4444; }
+    .btn-excluir:hover { background: rgba(239,68,68,.1); }
+
+    .materias-vazio {
+      text-align: center; padding: 60px 20px; color: var(--muted, #6b7c8d);
+    }
+    .materias-vazio i { font-size: 2.8rem; opacity: .3; display: block; margin-bottom: 10px; }
+    .materias-vazio p { font-size: .9rem; }
+
+    /* ── Dark mode overrides explícitos ── */
+    body.dark-mode .materias-card,
+    html.dark .materias-card,
+    html[data-theme="dark"] .materias-card,
+    [data-theme="dark"] .materias-card {
+      background: var(--card-bg, #162433);
+    }
+    body.dark-mode .materias-table thead tr,
+    html.dark .materias-table thead tr,
+    html[data-theme="dark"] .materias-table thead tr,
+    [data-theme="dark"] .materias-table thead tr,
+    body.dark-mode .materias-rodape,
+    html.dark .materias-rodape,
+    html[data-theme="dark"] .materias-rodape,
+    [data-theme="dark"] .materias-rodape {
+      background: var(--table-head-bg, #1a2e3b) !important;
+      color: var(--muted, #8fa8b8);
+    }
+    body.dark-mode .materias-table tbody tr:hover,
+    html.dark .materias-table tbody tr:hover,
+    [data-theme="dark"] .materias-table tbody tr:hover {
+      background: var(--row-hover, #1e3548);
+    }
+    body.dark-mode .materias-search,
+    html.dark .materias-search,
+    [data-theme="dark"] .materias-search,
+    body.dark-mode .modal-box,
+    html.dark .modal-box,
+    [data-theme="dark"] .modal-box,
+    body.dark-mode .form-group input,
+    html.dark .form-group input,
+    [data-theme="dark"] .form-group input,
+    body.dark-mode .form-group select,
+    html.dark .form-group select,
+    [data-theme="dark"] .form-group select,
+    body.dark-mode .form-group textarea,
+    html.dark .form-group textarea,
+    [data-theme="dark"] .form-group textarea {
+      background: var(--input-bg, #1a2e3b) !important;
+      color: var(--text, #e2eaf0) !important;
+      border-color: var(--border, #2d4a5e) !important;
+    }
+
+    .materias-rodape {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border, #dde3ea);
+      background: var(--table-head-bg, #f4f7fa);
+      font-size: .8rem; color: var(--muted, #6b7c8d);
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.45); backdrop-filter: blur(3px);
+      z-index: 1000; align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: var(--card-bg, #fff); border-radius: 20px; padding: 32px;
+      width: 100%; max-width: 520px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+      position: relative; animation: modalIn .22s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-18px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-titulo { font-size: 1.15rem; font-weight: 700; color: var(--text, #1a2e3b); }
+    .modal-fechar {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted, #6b7c8d); font-size: 1.4rem;
+      padding: 4px; border-radius: 8px; transition: background .15s;
+    }
+    .modal-fechar:hover { background: var(--border, #dde3ea); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block; font-size: .82rem; font-weight: 600;
+      color: var(--muted, #6b7c8d); margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--border, #dde3ea); border-radius: 10px;
+      font-size: .9rem; font-family: inherit;
+      background: var(--input-bg, #fff); color: var(--text, #1a2e3b);
+      transition: border-color .2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7c8d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; appearance: auto; -webkit-appearance: auto; }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus { outline: none; border-color: var(--primary, #4caebe); }
+    .form-group .campo-erro { border-color: #ef4444 !important; }
+    .msg-erro { font-size: .78rem; color: #ef4444; margin-top: 4px; display: none; }
+    .msg-erro.visivel { display: block; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .form-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; }
+
+    .modal-acoes {
+      display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;
+    }
+    .btn-cancelar {
+      padding: 10px 22px; border: 1.5px solid var(--border, #dde3ea);
+      background: none; border-radius: 10px;
+      font-size: .875rem; font-weight: 600; font-family: inherit;
+      color: var(--muted, #6b7c8d); cursor: pointer; transition: background .15s;
+    }
+    .btn-cancelar:hover { background: var(--table-head-bg, #f4f7fa); }
+    .btn-salvar {
+      padding: 10px 26px;
+      background: linear-gradient(135deg, var(--primary, #4caebe), var(--primary-dark, #3a9aaa));
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .875rem; font-weight: 600; font-family: inherit;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(76,174,190,.35);
+      transition: opacity .2s;
+    }
+    .btn-salvar:hover { opacity: .9; }
+    .btn-salvar:disabled { opacity: .6; cursor: not-allowed; }
+  </style>
+</head>
+
+<body class="inicio-body notas-page">
+
+{% include 'components/sidebar.html' %}
+
+  <main class="inicio-main">
+    {% include 'components/header.html' %}
+
+    <section class="materias-content">
+
+      <!-- Cabeçalho -->
+      <div class="page-heading">
+        <div class="page-heading-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Gestão de Matérias</h2>
+          <p>Cadastre, edite e gerencie as disciplinas da instituição</p>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="materias-toolbar">
+        <div class="materias-search-wrap">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="campoBusca" class="materias-search" placeholder="Buscar por nome ou código...">
+        </div>
+        <button class="btn-nova-materia" id="btnNovaMateria">
+          <i class="ph ph-plus-circle"></i>
+          Nova Matéria
+        </button>
+      </div>
+
+      <!-- Tabela -->
+      <div class="materias-card">
+        <div class="materias-table-wrap">
+          <table class="materias-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th>Nome da Matéria</th>
+                <th class="col-codigo">Código</th>
+                <th class="col-ch">Carga Horária</th>
+                <th>Descrição</th>
+                <th class="col-ativo">Status</th>
+                <th class="col-acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaMaterias">
+              <tr>
+                <td colspan="7">
+                  <div class="materias-vazio">
+                    <i class="ph ph-circle-notch"></i>
+                    <p>Carregando matérias...</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="materias-rodape" id="rodapeMaterias"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ── MODAL ── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-titulo" id="modalTitulo">Nova Matéria</span>
+        <button class="modal-fechar" id="btnFecharModal" title="Fechar">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="materiaId">
+
+      <div class="form-group">
+        <label for="inputNome">Nome da Matéria</label>
+        <input type="text" id="inputNome" placeholder="Ex.: Algoritmos e Estruturas de Dados" maxlength="255">
+        <span class="msg-erro" id="erroNome">Informe o nome da matéria.</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inputCodigo">Código</label>
+          <input type="text" id="inputCodigo" placeholder="Ex.: AED001" maxlength="50" style="text-transform:uppercase;">
+          <span class="msg-erro" id="erroCodigo">Informe o código.</span>
+        </div>
+        <div class="form-group">
+          <label for="inputCargaHoraria">Carga Horária (h)</label>
+          <input type="number" id="inputCargaHoraria" placeholder="Ex.: 80" min="1" max="9999">
+          <span class="msg-erro" id="erroCargaHoraria">Informe a carga horária.</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="inputDescricao">Descrição <span style="font-weight:400;text-transform:none;letter-spacing:0">(opcional)</span></label>
+        <textarea id="inputDescricao" placeholder="Breve descrição da disciplina..." maxlength="500"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="selectAtivo">Status</label>
+        <select id="selectAtivo">
+          <option value="1">Ativo</option>
+          <option value="0">Inativo</option>
+        </select>
+      </div>
+
+      <div class="modal-acoes">
+        <button class="btn-cancelar" id="btnCancelar">Cancelar</button>
+        <button class="btn-salvar" id="btnSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    function getToken() { return localStorage.getItem("token"); }
+    function authHeader() { return { "Authorization": `Bearer ${getToken()}`, "Content-Type": "application/json" }; }
+
+    // Normaliza ativo: aceita true, 1, "1", "true", "sim", "yes" etc.
+    function normalizarAtivo(v) {
+      if (v === null || v === undefined) return false;
+      if (typeof v === "boolean") return v;
+      if (typeof v === "number") return v !== 0;
+      const s = String(v).trim().toLowerCase();
+      return s === "1" || s === "true" || s === "sim" || s === "yes";
+    }
+
+    function isPapelCoordenador(p) {
+      if (!p && p !== 0) return false;
+      const s = String(p).toLowerCase();
+      return s === "coordenador" || s === "admin" || s === "adm" || Number(p) === 1;
+    }
+
+    // ── Popula header com dados do usuário ──
+    (function popularHeader() {
+      try {
+        let usuario = null;
+        const token = localStorage.getItem("token");
+        if (token) {
+          const part = token.split(".")[1];
+          const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+          const pad = "=".repeat((4 - b64.length % 4) % 4);
+          usuario = JSON.parse(atob(b64 + pad));
+        }
+        if (!usuario) {
+          const raw = localStorage.getItem("usuario");
+          if (raw) usuario = JSON.parse(raw);
+        }
+        if (!usuario) return;
+
+        const nome = usuario.nome || usuario.name || "";
+        const papel = String(usuario.papel || usuario.papel_id || usuario.fk_papel_id || "").toLowerCase();
+        const labelPapel = papel === "coordenador" || papel === "admin" || papel === "adm" || Number(usuario.papel_id || usuario.fk_papel_id) === 1
+          ? "Coordenador"
+          : papel === "professor" || Number(usuario.papel_id || usuario.fk_papel_id) === 2
+            ? "Professor"
+            : "Aluno";
+
+        const elNome = document.getElementById("nomeUsuarioTopo");
+        const elPapel = document.getElementById("papelUsuario");
+        const elAvatar = document.getElementById("avatarUsuario");
+
+        if (elNome) elNome.textContent = nome;
+        if (elPapel) elPapel.textContent = labelPapel;
+        if (elAvatar) elAvatar.textContent = nome ? nome.charAt(0).toUpperCase() : "U";
+
+        const botao = document.getElementById("botaoMenuUsuario");
+        const menu  = document.getElementById("menuUsuario");
+        if (botao && menu) {
+          botao.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("open"); });
+          document.addEventListener("click", () => menu.classList.remove("open"));
+        }
+        const btnEditar = document.getElementById("btnEditarPerfil");
+        if (btnEditar) btnEditar.addEventListener("click", () => window.location.href = "/perfil");
+      } catch(e) { console.warn("Header populate error", e); }
+    })();
+
+    // ── Verificação de acesso ──
+    (function verificarAcesso() {
+      const token = localStorage.getItem("token");
+      if (!token) { window.location.href = "/login"; return; }
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        const papel = payload.papel || payload.papel_id || payload.fk_papel_id;
+        if (!isPapelCoordenador(papel)) {
+          Swal.fire({ icon: "error", title: "Acesso negado", text: "Esta área é exclusiva para coordenadores.", confirmButtonColor: "#4caebe" })
+            .then(() => window.location.href = "/inicio");
+        }
+      } catch { window.location.href = "/login"; }
+    })();
+
+    // ── Estado ──
+    let materias = [];
+    let termoBusca = "";
+    let dadosOriginaisEdicao = null;
+
+    // ── Refs DOM ──
+    const tabelaMaterias  = document.getElementById("tabelaMaterias");
+    const rodapeMaterias  = document.getElementById("rodapeMaterias");
+    const campoBusca      = document.getElementById("campoBusca");
+    const modalOverlay    = document.getElementById("modalOverlay");
+    const modalTitulo     = document.getElementById("modalTitulo");
+    const btnNovaMateria  = document.getElementById("btnNovaMateria");
+    const btnFecharModal  = document.getElementById("btnFecharModal");
+    const btnCancelar     = document.getElementById("btnCancelar");
+    const btnSalvar       = document.getElementById("btnSalvar");
+    const materiaIdInput  = document.getElementById("materiaId");
+    const inputNome       = document.getElementById("inputNome");
+    const inputCodigo     = document.getElementById("inputCodigo");
+    const inputCargaHor   = document.getElementById("inputCargaHoraria");
+    const inputDescricao  = document.getElementById("inputDescricao");
+    const selectAtivo     = document.getElementById("selectAtivo");
+
+    // ── Carregar ──
+    async function carregarMaterias() {
+      try {
+        const r = await fetch("/api/materias", { headers: authHeader() });
+        const dados = await r.json();
+        if (!r.ok) { mostrarErroTabela(dados.message || "Erro ao carregar matérias."); return; }
+        materias = (dados.materias || []).map(m => ({ ...m, ativo: normalizarAtivo(m.ativo) }));
+        renderizarTabela();
+      } catch {
+        mostrarErroTabela("Falha de conexão ao carregar matérias.");
+      }
+    }
+
+    function filtrar() {
+      if (!termoBusca) return materias;
+      const t = termoBusca.toLowerCase();
+      return materias.filter(m =>
+        m.nome.toLowerCase().includes(t) ||
+        (m.codigo || "").toLowerCase().includes(t)
+      );
+    }
+
+    function renderizarTabela() {
+      const lista = filtrar();
+      if (!lista.length) {
+        tabelaMaterias.innerHTML = `
+          <tr><td colspan="7">
+            <div class="materias-vazio">
+              <i class="ph ph-books"></i>
+              <p>${termoBusca ? "Nenhuma matéria encontrada para a busca." : "Nenhuma matéria cadastrada ainda."}</p>
+            </div>
+          </td></tr>`;
+        rodapeMaterias.textContent = "";
+        return;
+      }
+      tabelaMaterias.innerHTML = lista.map((m, i) => `
+        <tr>
+          <td class="col-num">${i + 1}</td>
+          <td><strong>${escHtml(m.nome)}</strong></td>
+          <td>
+            ${m.codigo ? `<span class="codigo-badge">${escHtml(m.codigo)}</span>` : `<span style="color:var(--muted);font-size:.8rem">—</span>`}
+          </td>
+          <td class="col-ch">
+            <span class="ch-badge">
+              <i class="ph ph-clock"></i>
+              ${m.carga_horaria ? m.carga_horaria + "h" : "—"}
+            </span>
+          </td>
+          <td>
+            <span class="desc-cell" title="${escHtml(m.descricao || "")}">
+              ${m.descricao ? escHtml(m.descricao) : '<span style="color:var(--muted);font-size:.8rem">Sem descrição</span>'}
+            </span>
+          </td>
+          <td class="col-ativo">
+            <span class="${m.ativo ? "badge-ativo" : "badge-inativo"}">${m.ativo ? "Ativa" : "Inativa"}</span>
+          </td>
+          <td class="col-acoes">
+            <button class="btn-acao btn-editar" title="Editar" onclick="abrirEditar(${m.id})">
+              <i class="ph ph-pencil-simple"></i>
+            </button>
+            <button class="btn-acao btn-excluir" title="Excluir" onclick="confirmarExcluir(${m.id}, '${escHtml(m.nome)}')">
+              <i class="ph ph-trash"></i>
+            </button>
+          </td>
+        </tr>`).join("");
+      rodapeMaterias.textContent = `${lista.length} matéria${lista.length !== 1 ? "s" : ""} encontrada${lista.length !== 1 ? "s" : ""}`;
+    }
+
+    function mostrarErroTabela(msg) {
+      tabelaMaterias.innerHTML = `
+        <tr><td colspan="7">
+          <div class="materias-vazio">
+            <i class="ph ph-warning-circle"></i>
+            <p>${msg}</p>
+          </div>
+        </td></tr>`;
+    }
+
+    function escHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    // ── Modal ──
+    function abrirModal(modo, materia = null) {
+      limparErros();
+      if (modo === "novo") {
+        modalTitulo.textContent = "Nova Matéria";
+        materiaIdInput.value = "";
+        inputNome.value = "";
+        inputCodigo.value = "";
+        inputCargaHor.value = "";
+        inputDescricao.value = "";
+        selectAtivo.value = "1";
+        dadosOriginaisEdicao = null;
+      } else {
+        modalTitulo.textContent = "Editar Matéria";
+        materiaIdInput.value = materia.id;
+        inputNome.value = materia.nome;
+        inputCodigo.value = materia.codigo || "";
+        inputCargaHor.value = materia.carga_horaria || "";
+        inputDescricao.value = materia.descricao || "";
+        selectAtivo.value = materia.ativo ? "1" : "0";
+        dadosOriginaisEdicao = {
+          nome: materia.nome,
+          codigo: materia.codigo || "",
+          carga_horaria: String(materia.carga_horaria || ""),
+          descricao: materia.descricao || "",
+          ativo: materia.ativo ? "1" : "0"
+        };
+      }
+      modalOverlay.classList.add("open");
+      setTimeout(() => inputNome.focus(), 80);
+    }
+
+    function fecharModal() { modalOverlay.classList.remove("open"); }
+
+    function abrirEditar(id) {
+      const m = materias.find(x => x.id === id);
+      if (!m) return;
+      abrirModal("editar", m);
+    }
+
+    // ── Validação ──
+    function limparErros() {
+      document.querySelectorAll(".msg-erro").forEach(e => e.classList.remove("visivel"));
+      document.querySelectorAll(".campo-erro").forEach(e => e.classList.remove("campo-erro"));
+    }
+
+    function marcarErro(campo, idMsg, texto) {
+      campo.classList.add("campo-erro");
+      const el = document.getElementById(idMsg);
+      el.textContent = texto;
+      el.classList.add("visivel");
+    }
+
+    function validarForm() {
+      limparErros();
+      let valido = true;
+      const nome = inputNome.value.trim();
+      const codigo = inputCodigo.value.trim();
+      const ch = inputCargaHor.value.trim();
+
+      if (!nome || nome.length < 3) {
+        marcarErro(inputNome, "erroNome", nome ? "O nome deve ter pelo menos 3 caracteres." : "Informe o nome da matéria.");
+        valido = false;
+      }
+      if (!codigo || codigo.length < 2) {
+        marcarErro(inputCodigo, "erroCodigo", codigo ? "O código deve ter pelo menos 2 caracteres." : "Informe o código da matéria.");
+        valido = false;
+      }
+      if (!ch || isNaN(Number(ch)) || Number(ch) < 1) {
+        marcarErro(inputCargaHor, "erroCargaHoraria", ch ? "Informe uma carga horária válida (mín. 1h)." : "Informe a carga horária.");
+        valido = false;
+      }
+      return valido;
+    }
+
+    // ── Salvar ──
+    async function salvar() {
+      if (!validarForm()) return;
+
+      const id = materiaIdInput.value;
+      const payload = {
+        nome: inputNome.value.trim(),
+        codigo: inputCodigo.value.trim().toUpperCase(),
+        carga_horaria: parseInt(inputCargaHor.value),
+        descricao: inputDescricao.value.trim() || null,
+        ativo: selectAtivo.value === "1"
+      };
+
+      // Verifica se houve alteração ao editar
+      if (id && dadosOriginaisEdicao) {
+        const semMudanca =
+          payload.nome === dadosOriginaisEdicao.nome &&
+          payload.codigo === dadosOriginaisEdicao.codigo &&
+          String(payload.carga_horaria) === dadosOriginaisEdicao.carga_horaria &&
+          (payload.descricao || "") === dadosOriginaisEdicao.descricao &&
+          selectAtivo.value === dadosOriginaisEdicao.ativo;
+        if (semMudanca) {
+          Swal.fire({
+            icon: "info",
+            title: "Nenhuma alteração",
+            text: "Nenhum dado foi alterado.",
+            confirmButtonColor: "#4caebe",
+            timer: 2000, timerProgressBar: true, showConfirmButton: false
+          });
+          return;
+        }
+      }
+
+      btnSalvar.disabled = true;
+      btnSalvar.textContent = "Salvando...";
+
+      try {
+        const url    = id ? `/api/materias/${id}` : "/api/materias";
+        const method = id ? "PUT" : "POST";
+        const r = await fetch(url, { method, headers: authHeader(), body: JSON.stringify(payload) });
+        const dados = await r.json();
+
+        if (!r.ok) {
+          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Erro ao salvar.", confirmButtonColor: "#4caebe" });
+          return;
+        }
+
+        fecharModal();
+        await carregarMaterias();
+        Swal.fire({
+          icon: "success",
+          title: id ? "Matéria atualizada!" : "Matéria cadastrada!",
+          text: dados.message || "Operação realizada com sucesso.",
+          confirmButtonColor: "#4caebe",
+          timer: 2200, timerProgressBar: true, showConfirmButton: false
+        });
+      } catch {
+        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão. Tente novamente.", confirmButtonColor: "#4caebe" });
+      } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = "Salvar";
+      }
+    }
+
+    // ── Excluir ──
+    async function confirmarExcluir(id, nome) {
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "Excluir matéria?",
+        html: `A matéria <strong>${escHtml(nome)}</strong> será removida permanentemente.`,
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#6b7c8d",
+        confirmButtonText: "Sim, excluir",
+        cancelButtonText: "Cancelar"
+      });
+      if (!result.isConfirmed) return;
+      try {
+        const r = await fetch(`/api/materias/${id}`, { method: "DELETE", headers: authHeader() });
+        const dados = await r.json();
+        if (!r.ok) {
+          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Não foi possível excluir.", confirmButtonColor: "#4caebe" });
+          return;
+        }
+        await carregarMaterias();
+        Swal.fire({ icon: "success", title: "Excluída!", text: dados.message || "Matéria removida.", confirmButtonColor: "#4caebe", timer: 2000, timerProgressBar: true, showConfirmButton: false });
+      } catch {
+        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão.", confirmButtonColor: "#4caebe" });
+      }
+    }
+
+    // ── Eventos ──
+    btnNovaMateria.addEventListener("click", () => abrirModal("novo"));
+    btnFecharModal.addEventListener("click", fecharModal);
+    btnCancelar.addEventListener("click", fecharModal);
+    btnSalvar.addEventListener("click", salvar);
+    modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) fecharModal(); });
+
+    campoBusca.addEventListener("input", () => {
+      termoBusca = campoBusca.value.trim();
+      renderizarTabela();
+    });
+
+    inputCodigo.addEventListener("input", () => {
+      inputCodigo.value = inputCodigo.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter" && modalOverlay.classList.contains("open")) salvar();
+      if (e.key === "Escape" && modalOverlay.classList.contains("open")) fecharModal();
+    });
+
+    const btnSair = document.getElementById("btnSair");
+    if (btnSair) btnSair.addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      window.location.href = "/login";
+    });
+
+    carregarMaterias();
+  </script>
+
+  <script src="/static/js/darkmode.js"></script>
+</body>
+</html>

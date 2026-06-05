@@ -81,6 +81,25 @@
       Gestão de Usuários
     </a>
 
+    <a href="/cursos" class="sidebar-link{% if active_page == 'cursos' %} active{% endif %}" id="linkCursos" style="display:none;">
+      <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 3L2 9l10 6 10-6-10-6z"/>
+        <path d="M2 17l10 6 10-6"/>
+        <path d="M2 13l10 6 10-6"/>
+      </svg>
+      Cursos
+    </a>
+    
+    <a href="/materias" class="sidebar-link{% if active_page == 'materias' %} active{% endif %}" id="linkMaterias" style="display:none;">
+      <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="16" y1="13" x2="8" y2="13"/>
+        <line x1="16" y1="17" x2="8" y2="17"/>
+      </svg>
+      Matérias
+    </a>
+
     <a href="#" class="sidebar-link{% if active_page == 'desempenho' %} active{% endif %}">
       <svg class="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -132,14 +151,19 @@
       const linkPresenca = document.getElementById('linkPresenca');
       if (linkPresenca && !isProfessor(usuario.papel || usuario.papel_id || usuario.fk_papel_id)) linkPresenca.style.display = 'none';
 
+      const papel = String(usuario.papel || usuario.papel_id || usuario.fk_papel_id || '').toLowerCase();
+      const papelId = Number(usuario.papel_id || usuario.fk_papel_id);
+      const isCoordenador = papel === 'admin' || papel === 'adm' || papel === 'coordenador' || papelId === 1;
+
       const linkGestao = document.getElementById('linkGestaoUsuarios');
-      if (linkGestao) {
-        const papel = String(usuario.papel || usuario.papel_id || usuario.fk_papel_id || '').toLowerCase();
-        const papelId = Number(usuario.papel_id || usuario.fk_papel_id);
-        if (papel === 'admin' || papel === 'adm' || papel === 'coordenador' || papelId === 1) {
-          linkGestao.style.display = '';
-        }
-      }
+      if (linkGestao && isCoordenador) linkGestao.style.display = '';
+
+      const linkCursos = document.getElementById('linkCursos');
+      if (linkCursos && isCoordenador) linkCursos.style.display = '';
+
+      const linkMaterias = document.getElementById('linkMaterias');
+      if (linkMaterias && isCoordenador) linkMaterias.style.display = '';
+
     } catch(e){ console.warn('Sidebar script error', e); }
   })();
 </script>

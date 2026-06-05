@@ -354,11 +354,10 @@ def api_alertas_professor():
                 m.nome AS materia_nome,
                 t.id   AS turma_id,
                 t.nome AS turma_nome
-            FROM professor_materia pm
-            INNER JOIN materia m ON m.id = pm.fk_materia_id
-            INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
-            INNER JOIN turma t ON t.id = mt.fk_turma_id
-            WHERE pm.fk_usuario_id = %s AND m.ativo = 1 AND t.ativo = 1
+            FROM professor_turma_materia ptm
+            INNER JOIN materia m ON m.id = ptm.fk_materia_id
+            INNER JOIN turma t ON t.id = ptm.fk_turma_id
+            WHERE ptm.fk_usuario_id = %s AND m.ativo = 1 AND t.ativo = 1
         """, (professor_id,))
 
         combos = cursor.fetchall()

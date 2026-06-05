@@ -86,17 +86,17 @@
 
       <div class="campo-grupo">
         <label for="nome">Nome completo</label>
-        <input type="text" id="nome" placeholder="Ex.: João da Silva">
+        <input type="text" id="nome" placeholder="Ex.: João da Silva" minlength="3">
       </div>
 
       <div class="campos-grid">
         <div class="campo-grupo">
           <label for="cpf">CPF</label>
-          <input type="text" id="cpf" placeholder="000.000.000-00">
+          <input type="text" id="cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
         </div>
         <div class="campo-grupo">
           <label for="telefone">Telefone</label>
-          <input type="text" id="telefone" placeholder="(00) 00000-0000">
+          <input type="text" id="telefone" placeholder="(00) 00000-0000" inputmode="tel" maxlength="15">
         </div>
       </div>
 
@@ -112,12 +112,12 @@
 
       <div id="grupoEspecialidade" class="campo-grupo">
         <label for="especialidade">Especialidade</label>
-        <input type="text" id="especialidade" placeholder="Ex.: Matemática">
+        <input type="text" id="especialidade" placeholder="Ex.: Matemática" minlength="3">
       </div>
 
       <div id="grupoSalario" class="campo-grupo">
         <label for="salario">Salário (R$)</label>
-        <input type="number" id="salario" placeholder="0,00" step="0.01" min="0">
+        <input type="text" id="salario" placeholder="0,00" inputmode="decimal">
       </div>
 
       <div class="modal-actions">
@@ -134,6 +134,8 @@
     let modoEdicao = false;
     let abaAtual = "alunos";
     let dadosAba = {};
+    let papelModalAtual = "aluno";
+    let estadoOriginalModal = null;
 
     const SVG_VER  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
     const SVG_EDIT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
@@ -151,7 +153,7 @@
               <span class="row-nome-label">${u.nome}</span>
             </div>
           </td>
-          <td>${u.cpf || "—"}</td>
+          <td>${u.cpf ? formatarCpf(u.cpf) : "—"}</td>
           <td>${u.turma ? `<span class="badge-turma">${u.turma}</span>` : "—"}</td>`
       },
       coordenacao: {
@@ -166,7 +168,7 @@
             </div>
           </td>
           <td>${u.email || "—"}</td>
-          <td>${u.telefone || "—"}</td>`
+          <td>${u.telefone ? formatarTelefone(u.telefone) : "—"}</td>`
       },
       professores: {
         endpoint: "/api/usuarios/professores",
@@ -179,7 +181,7 @@
               <span class="row-nome-label">${u.nome}</span>
             </div>
           </td>
-          <td>${u.cpf || "—"}</td>
+          <td>${u.cpf ? formatarCpf(u.cpf) : "—"}</td>
           <td>${u.especialidade || "—"}</td>`
       }
     };
@@ -217,7 +219,187 @@
         `<tr>${colunas.map(c => `<th>${c}</th>`).join("")}</tr>`;
     }
 
-    function fecharModal() { document.getElementById("modalUsuario").style.display = "none"; }
+    function somenteNumeros(v) { return String(v || "").replace(/\D/g, ""); }
+    function formatarCpf(v) {
+      const n = somenteNumeros(v).slice(0, 11);
+      if (n.length <= 3) return n;
+      if (n.length <= 6) return `${n.slice(0, 3)}.${n.slice(3)}`;
+      if (n.length <= 9) return `${n.slice(0, 3)}.${n.slice(3, 6)}.${n.slice(6)}`;
+      return `${n.slice(0, 3)}.${n.slice(3, 6)}.${n.slice(6, 9)}-${n.slice(9)}`;
+    }
+    function formatarTelefone(v) {
+      const n = somenteNumeros(v).slice(0, 11);
+      if (n.length <= 2) return n;
+      if (n.length <= 6) return `(${n.slice(0, 2)})${n.slice(2)}`;
+      if (n.length <= 10) return `(${n.slice(0, 2)})${n.slice(2, 6)}-${n.slice(6)}`;
+      return `(${n.slice(0, 2)})${n.slice(2, 7)}-${n.slice(7)}`;
+    }
+    function telefoneValido(v) {
+      const n = somenteNumeros(v);
+      return n.length === 10 || n.length === 11;
+    }
+    function emailValido(v) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || "").trim());
+    }
+    function cpfValido(v) {
+      const cpf = somenteNumeros(v);
+      if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+
+      let soma = 0;
+      for (let i = 0; i < 9; i += 1) soma += Number(cpf[i]) * (10 - i);
+      let digito1 = (soma * 10) % 11;
+      if (digito1 === 10) digito1 = 0;
+
+      soma = 0;
+      for (let i = 0; i < 10; i += 1) soma += Number(cpf[i]) * (11 - i);
+      let digito2 = (soma * 10) % 11;
+      if (digito2 === 10) digito2 = 0;
+
+      return cpf.slice(-2) === `${digito1}${digito2}`;
+    }
+    function parseSalario(valor) {
+      let texto = String(valor || "").trim();
+      if (!texto) return null;
+
+      texto = texto.replace(/\s/g, "").replace(/^R\$\s*/i, "");
+      if (texto.includes(",") && texto.includes(".")) {
+        texto = texto.replace(/\./g, "").replace(",", ".");
+      } else {
+        texto = texto.replace(",", ".");
+      }
+
+      const numero = Number(texto);
+      if (!Number.isFinite(numero) || numero < 0) return null;
+      return Number(numero.toFixed(2));
+    }
+    function normalizarTextoSalario(valor) {
+      const texto = String(valor || "").replace(/[^\d,.-]/g, "").replace(/\./g, ",");
+      const partes = texto.split(",");
+      const inteiro = (partes.shift() || "").replace(/\D/g, "");
+      const decimal = partes.join("").replace(/\D/g, "").slice(0, 2);
+      if (!inteiro && !decimal) return "";
+      return decimal || texto.includes(",") ? `${inteiro || "0"},${decimal}` : inteiro;
+    }
+    function formatarSalario(valor) {
+      const numero = parseSalario(valor);
+      return numero == null ? "" : numero.toFixed(2).replace(".", ",");
+    }
+    function tipoUsuarioDaAba(aba) {
+      if (aba === "professores") return "professor";
+      if (aba === "coordenacao") return "coordenador";
+      return "aluno";
+    }
+    function ehCampoProfissional(papel) {
+      return String(papel || "").toLowerCase() !== "aluno";
+    }
+    function idadeEmAnos(dataIso) {
+      if (!dataIso) return null;
+      const dataNascimento = new Date(`${dataIso}T00:00:00`);
+      if (Number.isNaN(dataNascimento.getTime())) return null;
+
+      const hoje = new Date();
+      let idade = hoje.getFullYear() - dataNascimento.getFullYear();
+      const aniversarioNaoChegou =
+        hoje.getMonth() < dataNascimento.getMonth() ||
+        (hoje.getMonth() === dataNascimento.getMonth() && hoje.getDate() < dataNascimento.getDate());
+
+      if (aniversarioNaoChegou) idade -= 1;
+      return idade;
+    }
+    function idadeValidaParaPapel(dataIso, papel) {
+      const idade = idadeEmAnos(dataIso);
+      if (idade == null) return false;
+      return String(papel || "").toLowerCase() === "aluno" ? idade > 12 : idade > 18;
+    }
+    function obterDadosFormulario() {
+      return {
+        nome: document.getElementById("nome").value,
+        cpf: document.getElementById("cpf").value,
+        email: document.getElementById("email").value,
+        telefone: document.getElementById("telefone").value,
+        especialidade: document.getElementById("especialidade").value,
+        data_nascimento: document.getElementById("dataNascimento").value || null,
+        salario: document.getElementById("salario").value || null
+      };
+    }
+    function normalizarDadosUsuario(dados, papel = papelModalAtual) {
+      const tipo = String(papel || "").toLowerCase();
+      const salarioNormalizado = parseSalario(dados.salario);
+      return {
+        nome: String(dados.nome || "").trim(),
+        cpf: somenteNumeros(dados.cpf),
+        email: String(dados.email || "").trim().toLowerCase(),
+        telefone: somenteNumeros(dados.telefone),
+        data_nascimento: dados.data_nascimento || null,
+        especialidade: ehCampoProfissional(tipo) ? (String(dados.especialidade || "").trim() || null) : null,
+        salario: ehCampoProfissional(tipo) && salarioNormalizado != null ? salarioNormalizado.toFixed(2) : null
+      };
+    }
+    function validarDadosUsuario(dados, papel = papelModalAtual) {
+      const tipo = String(papel || "").toLowerCase();
+      const salarioNumero = parseSalario(dados.salario);
+
+      if (String(dados.nome || "").trim().length < 3) {
+        Swal.fire("Atenção", "O nome deve ter no mínimo 3 caracteres.", "warning");
+        return false;
+      }
+      if (!cpfValido(dados.cpf)) {
+        Swal.fire("Atenção", "Informe um CPF válido.", "warning");
+        return false;
+      }
+      if (!emailValido(dados.email)) {
+        Swal.fire("Atenção", "Informe um e-mail válido.", "warning");
+        return false;
+      }
+      if (!telefoneValido(dados.telefone)) {
+        Swal.fire("Atenção", "Informe um telefone válido com DDD.", "warning");
+        return false;
+      }
+      if (!dados.data_nascimento) {
+        Swal.fire("Atenção", "Informe a data de nascimento.", "warning");
+        return false;
+      }
+      if (!idadeValidaParaPapel(dados.data_nascimento, tipo)) {
+        Swal.fire(
+          "Atenção",
+          tipo === "aluno"
+            ? "Alunos devem ter mais de 12 anos."
+            : "Professores e coordenadores devem ter mais de 18 anos.",
+          "warning"
+        );
+        return false;
+      }
+      if (ehCampoProfissional(tipo)) {
+        if (String(dados.especialidade || "").trim().length < 3) {
+          Swal.fire("Atenção", "A especialidade deve ter no mínimo 3 caracteres.", "warning");
+          return false;
+        }
+        if (salarioNumero == null) {
+          Swal.fire("Atenção", "Informe um salário válido no formato 0,00.", "warning");
+          return false;
+        }
+      }
+      return true;
+    }
+    function aplicarVisibilidadeCamposProfissionais(papel) {
+      const mostrar = ehCampoProfissional(papel);
+      document.getElementById("grupoEspecialidade").style.display = mostrar ? "flex" : "none";
+      document.getElementById("grupoSalario").style.display = mostrar ? "flex" : "none";
+    }
+    function abrirModalNovo() {
+      modoEdicao = false;
+      papelModalAtual = tipoUsuarioDaAba(abaAtual);
+      estadoOriginalModal = null;
+      limparFormulario();
+      const labels = { alunos: "Novo aluno", professores: "Novo professor", coordenacao: "Novo coordenador" };
+      document.getElementById("tituloModal").textContent = labels[abaAtual] || "Novo usuário";
+      aplicarVisibilidadeCamposProfissionais(papelModalAtual);
+      document.getElementById("modalUsuario").style.display = "flex";
+    }
+    function fecharModal() {
+      estadoOriginalModal = null;
+      document.getElementById("modalUsuario").style.display = "none";
+    }
     function limparFormulario() {
       ["usuarioId","nome","cpf","email","telefone","dataNascimento","especialidade","salario"]
         .forEach(id => { document.getElementById(id).value = ""; });
@@ -265,14 +447,23 @@
 
     async function salvarUsuario() {
       const token = getToken();
-      const dados = {
-        nome:            document.getElementById("nome").value,
-        cpf:             document.getElementById("cpf").value,
-        email:           document.getElementById("email").value,
-        telefone:        document.getElementById("telefone").value,
-        especialidade:   document.getElementById("especialidade").value,
-        data_nascimento: document.getElementById("dataNascimento").value || null,
-        salario:         document.getElementById("salario").value || null
+      const dados = obterDadosFormulario();
+      if (!validarDadosUsuario(dados, papelModalAtual)) return;
+
+      const dadosNormalizados = normalizarDadosUsuario(dados, papelModalAtual);
+      if (modoEdicao && estadoOriginalModal && JSON.stringify(dadosNormalizados) === JSON.stringify(estadoOriginalModal)) {
+        Swal.fire("Atenção", "Nenhuma informação foi alterada.", "info");
+        return;
+      }
+
+      const payload = {
+        nome: dadosNormalizados.nome,
+        cpf: formatarCpf(dadosNormalizados.cpf),
+        email: dadosNormalizados.email,
+        telefone: formatarTelefone(dadosNormalizados.telefone),
+        especialidade: dadosNormalizados.especialidade,
+        data_nascimento: dadosNormalizados.data_nascimento,
+        salario: dadosNormalizados.salario ? dadosNormalizados.salario.replace(".", ",") : null
       };
       const endpoints = { alunos: "/api/usuarios/alunos", professores: "/api/usuarios/professores", coordenacao: "/api/usuarios/coordenacao" };
       const id     = document.getElementById("usuarioId").value;
@@ -282,12 +473,17 @@
         const resp = await fetch(url, {
           method: metodo,
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-          body: JSON.stringify(dados)
+          body: JSON.stringify(payload)
         });
         const res = await resp.json();
         if (!resp.ok) { Swal.fire("Erro", res.message || "Falha ao salvar", "error"); return; }
+        if (res.alterado === false) {
+          Swal.fire("Atenção", res.message || "Nenhuma informação foi alterada.", "info");
+          return;
+        }
         Swal.fire("Sucesso", res.message, "success");
         fecharModal();
+        estadoOriginalModal = null;
         dadosAba[abaAtual] = null;
         carregarAba(abaAtual);
       } catch { Swal.fire("Erro", "Falha na conexão", "error"); }
@@ -306,14 +502,7 @@
 
     // Botão novo
     document.getElementById("btnNovoAluno").addEventListener("click", () => {
-      modoEdicao = false;
-      limparFormulario();
-      const labels = { alunos: "Novo aluno", professores: "Novo professor", coordenacao: "Novo coordenador" };
-      document.getElementById("tituloModal").textContent = labels[abaAtual] || "Novo usuário";
-      const extra = abaAtual !== "alunos";
-      document.getElementById("grupoEspecialidade").style.display = extra ? "flex" : "none";
-      document.getElementById("grupoSalario").style.display       = extra ? "flex" : "none";
-      document.getElementById("modalUsuario").style.display = "flex";
+      abrirModalNovo();
     });
 
     // Ações na tabela
@@ -328,9 +517,9 @@
           Swal.fire({
             title: u.nome,
             html: `<table style="width:100%;text-align:left;font-size:0.9rem;border-collapse:collapse">
-              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">CPF</td><td style="padding:7px 10px">${u.cpf || "—"}</td></tr>
+              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">CPF</td><td style="padding:7px 10px">${u.cpf ? formatarCpf(u.cpf) : "—"}</td></tr>
               <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">E-mail</td><td style="padding:7px 10px">${u.email || "—"}</td></tr>
-              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Telefone</td><td style="padding:7px 10px">${u.telefone || "—"}</td></tr>
+              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Telefone</td><td style="padding:7px 10px">${u.telefone ? formatarTelefone(u.telefone) : "—"}</td></tr>
               <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Nascimento</td><td style="padding:7px 10px">${u.data_nascimento || "—"}</td></tr>
               ${!ehAluno ? `
               <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Especialidade</td><td style="padding:7px 10px">${u.especialidade || "—"}</td></tr>
@@ -348,18 +537,26 @@
           const data = await resp.json();
           const u = data.usuario;
           modoEdicao = true;
+          papelModalAtual = String(u.papel || "").toLowerCase();
           document.getElementById("usuarioId").value      = u.id;
           document.getElementById("nome").value           = u.nome || "";
-          document.getElementById("cpf").value            = u.cpf || "";
+          document.getElementById("cpf").value            = formatarCpf(u.cpf || "");
           document.getElementById("email").value          = u.email || "";
-          document.getElementById("telefone").value       = u.telefone || "";
+          document.getElementById("telefone").value       = formatarTelefone(u.telefone || "");
           document.getElementById("dataNascimento").value = u.data_nascimento || "";
           document.getElementById("especialidade").value  = u.especialidade || "";
-          document.getElementById("salario").value        = u.salario || "";
+          document.getElementById("salario").value        = formatarSalario(u.salario);
           document.getElementById("tituloModal").textContent = "Editar usuário";
-          const extra = String(u.papel || "").toLowerCase() !== "aluno";
-          document.getElementById("grupoEspecialidade").style.display = extra ? "flex" : "none";
-          document.getElementById("grupoSalario").style.display       = extra ? "flex" : "none";
+          aplicarVisibilidadeCamposProfissionais(papelModalAtual);
+          estadoOriginalModal = normalizarDadosUsuario({
+            nome: u.nome || "",
+            cpf: u.cpf || "",
+            email: u.email || "",
+            telefone: u.telefone || "",
+            especialidade: u.especialidade || "",
+            data_nascimento: u.data_nascimento || null,
+            salario: u.salario != null ? Number(u.salario).toFixed(2).replace(".", ",") : null
+          }, papelModalAtual);
           document.getElementById("modalUsuario").style.display = "flex";
         } catch { Swal.fire("Erro", "Falha ao carregar dados do usuário.", "error"); }
       }
@@ -396,6 +593,18 @@
     // Busca
     document.querySelector(".inicio-header .search-box input")?.addEventListener("input", () => {
       renderTabela(dadosAba[abaAtual] || [], CONFIG_ABAS[abaAtual]);
+    });
+    document.getElementById("cpf").addEventListener("input", (e) => {
+      e.target.value = formatarCpf(e.target.value);
+    });
+    document.getElementById("telefone").addEventListener("input", (e) => {
+      e.target.value = formatarTelefone(e.target.value);
+    });
+    document.getElementById("salario").addEventListener("input", (e) => {
+      e.target.value = normalizarTextoSalario(e.target.value);
+    });
+    document.getElementById("salario").addEventListener("blur", (e) => {
+      e.target.value = formatarSalario(e.target.value);
     });
 
     // Menu usuário

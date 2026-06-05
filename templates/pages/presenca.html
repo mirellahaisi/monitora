@@ -47,9 +47,10 @@
       </div>
       <div class="filtro-group">
         <label for="dataAula">Data da aula</label>
-        <select id="dataAula" style="height:44px;border:1.5px solid rgba(147,215,223,0.4);border-radius:10px;background:var(--bg);color:var(--mid);font:inherit;font-size:0.92rem;font-weight:500;padding:0 14px;outline:none;width:100%;cursor:pointer;">
-          <option value="">Selecione a data</option>
-        </select>
+        <input type="date" id="dataAula"
+          style="height:44px;border:1.5px solid rgba(147,215,223,0.4);border-radius:10px;background:var(--bg);color:var(--mid);font:inherit;font-size:0.92rem;font-weight:500;padding:0 14px;outline:none;width:100%;cursor:pointer;"
+          disabled>
+        <small id="avisoDataFim" style="color:#e74c3c;font-size:0.75rem;display:none;margin-top:4px;">Selecione apenas dias úteis (segunda a sexta).</small>
       </div>
     </div>
 
@@ -154,7 +155,7 @@
         id="justificativa"
         placeholder="Observações: professor, utilize este campo para justificar uma falta específica"
         style="width:100%;min-height:105px;border:1.5px solid rgba(147,215,223,0.4);border-radius:14px;padding:14px 16px;background:#fff;color:var(--mid);font:inherit;resize:vertical;outline:none;box-shadow:0 2px 12px rgba(76,190,190,0.06);margin-top:18px;"
-      ></textarea>
+      >${alunos[0]?.justificativa || ""}</textarea>
       <div style="display:flex;justify-content:flex-end;margin-top:16px;">
         <button id="btnSalvarPresenca" type="button" style="height:46px;padding:0 28px;border:none;border-radius:10px;background:var(--grad);color:white;font:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(87,219,189,0.3);transition:opacity 0.2s,transform 0.15s;">
           Salvar chamada
@@ -216,11 +217,62 @@
     } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
   }
 
+  // Retorna "YYYY-MM-DD" do dia de hoje no fuso local
+  function hojeISO() {
+    const d = new Date();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${mm}-${dd}`;
+  }
+
+  // Retorna dia da semana (0=dom,6=sab) de uma string "YYYY-MM-DD" sem erros de fuso
+  function diaSemana(iso) {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).getDay();
+  }
+
+  // Habilita o input de data com hoje pré-selecionado (se for dia útil) e restrição seg-sex
+  function habilitarInputData() {
+    const input = document.getElementById("dataAula");
+    const aviso = document.getElementById("avisoDataFim");
+    if (!input) return;
+    const hoje = hojeISO();
+    input.max = hoje; // não permite datas futuras
+    input.disabled = false;
+
+    // Pré-selecionar hoje se for dia útil (seg-sex)
+    const dow = diaSemana(hoje);
+    if (dow >= 1 && dow <= 5) {
+      input.value = hoje;
+      if (aviso) aviso.style.display = "none";
+      carregarAlunos();
+    } else {
+      input.value = "";
+    }
+
+    // Validar ao mudar: bloqueia sab/dom
+    input.onchange = () => {
+      const val = input.value;
+      if (!val) { mostrarVazio(); return; }
+      const dow = diaSemana(val);
+      if (dow === 0 || dow === 6) {
+        if (aviso) aviso.style.display = "block";
+        input.value = "";
+        mostrarVazio();
+        return;
+      }
+      if (aviso) aviso.style.display = "none";
+      carregarAlunos();
+    };
+  }
+
   async function carregarTurmas() {
+    const input = document.getElementById("dataAula");
+    const aviso = document.getElementById("avisoDataFim");
     selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
     selectTurma.disabled = true;
-    dataAula.innerHTML = `<option value="">Selecione a data</option>`;
-    dataAula.disabled = true;
+    if (input) { input.value = ""; input.disabled = true; }
+    if (aviso) aviso.style.display = "none";
     mostrarVazio();
     if (!selectMateria.value) return;
     try {
@@ -237,30 +289,10 @@
     } catch { Swal.fire("Erro", "Falha ao buscar turmas.", "error"); }
   }
 
-  async function carregarDatas() {
-    dataAula.innerHTML = `<option value="">Selecione a data</option>`;
-    dataAula.disabled = true;
-    mostrarVazio();
+  function carregarDatas() {
+    // Ao selecionar a turma, habilita o input de data com hoje pré-selecionado
     if (!selectMateria.value || !selectTurma.value) return;
-    try {
-      const r = await fetch(`/api/presenca/datas?materia_id=${selectMateria.value}&turma_id=${selectTurma.value}`, {
-        headers: { "Authorization": `Bearer ${getToken()}` }
-      });
-      if (r.ok) {
-        const dados = await r.json();
-        (dados.datas || []).forEach(d => {
-          dataAula.innerHTML += `<option value="${d}">${d}</option>`;
-        });
-        dataAula.disabled = false;
-      } else {
-        // fallback: input date nativo caso a API não exista
-        dataAula.outerHTML = `<input type="date" id="dataAula" style="height:44px;border:1.5px solid rgba(147,215,223,0.4);border-radius:10px;background:var(--bg);color:var(--mid);font:inherit;font-size:0.92rem;padding:0 14px;outline:none;width:100%;cursor:pointer;">`;
-        document.getElementById("dataAula").addEventListener("change", carregarAlunos);
-      }
-    } catch {
-      dataAula.outerHTML = `<input type="date" id="dataAula" style="height:44px;border:1.5px solid rgba(147,215,223,0.4);border-radius:10px;background:var(--bg);color:var(--mid);font:inherit;font-size:0.92rem;padding:0 14px;outline:none;width:100%;cursor:pointer;">`;
-      document.getElementById("dataAula").addEventListener("change", carregarAlunos);
-    }
+    habilitarInputData();
   }
 
   async function carregarAlunos() {
@@ -301,18 +333,27 @@
 
     const linhas = document.querySelectorAll("#tabelaPresenca tr[data-aluno-id]");
     const alunos = [];
+    const semMarca = [];
     for (const linha of linhas) {
       const alunoId   = linha.dataset.alunoId;
       const nomeAluno = linha.querySelector("td").textContent.trim();
       const radio     = linha.querySelector(`input[name="presenca_${alunoId}"]:checked`);
       if (!radio) {
-        Swal.fire("Atenção", `Marque presença ou ausência para o(a) aluno(a) ${nomeAluno}.`, "warning");
-        return;
+        semMarca.push(nomeAluno);
+      } else {
+        alunos.push({ aluno_id: alunoId, presente: Number(radio.value) });
       }
-      alunos.push({ aluno_id: alunoId, presente: Number(radio.value) });
     }
 
-    if (alunos.length === 0) { Swal.fire("Atenção", "Nenhum aluno carregado para salvar.", "warning"); return; }
+    if (alunos.length === 0 && semMarca.length === 0) {
+      Swal.fire("Atenção", "Nenhum aluno carregado para salvar.", "warning"); return;
+    }
+    if (semMarca.length > 0) {
+      Swal.fire("Chamada incompleta",
+        `Marque presença ou ausência para todos os alunos antes de salvar.<br><br>Faltando:<br><b>${semMarca.join("<br>")}</b>`,
+        "warning");
+      return;
+    }
 
     const justEl = document.getElementById("justificativa");
 
@@ -351,7 +392,7 @@
 
   selectMateria.addEventListener("change", carregarTurmas);
   selectTurma.addEventListener("change", carregarDatas);
-  dataAula.addEventListener("change", carregarAlunos);
+  // O listener do dataAula é atribuído dentro de habilitarInputData()
 
   if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
   if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click", () => window.location.href = "/perfil");

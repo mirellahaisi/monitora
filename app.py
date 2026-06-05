@@ -19,6 +19,8 @@ from turmas import turmas_bp
 from calendario import calendario_bp
 from presenca import presenca_bp
 from mensagens import mensagens_bp
+from cursos import cursos_bp
+from materias import materias_bp
 
  
 
@@ -49,6 +51,8 @@ app.register_blueprint(presenca_bp)
 app.register_blueprint(turmas_bp)
 app.register_blueprint(calendario_bp)
 app.register_blueprint(mensagens_bp)
+app.register_blueprint(cursos_bp)
+app.register_blueprint(materias_bp)
 
 
 # ========================

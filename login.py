@@ -1,4 +1,6 @@
+from datetime import date, datetime
 from functools import wraps
+import re
 
 from flask import Blueprint, jsonify, render_template, request
 import mysql.connector
@@ -12,6 +14,42 @@ login_bp = Blueprint("login", __name__)
 
 def somente_numeros(valor):
     return "".join(filter(str.isdigit, str(valor or "")))
+
+
+EMAIL_REGEX = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+
+
+def email_valido(email):
+    return bool(EMAIL_REGEX.match(str(email or "").strip()))
+
+
+def converter_data_iso(valor):
+    if isinstance(valor, datetime):
+        return valor.date()
+
+    if isinstance(valor, date):
+        return valor
+
+    texto = str(valor or "").strip()
+    if not texto:
+        return None
+
+    try:
+        return datetime.strptime(texto, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def idade_minima_valida(data_nascimento, idade_minima=12):
+    if not data_nascimento:
+        return False
+
+    hoje = date.today()
+    idade = hoje.year - data_nascimento.year
+    if (hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day):
+        idade -= 1
+
+    return idade >= idade_minima
 
 
 def obter_token_requisicao():
@@ -264,6 +302,27 @@ def atualizar_perfil(usuario):
             "message": "Preencha todos os campos obrigatórios."
         }), 400
 
+    if len(nome) < 3:
+        return jsonify({
+            "message": "O nome deve ter pelo menos 3 letras."
+        }), 400
+
+    if not email_valido(email):
+        return jsonify({
+            "message": "Digite um e-mail válido."
+        }), 400
+
+    data_nascimento_date = converter_data_iso(data_nascimento)
+    if not data_nascimento_date:
+        return jsonify({
+            "message": "Informe uma data de nascimento válida."
+        }), 400
+
+    if not idade_minima_valida(data_nascimento_date):
+        return jsonify({
+            "message": "A idade mínima permitida é de 12 anos."
+        }), 400
+
     if nova_senha and not senha_atual:
         return jsonify({
             "message": "Para alterar a senha, informe a senha atual."
@@ -307,10 +366,26 @@ def atualizar_perfil(usuario):
 
         email_existente = cursor.fetchone()
         cpf = somente_numeros(usuario_banco.get("cpf"))
+        data_nascimento_atual = usuario_banco.get("data_nascimento")
+        if data_nascimento_atual:
+            data_nascimento_atual = data_nascimento_atual.strftime("%Y-%m-%d")
+        else:
+            data_nascimento_atual = ""
 
         if email_existente:
             return jsonify({
                 "message": "Este e-mail já está sendo usado por outro usuário."
+            }), 400
+
+        if (
+            nome == str(usuario_banco.get("nome") or "").strip()
+            and email == str(usuario_banco.get("email") or "").strip().lower()
+            and telefone == somente_numeros(usuario_banco.get("telefone"))
+            and data_nascimento == data_nascimento_atual
+            and not nova_senha
+        ):
+            return jsonify({
+                "message": "Nenhum dado foi atualizado."
             }), 400
 
         if nova_senha:
@@ -335,7 +410,7 @@ def atualizar_perfil(usuario):
                     senha = %s
                 WHERE id = %s
                 """,
-                (nome, email, telefone, data_nascimento, cpf, nova_senha, usuario["id"])
+                (nome, email, telefone, data_nascimento_date, cpf, nova_senha, usuario["id"])
             )
 
         else:
@@ -349,7 +424,7 @@ def atualizar_perfil(usuario):
                     cpf = %s
                 WHERE id = %s
                 """,
-                (nome, email, telefone, data_nascimento, cpf, usuario["id"])
+                (nome, email, telefone, data_nascimento_date, cpf, usuario["id"])
             )
 
         conexao.commit()

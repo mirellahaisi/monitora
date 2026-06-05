@@ -26,9 +26,9 @@ def listar_materias_professor(usuario):
         cursor.execute("""
             SELECT DISTINCT m.id, m.nome
             FROM materia m
-            INNER JOIN professor_materia pm
-                ON pm.fk_materia_id = m.id
-            WHERE pm.fk_usuario_id = %s
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_materia_id = m.id
+            WHERE ptm.fk_usuario_id = %s
               AND m.ativo = 1
             ORDER BY m.nome
         """, (usuario["id"],))
@@ -64,12 +64,10 @@ def listar_turmas_por_materia(usuario):
         cursor.execute("""
             SELECT DISTINCT t.id, t.nome, t.periodo
             FROM turma t
-            INNER JOIN materias_turma mt
-                ON mt.fk_turma_id = t.id
-            INNER JOIN professor_materia pm
-                ON pm.fk_materia_id = mt.fk_materia_id
-            WHERE pm.fk_usuario_id = %s
-              AND mt.fk_materia_id = %s
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_turma_id = t.id
+            WHERE ptm.fk_usuario_id = %s
+              AND ptm.fk_materia_id = %s
               AND t.ativo = 1
             ORDER BY t.nome
         """, (usuario["id"], materia_id))
@@ -161,12 +159,10 @@ def salvar_presenca(usuario):
 
         cursor.execute("""
             SELECT 1
-            FROM professor_materia pm
-            INNER JOIN materias_turma mt
-                ON mt.fk_materia_id = pm.fk_materia_id
-            WHERE pm.fk_usuario_id = %s
-              AND pm.fk_materia_id = %s
-              AND mt.fk_turma_id = %s
+            FROM professor_turma_materia ptm
+            WHERE ptm.fk_usuario_id = %s
+              AND ptm.fk_materia_id = %s
+              AND ptm.fk_turma_id = %s
             LIMIT 1
         """, (usuario["id"], materia_id, turma_id))
 

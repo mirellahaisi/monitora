@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Cursos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── Layout geral ── */
+    .cursos-content {
+      padding: 28px 32px 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    /* ── Cabeçalho da página ── */
+    .page-heading {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .page-heading-icon {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--primary, #4caebe), var(--primary-dark, #3a9aaa));
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(76,174,190,.35);
+    }
+    .page-heading-icon svg { width: 24px; height: 24px; stroke: #fff; }
+    .page-heading h2 { font-size: 1.45rem; font-weight: 700; color: var(--text, #1a2e3b); }
+    .page-heading p  { font-size: .875rem; color: var(--muted, #6b7c8d); margin-top: 2px; }
+
+    /* ── Barra de ações ── */
+    .cursos-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .cursos-search-wrap {
+      position: relative;
+      flex: 1 1 260px;
+      max-width: 380px;
+    }
+    .cursos-search-wrap i {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--muted, #6b7c8d); font-size: 1rem; pointer-events: none;
+    }
+    .cursos-search {
+      width: 100%;
+      padding: 9px 14px 9px 36px;
+      border: 1.5px solid var(--border, #dde3ea);
+      border-radius: 10px;
+      font-size: .875rem;
+      font-family: inherit;
+      background: var(--card-bg, #fff);
+      color: var(--text, #1a2e3b);
+      transition: border-color .2s;
+    }
+    .cursos-search:focus { outline: none; border-color: var(--primary, #4caebe); }
+
+    .btn-novo-curso {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 20px;
+      background: linear-gradient(135deg, var(--primary, #4caebe), var(--primary-dark, #3a9aaa));
+      color: #fff;
+      border: none; border-radius: 10px;
+      font-size: .875rem; font-weight: 600; font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(76,174,190,.35);
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-novo-curso:hover { opacity: .9; transform: translateY(-1px); }
+
+    /* ── Tabela ── */
+    .cursos-card {
+      background: var(--card-bg, #fff);
+      border-radius: 16px;
+      border: 1.5px solid var(--border, #dde3ea);
+      overflow: hidden;
+      box-shadow: 0 2px 12px rgba(0,0,0,.05);
+    }
+    .cursos-table-wrap { overflow-x: auto; }
+    .cursos-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .875rem;
+    }
+    .cursos-table thead tr {
+      background: var(--table-head-bg, #f4f7fa);
+      border-bottom: 1.5px solid var(--border, #dde3ea);
+    }
+    .cursos-table th {
+      padding: 13px 16px;
+      text-align: left;
+      font-size: .75rem;
+      font-weight: 700;
+      color: var(--muted, #6b7c8d);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      white-space: nowrap;
+    }
+    .cursos-table td {
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border, #dde3ea);
+      color: var(--text, #1a2e3b);
+      vertical-align: middle;
+    }
+    .cursos-table tbody tr:last-child td { border-bottom: none; }
+    .cursos-table tbody tr:hover { background: var(--row-hover, #f9fbfc); }
+
+    .col-num    { width: 52px; text-align: center; color: var(--muted); font-size: .8rem; }
+    .col-codigo { width: 140px; }
+    .col-ativo  { width: 100px; text-align: center; }
+    .col-acoes  { width: 120px; text-align: center; }
+
+    /* Badge ativo/inativo */
+    .badge-ativo, .badge-inativo {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+    .badge-ativo   { background: #d1fae5; color: #065f46; }
+    .badge-inativo { background: #fee2e2; color: #991b1b; }
+
+    /* Prefixo badge */
+    .prefixo-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 8px;
+      background: rgba(76,174,190,.12);
+      color: var(--primary, #4caebe);
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .03em;
+    }
+
+    /* Ações */
+    .btn-acao {
+      background: none; border: none; cursor: pointer;
+      padding: 6px 8px; border-radius: 8px;
+      font-size: 1.1rem;
+      transition: background .15s, color .15s;
+    }
+    .btn-editar { color: var(--primary, #4caebe); }
+    .btn-editar:hover { background: rgba(76,174,190,.12); }
+    .btn-excluir { color: #ef4444; }
+    .btn-excluir:hover { background: rgba(239,68,68,.1); }
+
+    /* Estado vazio */
+    .cursos-vazio {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted, #6b7c8d);
+    }
+    .cursos-vazio i { font-size: 2.8rem; opacity: .3; display: block; margin-bottom: 10px; }
+    .cursos-vazio p { font-size: .9rem; }
+
+    /* Rodapé da tabela */
+    .cursos-rodape {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border, #dde3ea);
+      background: var(--table-head-bg, #f4f7fa);
+      font-size: .8rem;
+      color: var(--muted, #6b7c8d);
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      backdrop-filter: blur(3px);
+      z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--card-bg, #fff);
+      border-radius: 20px;
+      padding: 32px;
+      width: 100%; max-width: 480px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.18);
+      position: relative;
+      animation: modalIn .22s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(-18px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0)   scale(1); }
+    }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .modal-titulo { font-size: 1.15rem; font-weight: 700; color: var(--text, #1a2e3b); }
+    .modal-fechar {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted, #6b7c8d); font-size: 1.4rem;
+      padding: 4px; border-radius: 8px;
+      transition: background .15s;
+    }
+    .modal-fechar:hover { background: var(--border, #dde3ea); }
+
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block;
+      font-size: .82rem; font-weight: 600;
+      color: var(--muted, #6b7c8d);
+      margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid var(--border, #dde3ea);
+      border-radius: 10px;
+      font-size: .9rem; font-family: inherit;
+      background: var(--input-bg, #fff);
+      color: var(--text, #1a2e3b);
+      transition: border-color .2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .form-group select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7c8d' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      padding-right: 36px;
+    }
+    .form-group input:focus,
+    .form-group select:focus { outline: none; border-color: var(--primary, #4caebe); }
+    .form-group .campo-erro { border-color: #ef4444 !important; }
+    .msg-erro {
+      font-size: .78rem; color: #ef4444;
+      margin-top: 4px; display: none;
+    }
+    .msg-erro.visivel { display: block; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .modal-acoes {
+      display: flex; gap: 12px; justify-content: flex-end;
+      margin-top: 24px;
+    }
+    .btn-cancelar {
+      padding: 10px 22px; border: 1.5px solid var(--border, #dde3ea);
+      background: none; border-radius: 10px;
+      font-size: .875rem; font-weight: 600; font-family: inherit;
+      color: var(--muted, #6b7c8d); cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-cancelar:hover { background: var(--table-head-bg, #f4f7fa); }
+    .btn-salvar {
+      padding: 10px 26px;
+      background: linear-gradient(135deg, var(--primary, #4caebe), var(--primary-dark, #3a9aaa));
+      color: #fff; border: none; border-radius: 10px;
+      font-size: .875rem; font-weight: 600; font-family: inherit;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(76,174,190,.35);
+      transition: opacity .2s;
+    }
+    .btn-salvar:hover { opacity: .9; }
+    .btn-salvar:disabled { opacity: .6; cursor: not-allowed; }
+  </style>
+</head>
+
+<body class="inicio-body notas-page">
+
+{% include 'components/sidebar.html' %}
+
+  <main class="inicio-main">
+    {% include 'components/header.html' %}
+
+    <section class="cursos-content">
+
+      <!-- Cabeçalho -->
+      <div class="page-heading">
+        <div class="page-heading-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 3L2 9l10 6 10-6-10-6z"/>
+            <path d="M2 17l10 6 10-6"/>
+            <path d="M2 13l10 6 10-6"/>
+          </svg>
+        </div>
+        <div>
+          <h2>Gestão de Cursos</h2>
+          <p>Cadastre, edite e gerencie os cursos disponíveis na instituição</p>
+        </div>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="cursos-toolbar">
+        <div class="cursos-search-wrap">
+          <i class="ph ph-magnifying-glass"></i>
+          <input type="text" id="campoBusca" class="cursos-search" placeholder="Buscar por nome ou código...">
+        </div>
+        <button class="btn-novo-curso" id="btnNovoCurso">
+          <i class="ph ph-plus-circle"></i>
+          Novo Curso
+        </button>
+      </div>
+
+      <!-- Tabela -->
+      <div class="cursos-card">
+        <div class="cursos-table-wrap">
+          <table class="cursos-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th>Nome do Curso</th>
+                <th class="col-codigo">Prefixo / Código</th>
+                <th class="col-ativo">Status</th>
+                <th class="col-acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="tabelaCursos">
+              <tr>
+                <td colspan="5">
+                  <div class="cursos-vazio">
+                    <i class="ph ph-circle-notch"></i>
+                    <p>Carregando cursos...</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="cursos-rodape" id="rodapeCursos"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ── MODAL Cadastro / Edição ── -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <span class="modal-titulo" id="modalTitulo">Novo Curso</span>
+        <button class="modal-fechar" id="btnFecharModal" title="Fechar">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      <input type="hidden" id="cursoId">
+
+      <div class="form-group">
+        <label for="inputNome">Nome do Curso</label>
+        <input type="text" id="inputNome" placeholder="Ex.: Análise e Desenvolvimento de Sistemas" maxlength="255">
+        <span class="msg-erro" id="erroNome">Informe o nome do curso.</span>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="inputPrefixo">Prefixo / Sigla</label>
+          <input type="text" id="inputPrefixo" placeholder="Ex.: ADS" maxlength="20" style="text-transform:uppercase;">
+          <span class="msg-erro" id="erroPrefixo">Informe o prefixo.</span>
+        </div>
+        <div class="form-group">
+          <label for="selectAtivo">Status</label>
+          <select id="selectAtivo">
+            <option value="1">Ativo</option>
+            <option value="0">Inativo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-acoes">
+        <button class="btn-cancelar" id="btnCancelar">Cancelar</button>
+        <button class="btn-salvar" id="btnSalvar">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    // ── Utilitários ──
+    function getToken() { return localStorage.getItem("token"); }
+    function authHeader() { return { "Authorization": `Bearer ${getToken()}`, "Content-Type": "application/json" }; }
+
+    function isPapelCoordenador(p) {
+      if (!p && p !== 0) return false;
+      const s = String(p).toLowerCase();
+      return s === "coordenador" || s === "admin" || s === "adm" || Number(p) === 1;
+    }
+
+    // ── Popula header com dados do usuário ──
+    (function popularHeader() {
+      try {
+        let usuario = null;
+        const token = localStorage.getItem("token");
+        if (token) {
+          const part = token.split(".")[1];
+          const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+          const pad = "=".repeat((4 - b64.length % 4) % 4);
+          usuario = JSON.parse(atob(b64 + pad));
+        }
+        if (!usuario) {
+          const raw = localStorage.getItem("usuario");
+          if (raw) usuario = JSON.parse(raw);
+        }
+        if (!usuario) return;
+
+        const nome = usuario.nome || usuario.name || "";
+        const papel = String(usuario.papel || usuario.papel_id || usuario.fk_papel_id || "").toLowerCase();
+        const labelPapel = papel === "coordenador" || papel === "admin" || papel === "adm" || Number(usuario.papel_id || usuario.fk_papel_id) === 1
+          ? "Coordenador"
+          : papel === "professor" || Number(usuario.papel_id || usuario.fk_papel_id) === 2
+            ? "Professor"
+            : "Aluno";
+
+        const elNome = document.getElementById("nomeUsuarioTopo");
+        const elPapel = document.getElementById("papelUsuario");
+        const elAvatar = document.getElementById("avatarUsuario");
+
+        if (elNome) elNome.textContent = nome;
+        if (elPapel) elPapel.textContent = labelPapel;
+        if (elAvatar) elAvatar.textContent = nome ? nome.charAt(0).toUpperCase() : "U";
+
+        // Menu dropdown do header
+        const botao = document.getElementById("botaoMenuUsuario");
+        const menu  = document.getElementById("menuUsuario");
+        if (botao && menu) {
+          botao.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("open"); });
+          document.addEventListener("click", () => menu.classList.remove("open"));
+        }
+        const btnEditar = document.getElementById("btnEditarPerfil");
+        if (btnEditar) btnEditar.addEventListener("click", () => window.location.href = "/perfil");
+      } catch(e) { console.warn("Header populate error", e); }
+    })();
+
+    // ── Verificação de acesso ──
+    (function verificarAcesso() {
+      const token = localStorage.getItem("token");
+      if (!token) { window.location.href = "/login"; return; }
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+        const papel = payload.papel || payload.papel_id || payload.fk_papel_id;
+        if (!isPapelCoordenador(papel)) {
+          Swal.fire({ icon: "error", title: "Acesso negado", text: "Esta área é exclusiva para coordenadores.", confirmButtonColor: "#4caebe" })
+            .then(() => window.location.href = "/inicio");
+        }
+      } catch { window.location.href = "/login"; }
+    })();
+
+    // ── Estado ──
+    let cursos = [];
+    let termoBusca = "";
+    let dadosOriginaisEdicao = null; // guarda snapshot antes de editar
+
+    // ── Refs DOM ──
+    const tabelaCursos  = document.getElementById("tabelaCursos");
+    const rodapeCursos  = document.getElementById("rodapeCursos");
+    const campoBusca    = document.getElementById("campoBusca");
+    const modalOverlay  = document.getElementById("modalOverlay");
+    const modalTitulo   = document.getElementById("modalTitulo");
+    const btnNovoCurso  = document.getElementById("btnNovoCurso");
+    const btnFecharModal = document.getElementById("btnFecharModal");
+    const btnCancelar   = document.getElementById("btnCancelar");
+    const btnSalvar     = document.getElementById("btnSalvar");
+    const cursoIdInput  = document.getElementById("cursoId");
+    const inputNome     = document.getElementById("inputNome");
+    const inputPrefixo  = document.getElementById("inputPrefixo");
+    const selectAtivo   = document.getElementById("selectAtivo");
+
+    // ── Carregar cursos ──
+    async function carregarCursos() {
+      try {
+        const r = await fetch("/api/cursos", { headers: authHeader() });
+        const dados = await r.json();
+        if (!r.ok) { mostrarErroTabela(dados.message || "Erro ao carregar cursos."); return; }
+        cursos = (dados.cursos || []).map(c => ({ ...c, ativo: c.ativo === true || c.ativo === 1 }));
+        renderizarTabela();
+      } catch {
+        mostrarErroTabela("Falha de conexão ao carregar cursos.");
+      }
+    }
+
+    function filtrarCursos() {
+      if (!termoBusca) return cursos;
+      const t = termoBusca.toLowerCase();
+      return cursos.filter(c =>
+        c.nome.toLowerCase().includes(t) ||
+        c.codigo_prefixo.toLowerCase().includes(t)
+      );
+    }
+
+    function renderizarTabela() {
+      const lista = filtrarCursos();
+      if (!lista.length) {
+        tabelaCursos.innerHTML = `
+          <tr><td colspan="5">
+            <div class="cursos-vazio">
+              <i class="ph ph-book-open"></i>
+              <p>${termoBusca ? "Nenhum curso encontrado para a busca." : "Nenhum curso cadastrado ainda."}</p>
+            </div>
+          </td></tr>`;
+        rodapeCursos.textContent = "";
+        return;
+      }
+      tabelaCursos.innerHTML = lista.map((c, i) => `
+        <tr>
+          <td class="col-num">${i + 1}</td>
+          <td><strong>${escHtml(c.nome)}</strong></td>
+          <td><span class="prefixo-badge">${escHtml(c.codigo_prefixo)}</span></td>
+          <td class="col-ativo">
+            <span class="${c.ativo ? "badge-ativo" : "badge-inativo"}">${c.ativo ? "Ativo" : "Inativo"}</span>
+          </td>
+          <td class="col-acoes">
+            <button class="btn-acao btn-editar" title="Editar" onclick="abrirEditar(${c.id})">
+              <i class="ph ph-pencil-simple"></i>
+            </button>
+            <button class="btn-acao btn-excluir" title="Excluir" onclick="confirmarExcluir(${c.id}, '${escHtml(c.nome)}')">
+              <i class="ph ph-trash"></i>
+            </button>
+          </td>
+        </tr>`).join("");
+      rodapeCursos.textContent = `${lista.length} curso${lista.length !== 1 ? "s" : ""} encontrado${lista.length !== 1 ? "s" : ""}`;
+    }
+
+    function mostrarErroTabela(msg) {
+      tabelaCursos.innerHTML = `
+        <tr><td colspan="5">
+          <div class="cursos-vazio">
+            <i class="ph ph-warning-circle"></i>
+            <p>${msg}</p>
+          </div>
+        </td></tr>`;
+    }
+
+    function escHtml(str) {
+      return String(str ?? "")
+        .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    // ── Modal ──
+    function abrirModal(modo, curso = null) {
+      limparErros();
+      if (modo === "novo") {
+        modalTitulo.textContent = "Novo Curso";
+        cursoIdInput.value = "";
+        inputNome.value = "";
+        inputPrefixo.value = "";
+        selectAtivo.value = "1";
+        dadosOriginaisEdicao = null;
+      } else {
+        modalTitulo.textContent = "Editar Curso";
+        cursoIdInput.value = curso.id;
+        inputNome.value = curso.nome;
+        inputPrefixo.value = curso.codigo_prefixo;
+        selectAtivo.value = curso.ativo ? "1" : "0";
+        dadosOriginaisEdicao = {
+          nome: curso.nome,
+          codigo_prefixo: curso.codigo_prefixo,
+          ativo: curso.ativo ? "1" : "0"
+        };
+      }
+      modalOverlay.classList.add("open");
+      setTimeout(() => inputNome.focus(), 80);
+    }
+
+    function fecharModal() {
+      modalOverlay.classList.remove("open");
+    }
+
+    function abrirEditar(id) {
+      const curso = cursos.find(c => c.id === id);
+      if (!curso) return;
+      abrirModal("editar", curso);
+    }
+
+    // ── Validação ──
+    function limparErros() {
+      document.querySelectorAll(".msg-erro").forEach(e => e.classList.remove("visivel"));
+      document.querySelectorAll(".campo-erro").forEach(e => e.classList.remove("campo-erro"));
+    }
+
+    function marcarErro(campo, mensagemId) {
+      campo.classList.add("campo-erro");
+      document.getElementById(mensagemId).classList.add("visivel");
+    }
+
+    function validarForm() {
+      limparErros();
+      let valido = true;
+      const nome = inputNome.value.trim();
+      const prefixo = inputPrefixo.value.trim();
+
+      if (!nome || nome.length < 3) {
+        marcarErro(inputNome, "erroNome");
+        document.getElementById("erroNome").textContent = nome
+          ? "O nome deve ter pelo menos 3 caracteres."
+          : "Informe o nome do curso.";
+        valido = false;
+      }
+      if (!prefixo || prefixo.length < 2) {
+        marcarErro(inputPrefixo, "erroPrefixo");
+        document.getElementById("erroPrefixo").textContent = prefixo
+          ? "O prefixo deve ter pelo menos 2 caracteres."
+          : "Informe o prefixo do curso.";
+        valido = false;
+      }
+      return valido;
+    }
+
+    // ── Salvar ──
+    async function salvar() {
+      if (!validarForm()) return;
+
+      const id = cursoIdInput.value;
+      const payload = {
+        nome: inputNome.value.trim(),
+        codigo_prefixo: inputPrefixo.value.trim().toUpperCase(),
+        ativo: selectAtivo.value === "1"
+      };
+
+      // Verifica se houve alteração ao editar
+      if (id && dadosOriginaisEdicao) {
+        const semMudanca =
+          payload.nome === dadosOriginaisEdicao.nome &&
+          payload.codigo_prefixo === dadosOriginaisEdicao.codigo_prefixo &&
+          selectAtivo.value === dadosOriginaisEdicao.ativo;
+        if (semMudanca) {
+          Swal.fire({
+            icon: "info",
+            title: "Nenhuma alteração",
+            text: "Nenhum dado foi alterado.",
+            confirmButtonColor: "#4caebe",
+            timer: 2000, timerProgressBar: true, showConfirmButton: false
+          });
+          return;
+        }
+      }
+
+      btnSalvar.disabled = true;
+      btnSalvar.textContent = "Salvando...";
+
+      try {
+        const url    = id ? `/api/cursos/${id}` : "/api/cursos";
+        const method = id ? "PUT" : "POST";
+        const r = await fetch(url, { method, headers: authHeader(), body: JSON.stringify(payload) });
+        const dados = await r.json();
+
+        if (!r.ok) {
+          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Erro ao salvar.", confirmButtonColor: "#4caebe" });
+          return;
+        }
+
+        fecharModal();
+        await carregarCursos();
+        Swal.fire({
+          icon: "success",
+          title: id ? "Curso atualizado!" : "Curso cadastrado!",
+          text: dados.message || "Operação realizada com sucesso.",
+          confirmButtonColor: "#4caebe",
+          timer: 2200, timerProgressBar: true, showConfirmButton: false
+        });
+      } catch {
+        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão. Tente novamente.", confirmButtonColor: "#4caebe" });
+      } finally {
+        btnSalvar.disabled = false;
+        btnSalvar.textContent = "Salvar";
+      }
+    }
+
+    // ── Excluir ──
+    async function confirmarExcluir(id, nome) {
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "Excluir curso?",
+        html: `O curso <strong>${escHtml(nome)}</strong> será removido permanentemente.`,
+        showCancelButton: true,
+        confirmButtonColor: "#ef4444",
+        cancelButtonColor: "#6b7c8d",
+        confirmButtonText: "Sim, excluir",
+        cancelButtonText: "Cancelar"
+      });
+      if (!result.isConfirmed) return;
+      try {
+        const r = await fetch(`/api/cursos/${id}`, { method: "DELETE", headers: authHeader() });
+        const dados = await r.json();
+        if (!r.ok) {
+          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Não foi possível excluir.", confirmButtonColor: "#4caebe" });
+          return;
+        }
+        await carregarCursos();
+        Swal.fire({ icon: "success", title: "Excluído!", text: dados.message || "Curso removido.", confirmButtonColor: "#4caebe", timer: 2000, timerProgressBar: true, showConfirmButton: false });
+      } catch {
+        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão.", confirmButtonColor: "#4caebe" });
+      }
+    }
+
+    // ── Eventos ──
+    btnNovoCurso.addEventListener("click", () => abrirModal("novo"));
+    btnFecharModal.addEventListener("click", fecharModal);
+    btnCancelar.addEventListener("click", fecharModal);
+    btnSalvar.addEventListener("click", salvar);
+    modalOverlay.addEventListener("click", e => { if (e.target === modalOverlay) fecharModal(); });
+
+    campoBusca.addEventListener("input", () => {
+      termoBusca = campoBusca.value.trim();
+      renderizarTabela();
+    });
+
+    inputPrefixo.addEventListener("input", () => {
+      inputPrefixo.value = inputPrefixo.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    });
+
+    // Salvar com Enter
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter" && modalOverlay.classList.contains("open")) salvar();
+      if (e.key === "Escape" && modalOverlay.classList.contains("open")) fecharModal();
+    });
+
+    // ── Sidebar: logout ──
+    const btnSair = document.getElementById("btnSair");
+    if (btnSair) btnSair.addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("usuario");
+      window.location.href = "/login";
+    });
+
+    // ── Init ──
+    carregarCursos();
+  </script>
+
+  <script src="/static/js/darkmode.js"></script>
+</body>
+</html>

@@ -32,6 +32,10 @@ def _papel(payload):
     return str(payload.get("papel", "")).lower()
 
 
+def _texto_limpo(valor):
+    return str(valor or "").strip()
+
+
 def _expandir_destinatarios(cursor, fk_turma_id, fk_materia_id, papel_destino, remetente_id, usuario_destino_id=None):
     """
     Retorna lista de IDs de usuários que devem receber a mensagem.
@@ -62,15 +66,21 @@ def _expandir_destinatarios(cursor, fk_turma_id, fk_materia_id, papel_destino, r
             ids.update(r["id"] for r in cursor.fetchall())
 
         if papel_destino in ("professor", "todos"):
-            cursor.execute("""
+            filtro_materia = ""
+            parametros_professores = [fk_turma_id, remetente_id]
+            if fk_materia_id:
+                filtro_materia = " AND ptm.fk_materia_id = %s"
+                parametros_professores.insert(1, fk_materia_id)
+
+            cursor.execute(f"""
                 SELECT DISTINCT u.id
                 FROM usuario u
-                INNER JOIN professor_materia pm ON pm.fk_usuario_id = u.id
-                INNER JOIN materias_turma mt    ON mt.fk_materia_id = pm.fk_materia_id
-                WHERE mt.fk_turma_id = %s
+                INNER JOIN professor_turma_materia ptm ON ptm.fk_usuario_id = u.id
+                WHERE ptm.fk_turma_id = %s
+                  {filtro_materia}
                   AND u.ativo = 1
                   AND u.id != %s
-            """, (fk_turma_id, remetente_id))
+            """, tuple(parametros_professores))
             ids.update(r["id"] for r in cursor.fetchall())
 
     if papel_destino == "coordenador":
@@ -95,15 +105,21 @@ def enviar_mensagem():
         return jsonify({"message": "Não autorizado."}), 401
 
     dados = request.get_json(silent=True) or {}
-    titulo             = (dados.get("titulo") or "").strip()
-    descricao          = (dados.get("descricao") or "").strip()
+    titulo             = _texto_limpo(dados.get("titulo"))
+    descricao          = _texto_limpo(dados.get("descricao"))
     turma_id           = dados.get("turma_id")           or None
     materia_id         = dados.get("materia_id")         or None
-    papel_destino      = (dados.get("papel_destino") or "todos").lower()
+    papel_destino      = _texto_limpo(dados.get("papel_destino") or "todos").lower()
     usuario_destino_id = dados.get("usuario_destino_id") or None  # ID do professor/coord específico
 
     if not titulo or not descricao:
         return jsonify({"message": "Título e descrição são obrigatórios."}), 400
+
+    if len(titulo) <= 3:
+        return jsonify({"message": "O título deve ter mais de 3 caracteres."}), 400
+
+    if len(descricao) <= 3:
+        return jsonify({"message": "A mensagem deve ter mais de 3 caracteres."}), 400
 
     papel_rem    = _papel(payload)
     remetente_id = payload.get("id")
@@ -353,9 +369,8 @@ def opcoes_envio():
         cursor.execute("""
             SELECT DISTINCT t.id, t.nome, t.periodo
             FROM turma t
-            INNER JOIN materias_turma mt    ON mt.fk_turma_id  = t.id
-            INNER JOIN professor_materia pm ON pm.fk_materia_id = mt.fk_materia_id
-            WHERE pm.fk_usuario_id = %s AND t.ativo = 1
+            INNER JOIN professor_turma_materia ptm ON ptm.fk_turma_id = t.id
+            WHERE ptm.fk_usuario_id = %s AND t.ativo = 1
             ORDER BY t.nome
         """, (payload.get("id"),))
         turmas = cursor.fetchall()
@@ -401,9 +416,10 @@ def materias_da_turma():
         cursor.execute("""
             SELECT m.id, m.nome
             FROM materia m
-            INNER JOIN materias_turma    mt ON mt.fk_materia_id = m.id
-            INNER JOIN professor_materia pm ON pm.fk_materia_id = m.id
-            WHERE mt.fk_turma_id = %s AND pm.fk_usuario_id = %s AND m.ativo = 1
+            INNER JOIN professor_turma_materia ptm ON ptm.fk_materia_id = m.id
+            WHERE ptm.fk_turma_id = %s
+              AND ptm.fk_usuario_id = %s
+              AND m.ativo = 1
             ORDER BY m.nome
         """, (turma_id, payload.get("id")))
     elif papel_rem == "aluno":
@@ -413,9 +429,10 @@ def materias_da_turma():
             cursor.execute("""
                 SELECT m.id, m.nome
                 FROM materia m
-                INNER JOIN materias_turma    mt ON mt.fk_materia_id = m.id
-                INNER JOIN professor_materia pm ON pm.fk_materia_id = m.id
-                WHERE mt.fk_turma_id = %s AND pm.fk_usuario_id = %s AND m.ativo = 1
+                INNER JOIN professor_turma_materia ptm ON ptm.fk_materia_id = m.id
+                WHERE ptm.fk_turma_id = %s
+                  AND ptm.fk_usuario_id = %s
+                  AND m.ativo = 1
                 ORDER BY m.nome
             """, (turma_id, professor_id))
         else:
@@ -458,13 +475,12 @@ def professores_da_turma():
     conexao = criar_conexao()
     cursor  = conexao.cursor(dictionary=True)
 
-    # Retorna professores distintos que lecionam nessa turma (via professor_materia + materias_turma)
+    # Retorna professores distintos que lecionam nessa turma
     cursor.execute("""
         SELECT DISTINCT u.id, u.nome
         FROM usuario u
-        INNER JOIN professor_materia pm ON pm.fk_usuario_id = u.id
-        INNER JOIN materias_turma    mt ON mt.fk_materia_id = pm.fk_materia_id
-        WHERE mt.fk_turma_id = %s AND u.ativo = 1
+        INNER JOIN professor_turma_materia ptm ON ptm.fk_usuario_id = u.id
+        WHERE ptm.fk_turma_id = %s AND u.ativo = 1
         ORDER BY u.nome
     """, (turma_id,))
 

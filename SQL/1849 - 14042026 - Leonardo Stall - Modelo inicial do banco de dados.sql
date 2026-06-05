@@ -181,6 +181,27 @@ CREATE TABLE professor_materia (
     ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS professor_turma_materia (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    fk_usuario_id INT NOT NULL,
+    fk_turma_id INT NOT NULL,
+    fk_materia_id INT NOT NULL,
+
+    UNIQUE (fk_usuario_id, fk_turma_id, fk_materia_id),
+
+    FOREIGN KEY (fk_usuario_id)
+    REFERENCES usuario(id)
+    ON DELETE CASCADE,
+
+    FOREIGN KEY (fk_turma_id)
+    REFERENCES turma(id)
+    ON DELETE CASCADE,
+
+    FOREIGN KEY (fk_materia_id)
+    REFERENCES materia(id)
+    ON DELETE CASCADE
+);
+
 
 USE monitora;
 
@@ -280,3 +301,66 @@ CREATE TABLE mensagem_destinatario (
 CREATE INDEX idx_mensagem_remetente  ON mensagem (fk_remetente_id);
 CREATE INDEX idx_mensagem_turma      ON mensagem (fk_turma_id);
 CREATE INDEX idx_mensagem_destino    ON mensagem_destinatario (fk_usuario_id, lido);
+
+
+-- ================================================================
+-- Migração: Tabela curso + FK em turma  (versão corrigida)
+-- Compatível com banco que já possui linhas na tabela turma
+-- ================================================================
+
+USE monitora;
+
+-- ── 1. Cria tabela de cursos (já executado com sucesso, IF NOT EXISTS garante segurança) ──
+CREATE TABLE IF NOT EXISTS curso (
+    id               INT AUTO_INCREMENT PRIMARY KEY,
+    nome             VARCHAR(255) NOT NULL,
+    codigo_prefixo   VARCHAR(20)  NOT NULL,
+    ativo            BOOLEAN DEFAULT TRUE,
+    data_criacao     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    data_atualizacao DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- ── 2. Insere os cursos ANTES de criar a FK (precisamos do id=1 existir) ──
+INSERT IGNORE INTO curso (id, nome, codigo_prefixo) VALUES
+    (1, 'Análise e Desenvolvimento de Sistemas', 'ADS'),
+    (2, 'Engenharia de Software',                'ES'),
+    (3, 'Ciência da Computação',                 'CC'),
+    (4, 'Sistemas de Informação',                'SI');
+
+-- ── 3. Remove coluna id_curso antiga (já executado; IF EXISTS evita erro ao rodar de novo) ──
+
+
+-- ── 4. Adiciona fk_curso_id como NULL primeiro (para não quebrar linhas existentes) ──
+ALTER TABLE turma
+    ADD COLUMN fk_curso_id INT NULL AFTER id;
+
+-- ── 5. Preenche as linhas existentes com o curso id=1 (ADS) como padrão ──
+--      Ajuste o valor conforme necessário para cada turma existente.
+UPDATE turma
+SET fk_curso_id = 1
+WHERE fk_curso_id IS NULL;
+
+-- ── 6. Agora torna a coluna NOT NULL (todas as linhas já têm valor) ──
+ALTER TABLE turma
+    MODIFY COLUMN fk_curso_id INT NOT NULL;
+
+-- ── 7. Aplica a constraint de chave estrangeira ──
+ALTER TABLE turma
+    ADD CONSTRAINT FK_turma_curso
+    FOREIGN KEY (fk_curso_id)
+    REFERENCES curso(id)
+    ON DELETE RESTRICT;
+
+-- ── 8. Adiciona coluna turma_letra (gerada pelo backend: A, B, C...) ──
+ALTER TABLE turma
+    ADD COLUMN  turma_letra VARCHAR(5) NOT NULL DEFAULT 'A' AFTER semestre;
+
+-- ── 9. Migração do vínculo global professor_materia para o vínculo por turma ──
+INSERT IGNORE INTO professor_turma_materia (fk_usuario_id, fk_turma_id, fk_materia_id)
+SELECT
+    pm.fk_usuario_id,
+    mt.fk_turma_id,
+    pm.fk_materia_id
+FROM professor_materia pm
+INNER JOIN materias_turma mt
+    ON mt.fk_materia_id = pm.fk_materia_id;
