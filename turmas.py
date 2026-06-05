@@ -435,9 +435,10 @@ def listar_materias_turma(usuario, turma_id):
 
 @turmas_bp.get("/api/turmas/cursos")
 @token_obrigatorio
-@papel_obrigatorio("admin", "adm", "coordenador")
+@papel_obrigatorio("admin", "adm", "coordenador", "professor")
 def listar_cursos(usuario):
     """Retorna todos os cursos ativos para popular o select do modal."""
+    papel = str(usuario.get("papel", "")).lower()
     conexao = None
     cursor = None
 
@@ -445,12 +446,26 @@ def listar_cursos(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT id, nome, codigo_prefixo
-            FROM curso
-            WHERE ativo = 1
-            ORDER BY nome ASC
-        """)
+        if papel == "professor":
+            cursor.execute("""
+                SELECT DISTINCT c.id, c.nome, c.codigo_prefixo
+                FROM curso c
+                INNER JOIN turma t
+                    ON t.fk_curso_id = c.id
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_turma_id = t.id
+                WHERE c.ativo = 1
+                  AND t.ativo = 1
+                  AND ptm.fk_usuario_id = %s
+                ORDER BY c.nome ASC
+            """, (usuario["id"],))
+        else:
+            cursor.execute("""
+                SELECT id, nome, codigo_prefixo
+                FROM curso
+                WHERE ativo = 1
+                ORDER BY nome ASC
+            """)
 
         cursos = cursor.fetchall()
         return jsonify({"cursos": cursos}), 200

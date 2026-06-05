@@ -28,14 +28,20 @@
       </div>
       <div>
         <h2>Presença</h2>
-        <p>Selecione a matéria, turma e data para registrar a chamada</p>
+        <p>Selecione curso, matéria, turma e data para registrar a chamada</p>
       </div>
     </div>
 
     <div class="notas-filtros" id="filtrosPresenca">
       <div class="filtro-group">
+        <label for="selectCurso">Curso</label>
+        <select id="selectCurso">
+          <option value="">Selecione o curso</option>
+        </select>
+      </div>
+      <div class="filtro-group">
         <label for="selectMateria">Matéria</label>
-        <select id="selectMateria">
+        <select id="selectMateria" disabled>
           <option value="">Selecione a matéria</option>
         </select>
       </div>
@@ -58,7 +64,7 @@
       <div class="presenca-card-wrap" id="presencaCardWrap">
         <div class="freq-empty" id="presencaEmpty">
           <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
-          <p>Selecione matéria, turma e data para carregar os alunos.</p>
+          <p>Selecione curso, matéria, turma e data para carregar os alunos.</p>
         </div>
       </div>
     </div>
@@ -67,7 +73,9 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/static/js/searchable-select.js"></script>
 <script>
+  const selectCurso     = document.getElementById("selectCurso");
   const selectMateria   = document.getElementById("selectMateria");
   const selectTurma     = document.getElementById("selectTurma");
   const dataAula        = document.getElementById("dataAula");
@@ -103,15 +111,25 @@
     return papel;
   }
 
+  function aplicarFiltrosPesquisaveis() {
+    if (!window.SearchableSelect) return;
+    SearchableSelect.enhance(selectCurso, { placeholder: "Pesquise o curso" });
+    SearchableSelect.enhance(selectMateria, { placeholder: "Pesquise a matéria" });
+    SearchableSelect.enhance(selectTurma, { placeholder: "Pesquise a turma" });
+  }
+
   function mostrarVazio(msg) {
     presencaCardWrap.innerHTML = `
       <div class="freq-empty">
         <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
-        <p>${msg || "Selecione matéria, turma e data para carregar os alunos."}</p>
+        <p>${msg || "Selecione curso, matéria, turma e data para carregar os alunos."}</p>
       </div>`;
   }
 
   function renderTabela(alunos) {
+    const alunosOrdenados = [...alunos].sort((a, b) =>
+      String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", { sensitivity: "base" })
+    );
     presencaCardWrap.innerHTML = `
       <div class="presenca-card" style="
         background:#fff;
@@ -130,7 +148,7 @@
             </tr>
           </thead>
           <tbody id="tabelaPresenca">
-            ${alunos.map(aluno => {
+            ${alunosOrdenados.map(aluno => {
               const presenteMarcado = aluno.presente === 1 || aluno.presente === true;
               const ausenteMarcado  = aluno.presente === 0;
               return `
@@ -155,7 +173,7 @@
         id="justificativa"
         placeholder="Observações: professor, utilize este campo para justificar uma falta específica"
         style="width:100%;min-height:105px;border:1.5px solid rgba(147,215,223,0.4);border-radius:14px;padding:14px 16px;background:#fff;color:var(--mid);font:inherit;resize:vertical;outline:none;box-shadow:0 2px 12px rgba(76,190,190,0.06);margin-top:18px;"
-      >${alunos[0]?.justificativa || ""}</textarea>
+      >${alunosOrdenados[0]?.justificativa || ""}</textarea>
       <div style="display:flex;justify-content:flex-end;margin-top:16px;">
         <button id="btnSalvarPresenca" type="button" style="height:46px;padding:0 28px;border:none;border-radius:10px;background:var(--grad);color:white;font:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(87,219,189,0.3);transition:opacity 0.2s,transform 0.15s;">
           Salvar chamada
@@ -205,15 +223,54 @@
     } catch { limparSessao(); window.location.href = "/"; }
   }
 
-  async function carregarMaterias() {
+  async function carregarCursos() {
+    selectCurso.innerHTML = `<option value="">Selecione o curso</option>`;
+    selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+    selectMateria.disabled = true;
+    selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+    selectTurma.disabled = true;
+    dataAula.value = "";
+    dataAula.disabled = true;
+    aplicarFiltrosPesquisaveis();
+    mostrarVazio();
+
     try {
-      const r = await fetch("/api/presenca/materias", { headers: { "Authorization": `Bearer ${getToken()}` } });
+      const r = await fetch("/api/turmas/cursos", {
+        headers: { "Authorization": `Bearer ${getToken()}` }
+      });
+      const dados = await r.json();
+      if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar cursos.", "error"); return; }
+      (dados.cursos || []).forEach(curso => {
+        selectCurso.innerHTML += `<option value="${curso.id}">${curso.nome}</option>`;
+      });
+      aplicarFiltrosPesquisaveis();
+    } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+  }
+
+  async function carregarMaterias() {
+    const cursoId = selectCurso.value;
+    selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+    selectMateria.disabled = true;
+    selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+    selectTurma.disabled = true;
+    dataAula.value = "";
+    dataAula.disabled = true;
+    aplicarFiltrosPesquisaveis();
+    mostrarVazio();
+    if (!cursoId) return;
+
+    try {
+      const params = new URLSearchParams({ curso_id: cursoId });
+      const r = await fetch(`/api/presenca/materias?${params.toString()}`, {
+        headers: { "Authorization": `Bearer ${getToken()}` }
+      });
       const dados = await r.json();
       if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error"); return; }
-      selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
       dados.materias.forEach(m => {
         selectMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
       });
+      selectMateria.disabled = false;
+      aplicarFiltrosPesquisaveis();
     } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
   }
 
@@ -267,16 +324,19 @@
   }
 
   async function carregarTurmas() {
+    const cursoId = selectCurso.value;
     const input = document.getElementById("dataAula");
     const aviso = document.getElementById("avisoDataFim");
     selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
     selectTurma.disabled = true;
     if (input) { input.value = ""; input.disabled = true; }
     if (aviso) aviso.style.display = "none";
+    aplicarFiltrosPesquisaveis();
     mostrarVazio();
-    if (!selectMateria.value) return;
+    if (!cursoId || !selectMateria.value) return;
     try {
-      const r = await fetch(`/api/presenca/turmas?materia_id=${selectMateria.value}`, {
+      const params = new URLSearchParams({ materia_id: selectMateria.value, curso_id: cursoId });
+      const r = await fetch(`/api/presenca/turmas?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${getToken()}` }
       });
       const dados = await r.json();
@@ -286,6 +346,7 @@
         selectTurma.innerHTML += `<option value="${t.id}">${t.nome}${periodo}</option>`;
       });
       selectTurma.disabled = false;
+      aplicarFiltrosPesquisaveis();
     } catch { Swal.fire("Erro", "Falha ao buscar turmas.", "error"); }
   }
 
@@ -375,8 +436,9 @@
       selectMateria.value = "";
       selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
       selectTurma.disabled = true;
-      dataAula.innerHTML = `<option value="">Selecione a data</option>`;
+      dataAula.value = "";
       dataAula.disabled = true;
+      aplicarFiltrosPesquisaveis();
       mostrarVazio();
     } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
   }
@@ -390,6 +452,7 @@
     limparSessao(); window.location.href = "/";
   }
 
+  if (selectCurso) selectCurso.addEventListener("change", carregarMaterias);
   selectMateria.addEventListener("change", carregarTurmas);
   selectTurma.addEventListener("change", carregarDatas);
   // O listener do dataAula é atribuído dentro de habilitarInputData()
@@ -401,8 +464,9 @@
     if (!e.target.closest(".user-menu") && menuUsuario) menuUsuario.classList.remove("show");
   });
 
+  aplicarFiltrosPesquisaveis();
   carregarUsuarioLogado();
-  carregarMaterias();
+  carregarCursos();
 </script>
 
 <script src="/static/js/darkmode.js"></script>

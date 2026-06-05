@@ -16,6 +16,7 @@ def tela_notas():
 @token_obrigatorio
 @papel_obrigatorio("professor")
 def listar_materias_professor(usuario):
+    curso_id = request.args.get("curso_id")
     conexao = None
     cursor = None
 
@@ -23,15 +24,33 @@ def listar_materias_professor(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT m.id, m.nome
-            FROM materia m
-            INNER JOIN professor_turma_materia ptm
-                ON ptm.fk_materia_id = m.id
-            WHERE ptm.fk_usuario_id = %s
-              AND m.ativo = 1
-            ORDER BY m.nome
-        """, (usuario["id"],))
+        if curso_id:
+            cursor.execute("""
+                SELECT DISTINCT m.id, m.nome
+                FROM materia m
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_materia_id = m.id
+                INNER JOIN turma t
+                    ON t.id = ptm.fk_turma_id
+                WHERE ptm.fk_usuario_id = %s
+                  AND t.fk_curso_id = %s
+                  AND t.ativo = 1
+                  AND m.ativo = 1
+                ORDER BY m.nome
+            """, (usuario["id"], curso_id))
+        else:
+            cursor.execute("""
+                SELECT DISTINCT m.id, m.nome
+                FROM materia m
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_materia_id = m.id
+                INNER JOIN turma t
+                    ON t.id = ptm.fk_turma_id
+                WHERE ptm.fk_usuario_id = %s
+                  AND t.ativo = 1
+                  AND m.ativo = 1
+                ORDER BY m.nome
+            """, (usuario["id"],))
 
         return jsonify({"materias": cursor.fetchall()}), 200
 
@@ -50,6 +69,7 @@ def listar_materias_professor(usuario):
 @papel_obrigatorio("professor")
 def listar_turmas_por_materia(usuario):
     materia_id = request.args.get("materia_id")
+    curso_id = request.args.get("curso_id")
 
     if not materia_id:
         return jsonify({"message": "Informe a matéria."}), 400
@@ -61,16 +81,29 @@ def listar_turmas_por_materia(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT t.id, t.nome, t.periodo
-            FROM turma t
-            INNER JOIN professor_turma_materia ptm
-                ON ptm.fk_turma_id = t.id
-            WHERE ptm.fk_usuario_id = %s
-              AND ptm.fk_materia_id = %s
-              AND t.ativo = 1
-            ORDER BY t.nome
-        """, (usuario["id"], materia_id))
+        if curso_id:
+            cursor.execute("""
+                SELECT DISTINCT t.id, t.nome, t.periodo
+                FROM turma t
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_turma_id = t.id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_materia_id = %s
+                  AND t.fk_curso_id = %s
+                  AND t.ativo = 1
+                ORDER BY t.nome
+            """, (usuario["id"], materia_id, curso_id))
+        else:
+            cursor.execute("""
+                SELECT DISTINCT t.id, t.nome, t.periodo
+                FROM turma t
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_turma_id = t.id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_materia_id = %s
+                  AND t.ativo = 1
+                ORDER BY t.nome
+            """, (usuario["id"], materia_id))
 
         return jsonify({"turmas": cursor.fetchall()}), 200
 
@@ -123,6 +156,7 @@ def listar_alunos_da_turma(usuario):
         """, (materia_id, turma_id))
 
         alunos = cursor.fetchall()
+        alunos.sort(key=lambda aluno: str(aluno.get("nome") or "").casefold())
 
         for aluno in alunos:
             nota1 = aluno["nota1"]
@@ -377,6 +411,7 @@ def listar_notas_coordenador(usuario):
         """, tuple(parametros))
 
         alunos = cursor.fetchall()
+        alunos.sort(key=lambda aluno: str(aluno.get("aluno_nome") or "").casefold())
 
         for aluno in alunos:
             nota1 = aluno["nota1"]
@@ -487,6 +522,7 @@ def salvar_notas(usuario):
 @papel_obrigatorio("coordenador", "admin", "adm")
 def listar_todos_professores(usuario):
     """Retorna todos os professores ativos (primeiro select da view do coordenador)."""
+    curso_id = request.args.get("curso_id")
     conexao = None
     cursor = None
 
@@ -494,14 +530,30 @@ def listar_todos_professores(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT u.id, u.nome
-            FROM usuario u
-            INNER JOIN papel p ON p.id = u.fk_papel_id
-            WHERE LOWER(p.descricao) = 'professor'
-              AND u.ativo = 1
-            ORDER BY u.nome
-        """)
+        if curso_id:
+            cursor.execute("""
+                SELECT DISTINCT u.id, u.nome
+                FROM usuario u
+                INNER JOIN papel p ON p.id = u.fk_papel_id
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_usuario_id = u.id
+                INNER JOIN turma t
+                    ON t.id = ptm.fk_turma_id
+                WHERE LOWER(p.descricao) = 'professor'
+                  AND u.ativo = 1
+                  AND t.ativo = 1
+                  AND t.fk_curso_id = %s
+                ORDER BY u.nome
+            """, (curso_id,))
+        else:
+            cursor.execute("""
+                SELECT DISTINCT u.id, u.nome
+                FROM usuario u
+                INNER JOIN papel p ON p.id = u.fk_papel_id
+                WHERE LOWER(p.descricao) = 'professor'
+                  AND u.ativo = 1
+                ORDER BY u.nome
+            """)
 
         return jsonify({"professores": cursor.fetchall()}), 200
 
@@ -521,6 +573,7 @@ def listar_todos_professores(usuario):
 def listar_turmas_por_professor(usuario):
     """Retorna as turmas em que o professor leciona (segundo select da view do coordenador)."""
     professor_id = request.args.get("professor_id")
+    curso_id = request.args.get("curso_id")
 
     if not professor_id:
         return jsonify({"message": "Informe o professor."}), 400
@@ -532,15 +585,27 @@ def listar_turmas_por_professor(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT t.id, t.nome, t.periodo
-            FROM turma t
-            INNER JOIN professor_turma_materia ptm
-                ON ptm.fk_turma_id = t.id
-            WHERE ptm.fk_usuario_id = %s
-              AND t.ativo = 1
-            ORDER BY t.periodo, t.nome
-        """, (professor_id,))
+        if curso_id:
+            cursor.execute("""
+                SELECT DISTINCT t.id, t.nome, t.periodo
+                FROM turma t
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_turma_id = t.id
+                WHERE ptm.fk_usuario_id = %s
+                  AND t.fk_curso_id = %s
+                  AND t.ativo = 1
+                ORDER BY t.periodo, t.nome
+            """, (professor_id, curso_id))
+        else:
+            cursor.execute("""
+                SELECT DISTINCT t.id, t.nome, t.periodo
+                FROM turma t
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_turma_id = t.id
+                WHERE ptm.fk_usuario_id = %s
+                  AND t.ativo = 1
+                ORDER BY t.periodo, t.nome
+            """, (professor_id,))
 
         return jsonify({"turmas": cursor.fetchall()}), 200
 
@@ -561,6 +626,7 @@ def listar_materias_professor_turma(usuario):
     """Retorna as matérias que o professor leciona naquela turma (terceiro select da view do coordenador)."""
     professor_id = request.args.get("professor_id")
     turma_id     = request.args.get("turma_id")
+    curso_id     = request.args.get("curso_id")
 
     if not professor_id or not turma_id:
         return jsonify({"message": "Informe o professor e a turma."}), 400
@@ -572,16 +638,32 @@ def listar_materias_professor_turma(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT m.id, m.nome
-            FROM materia m
-            INNER JOIN professor_turma_materia ptm
-                ON ptm.fk_materia_id = m.id
-            WHERE ptm.fk_usuario_id = %s
-              AND ptm.fk_turma_id = %s
-              AND m.ativo = 1
-            ORDER BY m.nome
-        """, (professor_id, turma_id))
+        if curso_id:
+            cursor.execute("""
+                SELECT DISTINCT m.id, m.nome
+                FROM materia m
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_materia_id = m.id
+                INNER JOIN turma t
+                    ON t.id = ptm.fk_turma_id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_turma_id = %s
+                  AND t.fk_curso_id = %s
+                  AND t.ativo = 1
+                  AND m.ativo = 1
+                ORDER BY m.nome
+            """, (professor_id, turma_id, curso_id))
+        else:
+            cursor.execute("""
+                SELECT DISTINCT m.id, m.nome
+                FROM materia m
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_materia_id = m.id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_turma_id = %s
+                  AND m.ativo = 1
+                ORDER BY m.nome
+            """, (professor_id, turma_id))
 
         return jsonify({"materias": cursor.fetchall()}), 200
 

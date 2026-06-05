@@ -582,40 +582,27 @@
       const d = await r.json();
       if (!r.ok) { listaEnviados.innerHTML = vazio("Erro ao carregar mensagens."); return; }
       if (!d.mensagens.length) { listaEnviados.innerHTML = vazio("Nenhuma mensagem enviada."); return; }
-      // Log para ver campos disponíveis (remover após confirmar)
-      if (d.mensagens.length) console.log("[enviados] campos:", Object.keys(d.mensagens[0]), d.mensagens[0]);
-      // Monta mapa de id -> nome buscando nas APIs de professores e coordenadores
-      const ids = [...new Set(d.mensagens.map(m => m.usuario_destino_id).filter(Boolean))];
-      let nomesMap = {};
-      if (ids.length) {
-        try {
-          const [rProf, rCoord] = await Promise.allSettled([
-            fetch("/api/mensagens/todos-professores", { headers: authHeader() }).then(x => x.json()),
-            fetch("/api/mensagens/coordenadores",     { headers: authHeader() }).then(x => x.json()),
-          ]);
-          if (rProf.status === "fulfilled" && Array.isArray(rProf.value))
-            rProf.value.forEach(p => { nomesMap[String(p.id)] = p.nome; });
-          if (rCoord.status === "fulfilled" && Array.isArray(rCoord.value))
-            rCoord.value.forEach(c => { nomesMap[String(c.id)] = c.nome; });
-        } catch(e) { console.warn("Erro ao buscar nomes:", e); }
-      }
-      listaEnviados.innerHTML = d.mensagens.map(a => cardEnviado(a, nomesMap)).join("");
+      listaEnviados.innerHTML = d.mensagens.map(a => cardEnviado(a)).join("");
       document.querySelectorAll("#listaEnviados .mensagem-card[data-id]").forEach(card => {
         card.addEventListener("click", () => abrirModal(card.dataset.id, "enviado"));
       });
     } catch { listaEnviados.innerHTML = vazio("Falha na conexão."); }
   }
 
-  function cardEnviado(a, nomesMap) {
-    nomesMap = nomesMap || {};
+  function deveExibirNomeDestino(a) {
+    const papelDestino = String(a.papel_destino || "").toLowerCase();
+    const papelRemetente = String(papelUsuario || "").toLowerCase();
+    return Boolean(a.destinatario_nome) && (
+      papelDestino === "coordenador" ||
+      (papelRemetente === "aluno" && papelDestino === "professor")
+    );
+  }
+
+  function cardEnviado(a) {
     const lidos = a.total_lidos || 0;
     const total = a.total_destinatarios || 0;
-    // Pega nome do destinatário: campo direto da API ou via nomesMap
-    const nomeDestino = a.usuario_destino_nome || a.destinatario_nome || a.nome_destino
-      || (a.usuario_destino_id ? nomesMap[String(a.usuario_destino_id)] : null)
-      || null;
-    const chipDestino = nomeDestino
-      ? `<span class="mensagem-chip chip-remetente">${esc(nomeDestino)} (${formatarPapel(a.papel_destino)})</span>`
+    const chipDestino = deveExibirNomeDestino(a)
+      ? `<span class="mensagem-chip chip-remetente">${esc(a.destinatario_nome)} (${formatarPapel(a.destinatario_papel || a.papel_destino)})</span>`
       : `<span class="mensagem-chip chip-papel">${labelDestino(a.papel_destino)}</span>`;
     const chips = [
       a.turma_nome   ? `<span class="mensagem-chip chip-turma">${esc(a.turma_nome)}</span>` : "",
