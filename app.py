@@ -115,8 +115,8 @@ def serve_index():
     return render_template("pages/index.html")
 
 
-@app.post("/api/login")
-def login():
+@app.post("/api/login-legado")
+def login_legado():
     data = request.get_json(silent=True) or {}
 
     matricula = data.get("matricula")

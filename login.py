@@ -7,6 +7,12 @@ import mysql.connector
 
 from conexao import criar_conexao
 from gerador_token import gerar_token, validar_token, TEMPO_SESSAO
+from seguranca import (
+    gerar_hash_senha,
+    senha_padrao_data_nascimento,
+    senha_precisa_upgrade,
+    verificar_senha,
+)
 
 
 login_bp = Blueprint("login", __name__)
@@ -145,20 +151,50 @@ def login():
                 usuario.id,
                 usuario.nome,
                 usuario.email,
+                usuario.senha,
+                usuario.data_nascimento,
                 usuario.fk_papel_id AS fk_papel_id,
                 papel.descricao AS papel
             FROM usuario
             INNER JOIN papel 
                 ON papel.id = usuario.fk_papel_id
             WHERE usuario.email = %s
-              AND usuario.senha = %s
               AND usuario.ativo = 1
             LIMIT 1
             """,
-            (email, senha)
+            (email,)
         )
 
         usuario = cursor.fetchone()
+
+        senha_banco = usuario.get("senha") if usuario else None
+        senha_valida = verificar_senha(senha, senha_banco) if usuario else False
+
+        if usuario and not senha_valida and not str(senha_banco or "").strip():
+            try:
+                senha_padrao = senha_padrao_data_nascimento(usuario.get("data_nascimento"))
+            except ValueError:
+                senha_padrao = None
+
+            if senha_padrao and senha == senha_padrao:
+                senha_valida = True
+                cursor.execute(
+                    "UPDATE usuario SET senha = %s WHERE id = %s",
+                    (gerar_hash_senha(senha_padrao), usuario["id"])
+                )
+                conexao.commit()
+
+        if not usuario or not senha_valida:
+            return jsonify({
+                "message": "E-mail ou senha invalidos."
+            }), 401
+
+        if senha_precisa_upgrade(senha_banco):
+            cursor.execute(
+                "UPDATE usuario SET senha = %s WHERE id = %s",
+                (gerar_hash_senha(senha), usuario["id"])
+            )
+            conexao.commit()
 
     except mysql.connector.Error as erro:
         print("Erro no banco:", erro)
@@ -198,6 +234,95 @@ def login():
             "expiracao": payload["exp"]
         }
     }), 200
+
+
+@login_bp.post("/api/esqueci-senha")
+def esqueci_senha():
+    dados = request.get_json(silent=True) or {}
+
+    email = str(dados.get("email", "")).strip().lower()
+    senha_atual = str(dados.get("senha_atual", "")).strip()
+    nova_senha = str(dados.get("nova_senha", "")).strip()
+
+    if not email or not senha_atual or not nova_senha:
+        return jsonify({
+            "message": "Informe e-mail, senha atual e nova senha."
+        }), 400
+
+    if not email_valido(email):
+        return jsonify({
+            "message": "Informe um e-mail valido."
+        }), 400
+
+    if len(nova_senha) < 6:
+        return jsonify({
+            "message": "A nova senha deve ter pelo menos 6 caracteres."
+        }), 400
+
+    conexao = None
+    cursor = None
+
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute(
+            """
+            SELECT id, senha
+            FROM usuario
+            WHERE email = %s
+              AND ativo = 1
+            LIMIT 1
+            """,
+            (email,)
+        )
+
+        usuario = cursor.fetchone()
+
+        if not usuario:
+            return jsonify({
+                "message": "E-mail ou senha invalidos."
+            }), 401
+
+        if not verificar_senha(senha_atual, usuario.get("senha")):
+            return jsonify({
+                "message": "A senha atual nao confere."
+            }), 403
+
+        if verificar_senha(nova_senha, usuario.get("senha")):
+            return jsonify({
+                "message": "A nova senha nao pode ser igual a senha atual."
+            }), 400
+
+        cursor.execute(
+            """
+            UPDATE usuario
+            SET senha = %s
+            WHERE id = %s
+            """,
+            (gerar_hash_senha(nova_senha), usuario["id"])
+        )
+        conexao.commit()
+
+        return jsonify({
+            "message": "Senha alterada com sucesso."
+        }), 200
+
+    except mysql.connector.Error as erro:
+        if conexao:
+            conexao.rollback()
+
+        return jsonify({
+            "message": "Erro ao alterar a senha.",
+            "erro": str(erro)
+        }), 500
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conexao and conexao.is_connected():
+            conexao.close()
 
 
 @login_bp.get("/api/usuario-logado")
@@ -389,12 +514,12 @@ def atualizar_perfil(usuario):
             }), 400
 
         if nova_senha:
-            if senha_atual != usuario_banco["senha"]:
+            if not verificar_senha(senha_atual, usuario_banco.get("senha")):
                 return jsonify({
                     "message": "Senha atual incorreta."
                 }), 403
 
-            if nova_senha == usuario_banco["senha"]:
+            if verificar_senha(nova_senha, usuario_banco.get("senha")):
                 return jsonify({
                     "message": "A nova senha não pode ser igual à senha atual."
                 }), 400
@@ -410,7 +535,7 @@ def atualizar_perfil(usuario):
                     senha = %s
                 WHERE id = %s
                 """,
-                (nome, email, telefone, data_nascimento_date, cpf, nova_senha, usuario["id"])
+                (nome, email, telefone, data_nascimento_date, cpf, gerar_hash_senha(nova_senha), usuario["id"])
             )
 
         else:

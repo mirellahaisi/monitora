@@ -6,6 +6,15 @@
   <title>Monitora+ | Login</title>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .forgot-link.forgot-button {
+      background: none;
+      border: none;
+      padding: 0;
+      cursor: pointer;
+      font: inherit;
+    }
+  </style>
 </head>
 
 <body class="auth-page">
@@ -146,7 +155,7 @@
 
           <button class="login-button" type="submit">Entrar na plataforma</button>
 
-          <a class="forgot-link" href="#">Esqueceu a sua senha?</a>
+          <button class="forgot-link forgot-button" id="btnEsqueciSenha" type="button">Esqueceu a sua senha?</button>
 
         </form>
 
@@ -176,6 +185,7 @@
     const form = document.querySelector("#login-form");
     const passwordInput = document.querySelector("#password");
     const togglePasswordButton = document.querySelector("[data-toggle-password]");
+    const btnEsqueciSenha = document.querySelector("#btnEsqueciSenha");
 
     if (togglePasswordButton && passwordInput) {
       togglePasswordButton.addEventListener("click", () => {
@@ -230,6 +240,90 @@
         Swal.fire({ icon: "error", title: "Erro inesperado", text: "Não foi possível conectar ao servidor." });
       }
     });
+
+    if (btnEsqueciSenha) {
+      btnEsqueciSenha.addEventListener("click", async () => {
+        const emailPreenchido = form.email.value.trim();
+
+        const { value: dadosModal, isConfirmed } = await Swal.fire({
+          title: "Alterar senha",
+          html: `
+            <div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:10px;">
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
+                E-mail
+                <input id="swal-email" class="swal2-input" type="email" placeholder="seu@email.com" value="${emailPreenchido.replace(/"/g, "&quot;")}" style="margin:0;width:100%;">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
+                Senha atual
+                <input id="swal-senha-atual" class="swal2-input" type="password" placeholder="Digite sua senha atual" style="margin:0;width:100%;">
+              </label>
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
+                Nova senha
+                <input id="swal-nova-senha" class="swal2-input" type="password" placeholder="Digite a nova senha" style="margin:0;width:100%;">
+              </label>
+            </div>
+          `,
+          focusConfirm: false,
+          showCancelButton: true,
+          confirmButtonText: "Alterar senha",
+          cancelButtonText: "Cancelar",
+          preConfirm: () => {
+            const email = document.getElementById("swal-email").value.trim();
+            const senhaAtual = document.getElementById("swal-senha-atual").value.trim();
+            const novaSenha = document.getElementById("swal-nova-senha").value.trim();
+
+            if (!email || !senhaAtual || !novaSenha) {
+              Swal.showValidationMessage("Preencha e-mail, senha atual e nova senha.");
+              return false;
+            }
+
+            if (novaSenha.length < 6) {
+              Swal.showValidationMessage("A nova senha deve ter pelo menos 6 caracteres.");
+              return false;
+            }
+
+            return { email, senha_atual: senhaAtual, nova_senha: novaSenha };
+          }
+        });
+
+        if (!isConfirmed || !dadosModal) return;
+
+        try {
+          const resposta = await fetch("/api/esqueci-senha", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(dadosModal)
+          });
+
+          const dados = await resposta.json();
+
+          if (!resposta.ok) {
+            Swal.fire({
+              icon: "error",
+              title: "Nao foi possivel alterar",
+              text: dados.message || "Verifique os dados informados."
+            });
+            return;
+          }
+
+          form.email.value = dadosModal.email;
+          form.senha.value = "";
+
+          Swal.fire({
+            icon: "success",
+            title: "Senha alterada",
+            text: dados.message || "Sua senha foi atualizada com sucesso."
+          });
+        } catch (erro) {
+          console.error("Erro ao alterar senha:", erro);
+          Swal.fire({
+            icon: "error",
+            title: "Erro inesperado",
+            text: "Nao foi possivel conectar ao servidor."
+          });
+        }
+      });
+    }
   </script>
   <script src="/static/js/darkmode.js"></script>
 </body>

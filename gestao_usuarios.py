@@ -7,6 +7,7 @@ import mysql.connector
 
 from conexao import criar_conexao
 from login import token_obrigatorio, papel_obrigatorio
+from seguranca import gerar_hash_senha, senha_padrao_data_nascimento
 
 
 gestao_usuarios_bp = Blueprint("gestao_usuarios", __name__)
@@ -449,13 +450,16 @@ def _criar_usuario_com_papel(dados, fk_papel_id):
         if erro_unicidade:
             return {"message": erro_unicidade, "status": 409}
 
+        senha_inicial = senha_padrao_data_nascimento(dados_normalizados["data_nascimento"])
+        senha_hash = gerar_hash_senha(senha_inicial)
+
         cursor = conexao.cursor()
         cursor.execute("""
             INSERT INTO usuario (
                 nome, cpf, email, telefone,
                 data_nascimento, especialidade,
-                salario, fk_papel_id, ativo
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 1)
+                salario, senha, fk_papel_id, ativo
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, 1)
         """, (
             dados_normalizados["nome"],
             dados_normalizados["cpf"],
@@ -464,11 +468,16 @@ def _criar_usuario_com_papel(dados, fk_papel_id):
             dados_normalizados["data_nascimento"],
             dados_normalizados["especialidade"],
             dados_normalizados["salario"],
+            senha_hash,
             fk_papel_id
         ))
 
         conexao.commit()
-        return {"message": None, "status": 201}
+        return {
+            "message": None,
+            "status": 201,
+            "senha_inicial": senha_inicial,
+        }
 
     except mysql.connector.Error as erro:
         return {
@@ -517,36 +526,74 @@ def _atualizar_usuario_validado(usuario_logado, usuario_id, dados):
 
         estado_atual = _estado_usuario_para_comparacao(usuario_atual)
         estado_novo = _estado_payload_para_comparacao(dados_normalizados)
+        data_nascimento_alterada = (
+            estado_atual["data_nascimento"] != estado_novo["data_nascimento"]
+        )
+
         if estado_atual == estado_novo:
             return jsonify({
                 "message": "Nenhuma informacao foi alterada.",
                 "alterado": False
             }), 200
 
+        senha_inicial = None
+        senha_hash = None
+        if data_nascimento_alterada and dados_normalizados["data_nascimento"]:
+            senha_inicial = senha_padrao_data_nascimento(dados_normalizados["data_nascimento"])
+            senha_hash = gerar_hash_senha(senha_inicial)
+
         cursor = conexao.cursor()
-        cursor.execute("""
-            UPDATE usuario
-            SET nome = %s,
-                cpf = %s,
-                email = %s,
-                telefone = %s,
-                data_nascimento = %s,
-                especialidade = %s,
-                salario = %s
-            WHERE id = %s AND ativo = 1
-        """, (
-            dados_normalizados["nome"],
-            dados_normalizados["cpf"],
-            dados_normalizados["email"],
-            dados_normalizados["telefone"],
-            dados_normalizados["data_nascimento"],
-            dados_normalizados["especialidade"],
-            dados_normalizados["salario"],
-            usuario_id,
-        ))
+        if senha_hash:
+            cursor.execute("""
+                UPDATE usuario
+                SET nome = %s,
+                    cpf = %s,
+                    email = %s,
+                    telefone = %s,
+                    data_nascimento = %s,
+                    especialidade = %s,
+                    salario = %s,
+                    senha = %s
+                WHERE id = %s AND ativo = 1
+            """, (
+                dados_normalizados["nome"],
+                dados_normalizados["cpf"],
+                dados_normalizados["email"],
+                dados_normalizados["telefone"],
+                dados_normalizados["data_nascimento"],
+                dados_normalizados["especialidade"],
+                dados_normalizados["salario"],
+                senha_hash,
+                usuario_id,
+            ))
+        else:
+            cursor.execute("""
+                UPDATE usuario
+                SET nome = %s,
+                    cpf = %s,
+                    email = %s,
+                    telefone = %s,
+                    data_nascimento = %s,
+                    especialidade = %s,
+                    salario = %s
+                WHERE id = %s AND ativo = 1
+            """, (
+                dados_normalizados["nome"],
+                dados_normalizados["cpf"],
+                dados_normalizados["email"],
+                dados_normalizados["telefone"],
+                dados_normalizados["data_nascimento"],
+                dados_normalizados["especialidade"],
+                dados_normalizados["salario"],
+                usuario_id,
+            ))
         conexao.commit()
 
-        return jsonify({"message": "Usuario atualizado com sucesso.", "alterado": True}), 200
+        return jsonify({
+            "message": "Usuario atualizado com sucesso.",
+            "alterado": True,
+            "senha_inicial": senha_inicial,
+        }), 200
 
     except mysql.connector.Error as erro:
         return jsonify({
@@ -570,7 +617,10 @@ def criar_aluno(usuario_logado):
     if resultado["message"]:
         return jsonify({"message": resultado["message"]}), resultado["status"]
 
-    return jsonify({"message": "Aluno criado com sucesso."}), 201
+    return jsonify({
+        "message": "Aluno criado com sucesso.",
+        "senha_inicial": resultado.get("senha_inicial"),
+    }), 201
 
 @gestao_usuarios_bp.post("/api/usuarios/professores")
 @token_obrigatorio
@@ -582,7 +632,10 @@ def criar_professor(usuario_logado):
     if resultado["message"]:
         return jsonify({"message": resultado["message"]}), resultado["status"]
 
-    return jsonify({"message": "Professor criado com sucesso."}), 201
+    return jsonify({
+        "message": "Professor criado com sucesso.",
+        "senha_inicial": resultado.get("senha_inicial"),
+    }), 201
 
 @gestao_usuarios_bp.post("/api/usuarios/coordenacao")
 @token_obrigatorio
@@ -594,7 +647,10 @@ def criar_coordenador(usuario_logado):
     if resultado["message"]:
         return jsonify({"message": resultado["message"]}), resultado["status"]
 
-    return jsonify({"message": "Coordenador criado com sucesso."}), 201
+    return jsonify({
+        "message": "Coordenador criado com sucesso.",
+        "senha_inicial": resultado.get("senha_inicial"),
+    }), 201
 
 @gestao_usuarios_bp.put("/api/usuarios/<int:id>")
 @token_obrigatorio

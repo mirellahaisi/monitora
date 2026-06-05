@@ -68,7 +68,10 @@
       border: 1.5px solid var(--border, #dde3ea); overflow: hidden;
       box-shadow: 0 2px 12px rgba(0,0,0,.05);
     }
-    .materias-table-wrap { overflow-x: auto; }
+    .materias-table-wrap {
+      overflow-x: auto;
+      background: var(--card-bg, #fff);
+    }
     .materias-table {
       width: 100%; border-collapse: collapse; font-size: .875rem;
     }
@@ -132,40 +135,56 @@
     .materias-vazio p { font-size: .9rem; }
 
     /* ── Dark mode overrides explícitos ── */
+    body.dark .materias-card,
+    body.dark .materias-table-wrap,
     body.dark-mode .materias-card,
+    body.dark-mode .materias-table-wrap,
+    html.dark .materias-table-wrap,
+    html[data-theme="dark"] .materias-table-wrap,
+    [data-theme="dark"] .materias-table-wrap,
     html.dark .materias-card,
     html[data-theme="dark"] .materias-card,
     [data-theme="dark"] .materias-card {
       background: var(--card-bg, #162433);
+      border-color: var(--border, #2d4a5e);
     }
+    body.dark .materias-table thead tr,
     body.dark-mode .materias-table thead tr,
     html.dark .materias-table thead tr,
     html[data-theme="dark"] .materias-table thead tr,
     [data-theme="dark"] .materias-table thead tr,
+    body.dark .materias-rodape,
     body.dark-mode .materias-rodape,
     html.dark .materias-rodape,
     html[data-theme="dark"] .materias-rodape,
     [data-theme="dark"] .materias-rodape {
       background: var(--table-head-bg, #1a2e3b) !important;
       color: var(--muted, #8fa8b8);
+      border-color: var(--border, #2d4a5e) !important;
     }
+    body.dark .materias-table tbody tr:hover,
     body.dark-mode .materias-table tbody tr:hover,
     html.dark .materias-table tbody tr:hover,
     [data-theme="dark"] .materias-table tbody tr:hover {
       background: var(--row-hover, #1e3548);
     }
+    body.dark .materias-search,
     body.dark-mode .materias-search,
     html.dark .materias-search,
     [data-theme="dark"] .materias-search,
+    body.dark .modal-box,
     body.dark-mode .modal-box,
     html.dark .modal-box,
     [data-theme="dark"] .modal-box,
+    body.dark .form-group input,
     body.dark-mode .form-group input,
     html.dark .form-group input,
     [data-theme="dark"] .form-group input,
+    body.dark .form-group select,
     body.dark-mode .form-group select,
     html.dark .form-group select,
     [data-theme="dark"] .form-group select,
+    body.dark .form-group textarea,
     body.dark-mode .form-group textarea,
     html.dark .form-group textarea,
     [data-theme="dark"] .form-group textarea {
@@ -444,8 +463,8 @@
         const botao = document.getElementById("botaoMenuUsuario");
         const menu  = document.getElementById("menuUsuario");
         if (botao && menu) {
-          botao.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("open"); });
-          document.addEventListener("click", () => menu.classList.remove("open"));
+          botao.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("show"); });
+          document.addEventListener("click", () => menu.classList.remove("show"));
         }
         const btnEditar = document.getElementById("btnEditarPerfil");
         if (btnEditar) btnEditar.addEventListener("click", () => window.location.href = "/perfil");

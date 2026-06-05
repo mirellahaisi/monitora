@@ -7,6 +7,25 @@ from login import token_obrigatorio, papel_obrigatorio
 cursos_bp = Blueprint("cursos", __name__)
 
 
+def normalizar_ativo(valor, padrao=False):
+    if valor is None:
+        return padrao
+    if isinstance(valor, bool):
+        return valor
+    if isinstance(valor, (bytes, bytearray)):
+        return any(valor)
+
+    try:
+        return int(valor) != 0
+    except (TypeError, ValueError):
+        texto = str(valor).strip().lower()
+        if texto in {"1", "true", "sim", "yes", "ativo", "on"}:
+            return True
+        if texto in {"0", "false", "nao", "não", "no", "inativo", "off", ""}:
+            return False
+        return bool(valor)
+
+
 # ─────────────────────────────────────────────
 # PÁGINA HTML
 # ─────────────────────────────────────────────
@@ -51,7 +70,7 @@ def listar_cursos(usuario):
                 c["data_criacao"] = c["data_criacao"].strftime("%Y-%m-%d %H:%M:%S")
             if c.get("data_atualizacao"):
                 c["data_atualizacao"] = c["data_atualizacao"].strftime("%Y-%m-%d %H:%M:%S")
-            c["ativo"] = bool(int(c["ativo"]) if c["ativo"] is not None else 0)
+            c["ativo"] = normalizar_ativo(c.get("ativo"))
 
         return jsonify({"cursos": cursos}), 200
 
@@ -77,7 +96,7 @@ def criar_curso(usuario):
 
     nome            = str(dados.get("nome", "")).strip()
     codigo_prefixo  = str(dados.get("codigo_prefixo", "")).strip().upper()
-    ativo           = bool(dados.get("ativo", True))
+    ativo           = normalizar_ativo(dados.get("ativo", True), padrao=True)
 
     # ── Validações ──
     erros = []
@@ -153,7 +172,7 @@ def atualizar_curso(usuario, curso_id):
 
     nome            = str(dados.get("nome", "")).strip()
     codigo_prefixo  = str(dados.get("codigo_prefixo", "")).strip().upper()
-    ativo           = bool(dados.get("ativo", True))
+    ativo           = normalizar_ativo(dados.get("ativo", True), padrao=True)
 
     # ── Validações ──
     erros = []

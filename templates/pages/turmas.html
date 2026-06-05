@@ -2179,7 +2179,7 @@
 
     async function carregarCursos() {
       try {
-        const res = await fetch("/api/cursos", { headers: { Authorization: `Bearer ${getToken()}` } });
+        const res = await fetch("/api/turmas/cursos", { headers: { Authorization: `Bearer ${getToken()}` } });
         if (!res.ok) return;
         const dados = await res.json();
         cursosCache = dados.cursos || [];
