@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, render_template, request
+from datetime import datetime, timedelta
 import mysql.connector
 
 from conexao import criar_conexao
@@ -32,6 +33,113 @@ def _serializar_evento(ev):
     else:
         ev["criador_papel_label"] = f"Aluno – {nome}"
     return ev
+
+
+def _texto_limpo(valor):
+    return str(valor or "").strip()
+
+
+def _valor_bool(valor):
+    if isinstance(valor, bool):
+        return valor
+
+    if isinstance(valor, str):
+        return valor.strip().lower() in ("1", "true", "sim", "yes", "on")
+
+    return bool(valor)
+
+
+def _normalizar_id(valor):
+    if valor in (None, ""):
+        return None
+
+    try:
+        return int(valor)
+    except (TypeError, ValueError):
+        return valor
+
+
+def _normalizar_visibilidade(valor):
+    visibilidade = _texto_limpo(valor).lower() or "todos"
+    if visibilidade not in ("todos", "alunos", "professores"):
+        return "todos"
+    return visibilidade
+
+
+def _parse_datetime_local(valor):
+    if valor in (None, ""):
+        return None
+
+    if isinstance(valor, datetime):
+        return valor.replace(second=0, microsecond=0)
+
+    try:
+        return datetime.fromisoformat(str(valor).strip()).replace(second=0, microsecond=0)
+    except (TypeError, ValueError):
+        return None
+
+
+def _agora_no_minuto():
+    return datetime.now().replace(second=0, microsecond=0)
+
+
+def _data_comparacao(valor):
+    data = _parse_datetime_local(valor)
+    return data.isoformat(timespec="minutes") if data else None
+
+
+def _estado_evento_comparavel(
+    titulo,
+    descricao,
+    data_inicio,
+    data_fim,
+    cor,
+    tipo,
+    pessoal,
+    turma_id,
+    materia_id,
+    visibilidade
+):
+    eh_pessoal = bool(pessoal)
+    return {
+        "titulo": _texto_limpo(titulo),
+        "descricao": _texto_limpo(descricao),
+        "data_inicio": _data_comparacao(data_inicio),
+        "data_fim": _data_comparacao(data_fim),
+        "cor": _texto_limpo(cor) or "#4caebe",
+        "tipo": _texto_limpo(tipo) or "evento",
+        "pessoal": eh_pessoal,
+        "fk_turma_id": None if eh_pessoal else _normalizar_id(turma_id),
+        "fk_materia_id": None if eh_pessoal else _normalizar_id(materia_id),
+        "visibilidade": "todos" if eh_pessoal else _normalizar_visibilidade(visibilidade),
+    }
+
+
+def _validar_dados_evento(titulo, data_inicio, data_fim):
+    titulo_limpo = _texto_limpo(titulo)
+    if len(titulo_limpo) < 3:
+        return "O título deve ter no mínimo 3 caracteres."
+
+    inicio = _parse_datetime_local(data_inicio)
+    if not inicio:
+        return "Informe uma data e hora de início válida."
+
+    agora = _agora_no_minuto()
+    if inicio < agora:
+        return "A data e hora de início não podem estar no passado."
+
+    if data_fim not in (None, ""):
+        fim = _parse_datetime_local(data_fim)
+        if not fim:
+            return "Informe uma data e hora de fim válida."
+
+        if fim < agora:
+            return "A data e hora de fim não podem estar no passado."
+
+        if fim < inicio + timedelta(hours=1):
+            return "A data e hora de fim deve ter pelo menos 1 hora de diferença do início."
+
+    return None
 
 
 # ── GET /api/calendario ───────────────────────────────────────────────────────
@@ -188,12 +296,15 @@ def criar_evento(usuario):
     dados = request.get_json(silent=True) or {}
     papel = str(usuario.get("papel", "")).lower()
 
-    titulo      = str(dados.get("titulo", "")).strip()
-    descricao   = str(dados.get("descricao", "")).strip() or None
+    titulo      = _texto_limpo(dados.get("titulo"))
+    descricao   = _texto_limpo(dados.get("descricao")) or None
     data_inicio = dados.get("data_inicio")
     data_fim    = dados.get("data_fim") or None
-    cor         = dados.get("cor", "#4caebe")
-    tipo        = dados.get("tipo", "evento")
+    cor         = _texto_limpo(dados.get("cor")) or "#4caebe"
+    tipo        = _texto_limpo(dados.get("tipo")) or "evento"
+    mensagem_validacao = _validar_dados_evento(titulo, data_inicio, data_fim) if titulo and data_inicio else None
+    if mensagem_validacao:
+        return jsonify({"message": mensagem_validacao}), 400
 
     if not titulo or not data_inicio:
         return jsonify({"message": "Título e data de início são obrigatórios."}), 400
@@ -207,7 +318,7 @@ def criar_evento(usuario):
 
     # ── Professor: obrigatório escolher turma; sem opção global ──────────
     elif papel == "professor":
-        pessoal_req = bool(dados.get("pessoal", False))
+        pessoal_req = _valor_bool(dados.get("pessoal", False))
         if pessoal_req:
             turma_id     = None
             materia_id   = None
@@ -225,7 +336,7 @@ def criar_evento(usuario):
 
     # ── Coordenador / Admin: turma opcional, SEM matéria ─────────────────
     elif papel in ("admin", "adm", "coordenador"):
-        pessoal_req = bool(dados.get("pessoal", False))
+        pessoal_req = _valor_bool(dados.get("pessoal", False))
         if pessoal_req:
             turma_id     = None
             materia_id   = None
@@ -235,9 +346,7 @@ def criar_evento(usuario):
             turma_id     = dados.get("fk_turma_id") or None
             materia_id   = None   # coordenador não vincula matéria
             pessoal      = False
-            visibilidade = dados.get("visibilidade", "todos")
-            if visibilidade not in ("todos", "alunos", "professores"):
-                visibilidade = "todos"
+            visibilidade = _normalizar_visibilidade(dados.get("visibilidade", "todos"))
 
     else:
         return jsonify({"message": "Papel não autorizado a criar eventos."}), 403
@@ -245,33 +354,33 @@ def criar_evento(usuario):
     conexao = cursor = None
     try:
         conexao = criar_conexao()
-        cursor  = conexao.cursor()
+        cursor  = conexao.cursor(dictionary=True)
 
         # Professor: valida que a turma realmente pertence a ele
         if papel == "professor" and not pessoal and turma_id:
             cursor.execute("""
                 SELECT COUNT(*) AS cnt
-                FROM turma t
-                INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
-                INNER JOIN professor_materia pm ON pm.fk_materia_id = mt.fk_materia_id
-                WHERE pm.fk_usuario_id = %s AND t.id = %s AND t.ativo = 1
+                FROM professor_turma_materia ptm
+                INNER JOIN turma t ON t.id = ptm.fk_turma_id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_turma_id = %s
+                  AND t.ativo = 1
             """, (usuario["id"], turma_id))
             row = cursor.fetchone()
-            if not row or row[0] == 0:
+            if not row or row["cnt"] == 0:
                 return jsonify({"message": "Você não leciona nessa turma."}), 403
 
         # Professor: se informou matéria, valida que pertence à turma selecionada
         if papel == "professor" and not pessoal and materia_id and turma_id:
             cursor.execute("""
                 SELECT COUNT(*) AS cnt
-                FROM professor_materia pm
-                INNER JOIN materias_turma mt ON mt.fk_materia_id = pm.fk_materia_id
-                WHERE pm.fk_usuario_id = %s
-                  AND pm.fk_materia_id = %s
-                  AND mt.fk_turma_id   = %s
+                FROM professor_turma_materia ptm
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_materia_id = %s
+                  AND ptm.fk_turma_id = %s
             """, (usuario["id"], materia_id, turma_id))
             row = cursor.fetchone()
-            if not row or row[0] == 0:
+            if not row or row["cnt"] == 0:
                 return jsonify({"message": "Você não leciona essa matéria nessa turma."}), 403
 
         cursor.execute("""
@@ -279,7 +388,7 @@ def criar_evento(usuario):
                 (titulo, descricao, data_inicio, data_fim, cor, tipo,
                  fk_criador_id, fk_turma_id, fk_materia_id, pessoal, visibilidade)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """, (titulo, descricao, data_inicio, data_fim, cor, tipo,
+        """, (titulo, descricao, _parse_datetime_local(data_inicio), _parse_datetime_local(data_fim), cor, tipo,
               usuario["id"], turma_id, materia_id, pessoal, visibilidade))
 
         conexao.commit()
@@ -300,6 +409,7 @@ def criar_evento(usuario):
 def atualizar_evento(usuario, evento_id):
     dados = request.get_json(silent=True) or {}
     papel = str(usuario.get("papel", "")).lower()
+    return _atualizar_evento_impl(usuario, evento_id, dados, papel)
 
     conexao = cursor = None
     try:
@@ -449,9 +559,8 @@ def opcoes_formulario(usuario):
             cursor.execute("""
                 SELECT DISTINCT t.id, t.nome, t.periodo
                 FROM turma t
-                INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
-                INNER JOIN professor_materia pm ON pm.fk_materia_id = mt.fk_materia_id
-                WHERE pm.fk_usuario_id = %s AND t.ativo = 1
+                INNER JOIN professor_turma_materia ptm ON ptm.fk_turma_id = t.id
+                WHERE ptm.fk_usuario_id = %s AND t.ativo = 1
                 ORDER BY t.nome
             """, (usuario["id"],))
             turmas = cursor.fetchall()
@@ -487,10 +596,9 @@ def materias_por_turma(usuario, turma_id):
         cursor.execute("""
             SELECT DISTINCT m.id, m.nome
             FROM materia m
-            INNER JOIN professor_materia pm ON pm.fk_materia_id = m.id
-            INNER JOIN materias_turma    mt ON mt.fk_materia_id = m.id
-            WHERE pm.fk_usuario_id = %s
-              AND mt.fk_turma_id   = %s
+            INNER JOIN professor_turma_materia ptm ON ptm.fk_materia_id = m.id
+            WHERE ptm.fk_usuario_id = %s
+              AND ptm.fk_turma_id = %s
               AND m.ativo = 1
             ORDER BY m.nome
         """, (usuario["id"], turma_id))
@@ -503,3 +611,164 @@ def materias_por_turma(usuario, turma_id):
     finally:
         if cursor:  cursor.close()
         if conexao and conexao.is_connected(): conexao.close()
+
+
+def _atualizar_evento_impl(usuario, evento_id, dados, papel):
+    conexao = cursor = None
+    try:
+        conexao = criar_conexao()
+        cursor = conexao.cursor(dictionary=True)
+
+        cursor.execute("""
+            SELECT
+                id, fk_criador_id, titulo, descricao, data_inicio, data_fim,
+                cor, tipo, fk_turma_id, fk_materia_id, pessoal, visibilidade
+            FROM evento_calendario
+            WHERE id = %s AND ativo = 1
+            LIMIT 1
+        """, (evento_id,))
+        ev = cursor.fetchone()
+        if not ev:
+            return jsonify({"message": "Evento não encontrado."}), 404
+
+        if ev["fk_criador_id"] != usuario["id"]:
+            return jsonify({"message": "Sem permissão para editar este evento."}), 403
+
+        titulo = _texto_limpo(dados.get("titulo")) if "titulo" in dados else _texto_limpo(ev.get("titulo"))
+        descricao = _texto_limpo(dados.get("descricao")) if "descricao" in dados else _texto_limpo(ev.get("descricao"))
+        data_inicio = dados.get("data_inicio") if "data_inicio" in dados else ev.get("data_inicio")
+        data_fim = dados.get("data_fim") if "data_fim" in dados else ev.get("data_fim")
+        cor = _texto_limpo(dados.get("cor")) if "cor" in dados else (_texto_limpo(ev.get("cor")) or "#4caebe")
+        tipo = _texto_limpo(dados.get("tipo")) if "tipo" in dados else (_texto_limpo(ev.get("tipo")) or "evento")
+
+        if not titulo or not data_inicio:
+            return jsonify({"message": "Título e data de início são obrigatórios."}), 400
+
+        mensagem_validacao = _validar_dados_evento(titulo, data_inicio, data_fim)
+        if mensagem_validacao:
+            return jsonify({"message": mensagem_validacao}), 400
+
+        visibilidade_atual = _normalizar_visibilidade(ev.get("visibilidade"))
+
+        if papel == "aluno":
+            pessoal = True
+            turma_id = None
+            materia_id = None
+            visibilidade = visibilidade_atual or "todos"
+        elif papel == "professor":
+            pessoal = _valor_bool(dados["pessoal"]) if "pessoal" in dados else bool(ev.get("pessoal"))
+            if pessoal:
+                turma_id = None
+                materia_id = None
+                visibilidade = "todos"
+            else:
+                turma_id = dados.get("fk_turma_id") if "fk_turma_id" in dados else ev.get("fk_turma_id")
+                materia_id = dados.get("fk_materia_id") if "fk_materia_id" in dados else ev.get("fk_materia_id")
+                if not turma_id:
+                    return jsonify({"message": "Professor deve selecionar uma turma."}), 400
+                if not materia_id:
+                    return jsonify({"message": "Professor deve selecionar uma matéria."}), 400
+                visibilidade = "alunos" if bool(ev.get("pessoal")) else (visibilidade_atual or "alunos")
+        elif papel in ("admin", "adm", "coordenador"):
+            pessoal = _valor_bool(dados["pessoal"]) if "pessoal" in dados else bool(ev.get("pessoal"))
+            if pessoal:
+                turma_id = None
+                materia_id = None
+                visibilidade = "todos"
+            else:
+                turma_id = dados.get("fk_turma_id") if "fk_turma_id" in dados else ev.get("fk_turma_id")
+                materia_id = None
+                visibilidade = _normalizar_visibilidade(dados.get("visibilidade", ev.get("visibilidade")))
+        else:
+            return jsonify({"message": "Papel não autorizado a editar eventos."}), 403
+
+        estado_atual = _estado_evento_comparavel(
+            ev.get("titulo"),
+            ev.get("descricao"),
+            ev.get("data_inicio"),
+            ev.get("data_fim"),
+            ev.get("cor"),
+            ev.get("tipo"),
+            ev.get("pessoal"),
+            ev.get("fk_turma_id"),
+            ev.get("fk_materia_id"),
+            ev.get("visibilidade"),
+        )
+        estado_novo = _estado_evento_comparavel(
+            titulo,
+            descricao,
+            data_inicio,
+            data_fim,
+            cor,
+            tipo,
+            pessoal,
+            turma_id,
+            materia_id,
+            visibilidade,
+        )
+
+        if estado_atual == estado_novo:
+            return jsonify({"message": "Nenhum dado foi atualizado."}), 400
+
+        if papel == "professor" and not pessoal and turma_id:
+            cursor.execute("""
+                SELECT COUNT(*) AS cnt
+                FROM professor_turma_materia ptm
+                INNER JOIN turma t ON t.id = ptm.fk_turma_id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_turma_id = %s
+                  AND t.ativo = 1
+            """, (usuario["id"], turma_id))
+            row = cursor.fetchone()
+            if not row or row["cnt"] == 0:
+                return jsonify({"message": "Você não leciona nessa turma."}), 403
+
+        if papel == "professor" and not pessoal and materia_id and turma_id:
+            cursor.execute("""
+                SELECT COUNT(*) AS cnt
+                FROM professor_turma_materia ptm
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_materia_id = %s
+                  AND ptm.fk_turma_id = %s
+            """, (usuario["id"], materia_id, turma_id))
+            row = cursor.fetchone()
+            if not row or row["cnt"] == 0:
+                return jsonify({"message": "Você não leciona essa matéria nessa turma."}), 403
+
+        cursor.execute("""
+            UPDATE evento_calendario
+            SET titulo = %s,
+                descricao = %s,
+                data_inicio = %s,
+                data_fim = %s,
+                cor = %s,
+                tipo = %s,
+                fk_turma_id = %s,
+                fk_materia_id = %s,
+                pessoal = %s,
+                visibilidade = %s
+            WHERE id = %s
+        """, (
+            titulo,
+            descricao or None,
+            _parse_datetime_local(data_inicio),
+            _parse_datetime_local(data_fim),
+            cor,
+            tipo,
+            turma_id,
+            materia_id,
+            pessoal,
+            visibilidade,
+            evento_id
+        ))
+        conexao.commit()
+
+        return jsonify({"message": "Evento atualizado com sucesso."}), 200
+
+    except mysql.connector.Error as erro:
+        return jsonify({"message": "Erro ao atualizar evento.", "erro": str(erro)}), 500
+    finally:
+        if cursor:
+            cursor.close()
+        if conexao and conexao.is_connected():
+            conexao.close()

@@ -766,9 +766,19 @@
                 <!-- populado via JS -->
               </div>
             </div>
+            <div class="filtro-custom" id="wrapFiltroCurso">
+              <button class="filtro-custom-btn" id="btnFiltroCurso" type="button">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                <span id="lblFiltroCurso">Todos os cursos</span>
+              </button>
+              <div class="filtro-custom-dropdown" id="dropFiltroCurso">
+                <!-- populado via JS -->
+              </div>
+            </div>
             <!-- hidden selects mantidos para compatibilidade com renderizarTurmas() -->
             <select id="filtroPeriodo" style="display:none"></select>
             <select id="filtroTurno"   style="display:none"></select>
+            <select id="filtroCurso"   style="display:none"></select>
           </div>
           <!-- Botão só aparece para coordenador/admin -->
           <button class="btn-nova-turma" id="btnNovaTurma" style="display:none">
@@ -829,32 +839,47 @@
       <div class="modal-header">
         <div>
           <div class="modal-titulo">Nova turma</div>
-          <div class="modal-subtitulo">Preencha os dados da turma a ser criada</div>
+          <div class="modal-subtitulo">Selecione os dados — nome e código serão gerados automaticamente</div>
         </div>
         <button class="modal-close" id="fecharNovaTurma">✕</button>
       </div>
 
       <div class="modal-body">
         <div class="modal-form" id="formNovaTurma">
-          <div class="form-row">
-            <div class="form-group" style="flex:2">
-              <label>Nome da turma</label>
-              <input type="text" id="inputNome" placeholder="Ex: Engenharia de Software — 2026.1">
-            </div>
-            <div class="form-group">
-              <label>Código</label>
-              <input type="text" id="inputCodigo" placeholder="Ex: ES-2026-1A">
-            </div>
+
+          <!-- Curso -->
+          <div class="form-group">
+            <label>Curso <span style="color:#e74c3c">*</span></label>
+            <select id="inputCurso">
+              <option value="">Carregando cursos...</option>
+            </select>
           </div>
 
+          <!-- Período · Ano · Semestre -->
           <div class="form-row">
             <div class="form-group">
-              <label>Período</label>
-              <input type="number" id="inputPeriodo" min="1" max="12" placeholder="Ex: 3">
+              <label>Período <span style="color:#e74c3c">*</span></label>
+              <select id="inputPeriodo">
+                <option value="">Selecione</option>
+                <option value="1">1º</option>
+                <option value="2">2º</option>
+                <option value="3">3º</option>
+                <option value="4">4º</option>
+                <option value="5">5º</option>
+                <option value="6">6º</option>
+                <option value="7">7º</option>
+                <option value="8">8º</option>
+                <option value="9">9º</option>
+                <option value="10">10º</option>
+                <option value="11">11º</option>
+                <option value="12">12º</option>
+              </select>
             </div>
             <div class="form-group">
               <label>Ano</label>
-              <input type="number" id="inputAno" min="2020" max="2099" placeholder="Ex: 2026">
+              <input type="number" id="inputAno" readonly tabindex="-1"
+                style="background:var(--bg);color:var(--muted);cursor:not-allowed"
+                title="O ano é sempre o corrente e não pode ser alterado">
             </div>
             <div class="form-group">
               <label>Semestre</label>
@@ -865,6 +890,7 @@
             </div>
           </div>
 
+          <!-- Turno · Capacidade -->
           <div class="form-row">
             <div class="form-group">
               <label>Turno</label>
@@ -875,10 +901,22 @@
               </select>
             </div>
             <div class="form-group">
-              <label>Capacidade</label>
-              <input type="number" id="inputCapacidade" min="1" max="200" placeholder="Ex: 40">
+              <label>Capacidade <span style="color:#e74c3c">*</span></label>
+              <input type="number" id="inputCapacidade" min="1" max="100" placeholder="1 a 100">
             </div>
           </div>
+
+          <!-- Preview gerado automaticamente -->
+          <div id="previewTurma" style="display:none;
+               background:rgba(76,190,190,0.07); border:1.5px solid rgba(76,190,190,0.25);
+               border-radius:12px; padding:14px 18px; display:flex; flex-direction:column; gap:4px;">
+            <span style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em">
+              Prévia gerada automaticamente
+            </span>
+            <span id="previewNome" style="font-size:.95rem;font-weight:700;color:var(--dark)">—</span>
+            <span id="previewCodigo" style="font-size:.8rem;color:var(--muted)">—</span>
+          </div>
+
         </div>
       </div>
 
@@ -908,11 +946,102 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- ══════════════════════════════════════
+       MODAL: Editar turma (coordenador)
+  ══════════════════════════════════════ -->
+  <div class="modal-overlay" id="modalEditarTurma">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <div class="modal-titulo">Editar turma</div>
+          <div class="modal-subtitulo" id="editarTurmaSubtitulo">Altere os dados da turma</div>
+        </div>
+        <button class="modal-close" id="fecharEditarTurma">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form" id="formEditarTurma">
+
+          <!-- Curso -->
+          <div class="form-group">
+            <label>Curso <span style="color:#e74c3c">*</span></label>
+            <select id="editInputCurso">
+              <option value="">Carregando cursos...</option>
+            </select>
+          </div>
+
+          <!-- Período · Ano · Semestre -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Período <span style="color:#e74c3c">*</span></label>
+              <select id="editInputPeriodo">
+                <option value="">Selecione</option>
+                <option value="1">1º</option><option value="2">2º</option>
+                <option value="3">3º</option><option value="4">4º</option>
+                <option value="5">5º</option><option value="6">6º</option>
+                <option value="7">7º</option><option value="8">8º</option>
+                <option value="9">9º</option><option value="10">10º</option>
+                <option value="11">11º</option><option value="12">12º</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Ano</label>
+              <input type="number" id="editInputAno" readonly tabindex="-1"
+                style="background:var(--bg);color:var(--muted);cursor:not-allowed"
+                title="O ano é sempre o corrente e não pode ser alterado">
+            </div>
+            <div class="form-group">
+              <label>Semestre</label>
+              <select id="editInputSemestre">
+                <option value="1">1º semestre</option>
+                <option value="2">2º semestre</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Turno · Capacidade -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Turno</label>
+              <select id="editInputTurno">
+                <option value="Manhã">Manhã</option>
+                <option value="Tarde">Tarde</option>
+                <option value="Noite">Noite</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Capacidade <span style="color:#e74c3c">*</span></label>
+              <input type="number" id="editInputCapacidade" min="1" max="100" placeholder="1 a 100">
+            </div>
+          </div>
+
+          <!-- Preview -->
+          <div id="editPreviewTurma"
+               style="display:none; background:rgba(76,190,190,0.07);
+                      border:1.5px solid rgba(76,190,190,0.25); border-radius:12px;
+                      padding:14px 18px; flex-direction:column; gap:4px;">
+            <span style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.04em">
+              Prévia gerada automaticamente
+            </span>
+            <span id="editPreviewNome"   style="font-size:.95rem;font-weight:700;color:var(--dark)">—</span>
+            <span id="editPreviewCodigo" style="font-size:.8rem;color:var(--muted)">—</span>
+          </div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancelar" id="cancelarEditarTurma">Cancelar</button>
+        <button class="btn-confirmar" id="confirmarEditarTurma">Salvar alterações</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // ── Refs ──────────────────────────────────────────────
     const turmasGrid      = document.getElementById("turmasGrid");
     const filtroPeriodo   = document.getElementById("filtroPeriodo");
     const filtroTurno     = document.getElementById("filtroTurno");
+    const filtroCurso     = document.getElementById("filtroCurso");
     const btnNovaTurma    = document.getElementById("btnNovaTurma");
     const secaoTurmas     = document.getElementById("secaoTurmas");
     const secaoMinhaTurma = document.getElementById("secaoMinhaTurma");
@@ -947,6 +1076,7 @@
     let tabAtiva       = "alunos";
     let turmaDetalheId = null;
     let papelAtual     = "";
+    let cursosCache    = [];
 
     // ── Auth ──────────────────────────────────────────────
     function getToken() { return localStorage.getItem("token"); }
@@ -1142,12 +1272,16 @@
       if (!verificarToken()) return;
       turmasGrid.innerHTML = `<div class="turmas-vazio">Carregando turmas...</div>`;
       try {
+        // Garante que cursosCache está populado antes de enriquecer turmas
+        if (!cursosCache.length) await carregarCursos();
         const res = await fetch("/api/turmas", { headers: { Authorization: `Bearer ${getToken()}` } });
         const dados = await res.json();
         if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error"); return; }
         todasTurmas = dados.turmas || [];
+        enriquecerTurmasComCurso();
         popularFiltroPeriodo();
         popularFiltroTurno();
+        popularFiltroCurso();
         renderizarTurmas();
       } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     }
@@ -1174,14 +1308,71 @@
       atualizarDropdownTurno && atualizarDropdownTurno();
     }
 
+    // Enriquece cada turma com fk_curso_id e curso_nome a partir do cursosCache e do campo codigo
+    function enriquecerTurmasComCurso() {
+      if (!cursosCache.length) return;
+      todasTurmas.forEach(t => {
+        if (t.fk_curso_id) return; // já tem
+        // Tenta extrair o prefixo do código: "ADS-2026-1-MA" → "ADS"
+        const prefixo = (t.codigo || '').split('-')[0].toUpperCase();
+        const curso = cursosCache.find(c => c.codigo_prefixo && c.codigo_prefixo.toUpperCase() === prefixo);
+        if (curso) {
+          t.fk_curso_id = curso.id;
+          t.curso_nome  = curso.nome;
+        }
+      });
+    }
+
+    function popularFiltroCurso() {
+      enriquecerTurmasComCurso();
+      const cursoMap = new Map();
+      // Primeiro da cache (garante que todos os cursos aparecem mesmo que nenhuma turma tenha)
+      cursosCache.forEach(c => cursoMap.set(String(c.id), c.nome));
+      // Depois das turmas (pode ter informação extra)
+      todasTurmas.forEach(t => {
+        if (t.fk_curso_id && t.curso_nome && !cursoMap.has(String(t.fk_curso_id))) {
+          cursoMap.set(String(t.fk_curso_id), t.curso_nome);
+        }
+      });
+
+      const atual = filtroCurso.value;
+      filtroCurso.innerHTML = `<option value="">Todos os cursos</option>`;
+      [...cursoMap.entries()].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR')).forEach(([id, nome]) => {
+        filtroCurso.innerHTML += `<option value="${id}">${nome}</option>`;
+      });
+      if (atual) filtroCurso.value = atual;
+      atualizarDropdownCurso && atualizarDropdownCurso();
+    }
+
     function renderizarTurmas() {
       const periodo = filtroPeriodo.value;
       const turno   = filtroTurno.value;
+      const curso   = filtroCurso.value;
 
-      const filtradas = todasTurmas.filter(t => {
+      let filtradas = todasTurmas.filter(t => {
         if (periodo && String(t.periodo) !== String(periodo)) return false;
         if (turno   && (t.turno || '').trim().toLowerCase() !== turno) return false;
+        if (curso) {
+          // Tenta fk_curso_id primeiro, senão extrai prefixo do codigo
+          const tCursoId = String(t.fk_curso_id || '');
+          if (tCursoId && tCursoId !== String(curso)) return false;
+          if (!tCursoId) {
+            // fallback: verifica se o prefixo do codigo bate com o curso selecionado
+            const c = cursosCache.find(c => String(c.id) === String(curso));
+            const prefixoCodigo = (t.codigo || '').split('-')[0].toUpperCase();
+            const prefixoCurso  = c ? (c.codigo_prefixo || '').toUpperCase() : '';
+            if (!prefixoCurso || prefixoCodigo !== prefixoCurso) return false;
+          }
+        }
         return true;
+      });
+
+      // Ordena por período (menor → maior) e depois alfabeticamente pelo nome
+      filtradas = filtradas.slice().sort((a, b) => {
+        const pA = Number(a.periodo) || 0;
+        const pB = Number(b.periodo) || 0;
+        if (pA !== pB) return pA - pB;
+        return (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
       });
 
       if (filtradas.length === 0) {
@@ -1359,6 +1550,7 @@
     // ── Gestão (modal dedicado) ───────────────────────────
     let todosUsuarios = [];
     let todasMaterias = [];
+    let _gestaoAbortController = null;
 
     async function carregarRecursosGestao() {
       if (todosUsuarios.length && todasMaterias.length) return;
@@ -1402,6 +1594,69 @@
       document.addEventListener("click", () => wrap.classList.remove("open"), { capture: false });
     }
 
+    // ── Busca com autocomplete ─────────────────────────────
+    function buildSearchSelect(wrapId, options, placeholder) {
+      return `
+        <div style="position:relative" id="${wrapId}">
+          <input type="text"
+            placeholder="${placeholder}"
+            autocomplete="off"
+            style="width:100%;height:40px;padding:0 12px;border:1.5px solid rgba(147,215,223,0.4);
+                   border-radius:10px;font:inherit;font-size:0.86rem;color:var(--mid);
+                   background:var(--white);outline:none;transition:border-color 0.2s,box-shadow 0.2s"
+            data-value=""
+            class="search-select-input"
+            onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px rgba(76,190,190,0.1)'"
+            onblur="this.style.borderColor='rgba(147,215,223,0.4)';this.style.boxShadow='none'">
+          <div class="search-select-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+               background:var(--white);border:1.5px solid rgba(147,215,223,0.25);border-radius:12px;
+               box-shadow:0 8px 28px rgba(23,60,74,0.14);z-index:200;max-height:220px;overflow-y:auto;padding:4px">
+            ${options.map(o => `<div class="search-select-option" data-value="${o.value}" data-label="${o.label}"
+              style="padding:9px 12px;border-radius:8px;cursor:pointer;font-size:0.86rem;color:var(--text)"
+              onmouseover="this.style.background='rgba(147,215,223,0.12)'"
+              onmouseout="this.style.background=''">${o.label}</div>`).join("")}
+            ${options.length === 0 ? `<div style="padding:10px 12px;color:var(--muted);font-size:0.82rem">Nenhuma opção disponível</div>` : ""}
+          </div>
+        </div>`;
+    }
+
+    function initSearchSelect(wrapId) {
+      const wrap = document.getElementById(wrapId);
+      if (!wrap) return;
+      const input = wrap.querySelector(".search-select-input");
+      const drop  = wrap.querySelector(".search-select-dropdown");
+      const opts  = Array.from(wrap.querySelectorAll(".search-select-option"));
+
+      input.addEventListener("input", () => {
+        const q = input.value.toLowerCase();
+        let visible = 0;
+        opts.forEach(opt => {
+          const match = opt.dataset.label.toLowerCase().includes(q);
+          opt.style.display = match ? "" : "none";
+          if (match) visible++;
+        });
+        drop.style.display = "";
+        input.dataset.value = ""; // reset on typing
+      });
+
+      input.addEventListener("focus", () => { drop.style.display = ""; });
+
+      opts.forEach(opt => {
+        opt.addEventListener("mousedown", e => {
+          e.preventDefault();
+          input.value = opt.dataset.label;
+          input.dataset.value = opt.dataset.value;
+          drop.style.display = "none";
+          opts.forEach(o => o.style.background = "");
+          opt.style.background = "rgba(76,190,190,0.12)";
+        });
+      });
+
+      document.addEventListener("click", e => {
+        if (!wrap.contains(e.target)) drop.style.display = "none";
+      });
+    }
+
     async function carregarModalGestao(turmaId) {
       gestaoBody.innerHTML = `<div class="turmas-vazio">Carregando...</div>`;
       await carregarRecursosGestao();
@@ -1417,11 +1672,54 @@
       const alunoIds   = new Set(alunosData.map(a => a.id));
       const materiaIds = new Set(materiasData.map(m => m.id));
 
-      const alunosDisp   = todosUsuarios.filter(u => u.papel === "aluno"     && !alunoIds.has(u.id));
-      const profesDisp   = todosUsuarios.filter(u => u.papel === "professor");
-      const materiasDisp = todasMaterias.filter(m => !materiaIds.has(m.id));
+      // Alunos que já estão em alguma turma (qualquer turma)
+      const alunosEmQualquerTurma = new Set(
+        todasTurmas.flatMap(t => {
+          // Usa o cache local se disponível — cada turma no cache pode ter uma lista de alunos
+          // Como não temos os alunos de cada turma em memória, usamos apenas os desta turma
+          return [];
+        })
+      );
+      // Adiciona os alunos da turma atual ao set
+      alunosData.forEach(a => alunosEmQualquerTurma.add(a.id));
+
+      // Alunos disponíveis: são alunos, não estão nesta turma e não têm turma (verificado via papel)
+      // O ideal seria uma API /api/usuarios/sem-turma, mas filtramos pelo que temos:
+      // excluímos os da turma atual; alunos em outras turmas serão barrados pelo backend
+      // Exclui alunos já matriculados NESTA turma e alunos que já têm OUTRA turma ativa
+      const alunosDisp = todosUsuarios
+        .filter(u => (u.papel === 'aluno' || String(u.papel) === '1')
+                  && !alunoIds.has(u.id)
+                  && !u.tem_turma)
+        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+      const profesDisp   = todosUsuarios.filter(u => u.papel === "professor").sort((a,b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      const materiasDisp = todasMaterias.filter(m => !materiaIds.has(m.id)).sort((a,b) => a.nome.localeCompare(b.nome, "pt-BR"));
+
+      // Alunos já matriculados também em ordem alfabética
+      const alunosOrdenados = [...alunosData].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+
+      // Busca info da turma para botões editar/excluir
+      const turmaInfo = todasTurmas.find(t => String(t.id) === String(turmaId));
 
       gestaoBody.innerHTML = `
+        <!-- Ações da turma: Editar / Excluir -->
+        <div style="display:flex;gap:10px;margin-bottom:18px;justify-content:flex-end">
+          <button class="btn-ver-turma" id="btnEditarTurma" style="display:flex;align-items:center;gap:6px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Editar turma
+          </button>
+          <button style="height:32px;padding:0 14px;border:1.5px solid rgba(231,76,60,0.3);border-radius:8px;
+                         background:transparent;color:#e74c3c;font:inherit;font-size:0.8rem;font-weight:700;
+                         cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.18s,color 0.18s"
+                  id="btnExcluirTurma"
+                  onmouseover="this.style.background='#e74c3c';this.style.color='white'"
+                  onmouseout="this.style.background='transparent';this.style.color='#e74c3c'">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            Excluir turma
+          </button>
+        </div>
+
         <div class="gestao-grid-2col">
 
           <!-- ── Painel Alunos ── -->
@@ -1435,18 +1733,24 @@
               </div>
             </div>
             <div class="gestao-panel-body">
-              ${buildCustomSelect("selAlunoWrap",
+              ${buildSearchSelect("selAlunoWrap",
                   alunosDisp.map(u => ({ value: u.id, label: `${u.nome}${u.email ? " — " + u.email : ""}` })),
-                  "Selecionar aluno...")}
+                  "Pesquisar aluno...")}
               <button class="btn-gestao-add" id="btnAlunoAdd" style="width:100%;justify-content:center">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Matricular aluno
               </button>
+              <!-- Busca dentro dos matriculados -->
+              <input type="text" id="filtroAlunosMatriculados" placeholder="Filtrar matriculados..."
+                style="width:100%;height:36px;padding:0 12px;border:1.5px solid rgba(147,215,223,0.3);
+                       border-radius:8px;font:inherit;font-size:0.83rem;color:var(--text);
+                       background:var(--bg);outline:none"
+                oninput="filtrarAlunosLista(this.value)">
               <div class="gestao-lista" id="gestaoAlunosLista">
-                ${alunosData.length === 0
+                ${alunosOrdenados.length === 0
                   ? `<div class="gestao-vazio">Nenhum aluno matriculado.</div>`
-                  : alunosData.map(a => `
-                    <div class="gestao-item">
+                  : alunosOrdenados.map(a => `
+                    <div class="gestao-item" data-nome="${a.nome.toLowerCase()}">
                       <div class="gestao-item-info">
                         <span class="gestao-item-nome">${a.nome}</span>
                         <span class="gestao-item-sub">${a.email || ""}</span>
@@ -1470,9 +1774,9 @@
               </div>
             </div>
             <div class="gestao-panel-body">
-              ${buildCustomSelect("selMateriaWrap",
+              ${buildSearchSelect("selMateriaWrap",
                   materiasDisp.map(m => ({ value: m.id, label: `${m.nome}${m.carga_horaria ? " — " + m.carga_horaria + "h" : ""}` })),
-                  "Selecionar matéria...")}
+                  "Pesquisar matéria...")}
               <button class="btn-gestao-add" id="btnMateriaAdd" style="width:100%;justify-content:center">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Vincular matéria
@@ -1481,10 +1785,17 @@
                 ${materiasData.length === 0
                   ? `<div class="gestao-vazio">Nenhuma matéria vinculada.</div>`
                   : materiasData.map(m => {
-                      const profsAtuais = m.professores
+                      const profsAtuais = (m.professores
                         ? m.professores.split(", ").map(n => n.trim()).filter(Boolean)
-                        : [];
-                      const profsDispM = profesDisp.filter(p => !profsAtuais.includes(p.nome));
+                        : [])
+                        .map((nome, index) => ({
+                          nome,
+                          id: String((m.professor_ids || "").split(",")[index] || "").trim() || null,
+                        }));
+                      const profIdsAtuais = new Set(
+                        profsAtuais.map(prof => String(prof.id || "")).filter(Boolean)
+                      );
+                      const profsDispM = profesDisp.filter(p => !profIdsAtuais.has(String(p.id)));
                       return `
                         <div class="gestao-materia-bloco" data-materia-id="${m.id}">
                           <div class="gestao-materia-header">
@@ -1497,25 +1808,23 @@
                             </button>
                           </div>
                           <div class="gestao-materia-body">
-                            <div class="gestao-custom-select-wrap" id="selProfWrap-${m.id}" style="margin-bottom:8px">
-                              <button class="gestao-custom-select-btn" type="button" data-value="" style="width:100%">Atribuir professor...</button>
-                              <div class="gestao-custom-select-dropdown">
-                                <div class="gestao-custom-select-option selected" data-value="">Atribuir professor...</div>
-                                ${profsDispM.map(p => `<div class="gestao-custom-select-option" data-value="${p.id}">${p.nome}</div>`).join("")}
-                              </div>
-                            </div>
-                            <button class="btn-prof-add" data-materia-id="${m.id}" style="width:100%;justify-content:center;display:flex;align-items:center;gap:5px">
+                            <!-- Busca de professor com search -->
+                            ${buildSearchSelect(`selProfWrap-${m.id}`,
+                                profsDispM.map(p => ({ value: p.id, label: p.nome })),
+                                "Pesquisar professor...")}
+                            <button class="btn-prof-add" data-materia-id="${m.id}"
+                              style="width:100%;justify-content:center;display:flex;align-items:center;
+                                     gap:5px;margin-top:6px">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                              Atribuir
+                              Atribuir professor
                             </button>
                             <div class="gestao-prof-lista" id="profLista-${m.id}" style="margin-top:8px">
                               ${profsAtuais.length === 0
                                 ? `<div class="gestao-vazio">Sem professor atribuído.</div>`
-                                : profsAtuais.map(nome => {
-                                    const profObj = profesDisp.find(p => p.nome === nome);
+                                : profsAtuais.map(prof => {
                                     return `<div class="gestao-prof-item">
-                                      <span>${nome}</span>
-                                      ${profObj ? `<button class="btn-gestao-remove" style="width:24px;height:24px" title="Remover professor" data-acao="remove-prof" data-prof-id="${profObj.id}" data-materia-id="${m.id}">
+                                      <span>${prof.nome}</span>
+                                      ${prof.id ? `<button class="btn-gestao-remove" style="width:24px;height:24px" title="Remover professor" data-acao="remove-prof" data-prof-id="${prof.id}" data-materia-id="${m.id}">
                                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                       </button>` : ""}
                                     </div>`;
@@ -1530,17 +1839,56 @@
         </div>
       `;
 
-      // init custom selects
-      initCustomSelect("selAlunoWrap");
-      initCustomSelect("selMateriaWrap");
-      materiasData.forEach(m => initCustomSelect(`selProfWrap-${m.id}`));
+      // init search selects
+      initSearchSelect("selAlunoWrap");
+      initSearchSelect("selMateriaWrap");
+      materiasData.forEach(m => initSearchSelect(`selProfWrap-${m.id}`));
+
+      // ── Filtrar alunos matriculados ──────────────────────
+      window.filtrarAlunosLista = function(q) {
+        const items = document.querySelectorAll("#gestaoAlunosLista .gestao-item");
+        items.forEach(item => {
+          item.style.display = item.dataset.nome.includes(q.toLowerCase()) ? "" : "none";
+        });
+      };
+
+      // ── Editar turma ────────────────────────────────────
+      document.getElementById("btnEditarTurma").addEventListener("click", () => {
+        modalGestao.classList.remove("show");
+        abrirEditarTurma(turmaId);
+      });
+
+      // ── Excluir turma ────────────────────────────────────
+      document.getElementById("btnExcluirTurma").addEventListener("click", async () => {
+        const turma = todasTurmas.find(t => String(t.id) === String(turmaId));
+        const conf = await Swal.fire({
+          icon: "warning",
+          title: "Excluir turma?",
+          html: `A turma <strong>${turma ? turma.nome : ""}</strong> será desativada. Esta ação não pode ser desfeita.`,
+          showCancelButton: true, confirmButtonText: "Sim, excluir", cancelButtonText: "Cancelar",
+          confirmButtonColor: "#e74c3c"
+        });
+        if (!conf.isConfirmed) return;
+        const res = await fetch(`/api/turmas/${turmaId}`, {
+          method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
+        });
+        if (res.ok) {
+          modalGestao.classList.remove("show");
+          Swal.fire({ icon:"success", title:"Turma excluída!", timer:1500, showConfirmButton:false });
+          await carregarTurmas();
+        } else {
+          const d = await res.json();
+          Swal.fire("Erro", d.message || "Erro ao excluir turma.", "error");
+        }
+      });
 
       // ── Eventos ──────────────────────────────────
       // Matricular aluno
       document.getElementById("btnAlunoAdd").addEventListener("click", async () => {
         const wrap = document.getElementById("selAlunoWrap");
-        const alunoId = wrap?.querySelector(".gestao-custom-select-btn")?.dataset?.value;
-        if (!alunoId) { Swal.fire("Atenção", "Selecione um aluno.", "warning"); return; }
+        const input = wrap?.querySelector(".search-select-input");
+        const alunoId = input?.dataset?.value;
+        if (!alunoId) { Swal.fire("Atenção", "Pesquise e selecione um aluno da lista.", "warning"); return; }
 
         const btn = document.getElementById("btnAlunoAdd");
         btn.disabled = true;
@@ -1560,11 +1908,12 @@
         finally { btn.disabled = false; }
       });
 
-      // Vincular matéria
+      // Vincular matéria (apenas a matéria — professor é opcional e separado)
       document.getElementById("btnMateriaAdd").addEventListener("click", async () => {
         const wrap = document.getElementById("selMateriaWrap");
-        const materiaId = wrap?.querySelector(".gestao-custom-select-btn")?.dataset?.value;
-        if (!materiaId) { Swal.fire("Atenção", "Selecione uma matéria.", "warning"); return; }
+        const input = wrap?.querySelector(".search-select-input");
+        const materiaId = input?.dataset?.value;
+        if (!materiaId) { Swal.fire("Atenção", "Pesquise e selecione uma matéria da lista.", "warning"); return; }
 
         const btn = document.getElementById("btnMateriaAdd");
         btn.disabled = true;
@@ -1576,38 +1925,44 @@
           });
           const dados = await res.json();
           if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao vincular.", "error"); return; }
-          Swal.fire({ icon:"success", title:"Vinculada!", timer:1400, showConfirmButton:false });
+          // Limpa o campo após vincular
+          if (input) { input.value = ""; input.dataset.value = ""; }
+          Swal.fire({ icon:"success", title:"Matéria vinculada!", text:"Atribua um professor abaixo se necessário.", timer:1800, showConfirmButton:false });
           await carregarModalGestao(turmaId);
           await carregarTurmas();
         } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
         finally { btn.disabled = false; }
       });
 
-      // Atribuir professor
-      document.querySelectorAll(".btn-prof-add").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const mId  = btn.dataset.materiaId;
-          const wrap = document.getElementById(`selProfWrap-${mId}`);
-          const profId = wrap?.querySelector(".gestao-custom-select-btn")?.dataset?.value;
-          if (!profId) { Swal.fire("Atenção", "Selecione um professor.", "warning"); return; }
+      // Remoções e atribuições via delegação — cancela listener anterior para evitar acúmulo
+      if (_gestaoAbortController) _gestaoAbortController.abort();
+      _gestaoAbortController = new AbortController();
+      const sig = _gestaoAbortController.signal;
 
-          btn.disabled = true;
-          try {
-            const res = await fetch(`/api/turmas/${turmaId}/materias/${mId}/professor`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-              body: JSON.stringify({ professor_id: profId }),
-            });
-            const dados = await res.json();
-            if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao atribuir.", "error"); return; }
-            Swal.fire({ icon:"success", title:"Professor atribuído!", timer:1400, showConfirmButton:false });
-            await carregarModalGestao(turmaId);
-          } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
-          finally { btn.disabled = false; }
-        });
-      });
+      // Atribuir professor — via delegation para não acumular listeners
+      gestaoBody.addEventListener("click", async e => {
+        const btn = e.target.closest(".btn-prof-add");
+        if (!btn) return;
+        const mId  = btn.dataset.materiaId;
+        const wrap = document.getElementById(`selProfWrap-${mId}`);
+        const profId = wrap?.querySelector(".search-select-input")?.dataset?.value;
+        if (!profId) { Swal.fire("Atenção", "Pesquise e selecione um professor da lista.", "warning"); return; }
 
-      // Remoções via delegação
+        btn.disabled = true;
+        try {
+          const res = await fetch(`/api/turmas/${turmaId}/materias/${mId}/professor`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+            body: JSON.stringify({ professor_id: profId }),
+          });
+          const dados = await res.json();
+          if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao atribuir.", "error"); return; }
+          Swal.fire({ icon:"success", title:"Professor atribuído!", timer:1400, showConfirmButton:false });
+          await carregarModalGestao(turmaId);
+        } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        finally { btn.disabled = false; }
+      }, { signal: sig });
+
       gestaoBody.addEventListener("click", async e => {
         const btn = e.target.closest("[data-acao]");
         if (!btn) return;
@@ -1615,13 +1970,13 @@
 
         if (acao === "remove-aluno") {
           const aId = btn.dataset.id;
-          const confirm = await Swal.fire({
+          const conf = await Swal.fire({
             icon:"warning", title:"Remover aluno?",
             text:"O aluno será desmatriculado desta turma.",
             showCancelButton:true, confirmButtonText:"Remover", cancelButtonText:"Cancelar",
             confirmButtonColor:"#e74c3c"
           });
-          if (!confirm.isConfirmed) return;
+          if (!conf.isConfirmed) return;
           const res = await fetch(`/api/turmas/${turmaId}/alunos/${aId}`, {
             method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
           });
@@ -1635,13 +1990,13 @@
 
         if (acao === "remove-materia") {
           const mId = btn.dataset.id;
-          const confirm = await Swal.fire({
+          const conf = await Swal.fire({
             icon:"warning", title:"Desvincular matéria?",
             text:"A matéria será removida desta turma.",
             showCancelButton:true, confirmButtonText:"Remover", cancelButtonText:"Cancelar",
             confirmButtonColor:"#e74c3c"
           });
-          if (!confirm.isConfirmed) return;
+          if (!conf.isConfirmed) return;
           const res = await fetch(`/api/turmas/${turmaId}/materias/${mId}`, {
             method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
           });
@@ -1663,8 +2018,140 @@
             await carregarModalGestao(turmaId);
           }
         }
-      }, { once: true });
+      }, { signal: sig });
     }
+
+    // ── Modal Editar Turma ────────────────────────────────
+    let editandoTurmaId = null;
+
+    async function abrirEditarTurma(turmaId) {
+      editandoTurmaId = turmaId;
+      const turma = todasTurmas.find(t => String(t.id) === String(turmaId));
+
+      // Preenche ano fixo
+      document.getElementById("editInputAno").value = new Date().getFullYear();
+
+      // Carrega cursos se necessário
+      if (!cursosCache.length) await carregarCursos();
+      const editCursoSel = document.getElementById("editInputCurso");
+      editCursoSel.innerHTML = `<option value="">Selecione um curso</option>` +
+        cursosCache.map(c => `<option value="${c.id}" data-prefixo="${c.codigo_prefixo}">${c.nome}</option>`).join("");
+
+      // Preenche campos com dados da turma atual
+      if (turma) {
+        // Tenta fk_curso_id, senão extrai prefixo do codigo para encontrar o curso
+        let cursoIdParaSetar = turma.fk_curso_id ? String(turma.fk_curso_id) : '';
+        if (!cursoIdParaSetar && turma.codigo) {
+          const prefixoCodigo = turma.codigo.split('-')[0].toUpperCase();
+          const cursoEncontrado = cursosCache.find(c => (c.codigo_prefixo || '').toUpperCase() === prefixoCodigo);
+          if (cursoEncontrado) cursoIdParaSetar = String(cursoEncontrado.id);
+        }
+        if (cursoIdParaSetar) {
+          editCursoSel.value = cursoIdParaSetar;
+        }
+        document.getElementById("editInputPeriodo").value    = turma.periodo   || "";
+        document.getElementById("editInputSemestre").value   = turma.semestre  || "1";
+        // Turno: garante capitalização correta para o select
+        const turnoNorm = (turma.turno || "Manhã").trim();
+        const turnoOpts = Array.from(document.getElementById("editInputTurno").options).map(o => o.value);
+        const turnoMatch = turnoOpts.find(o => o.toLowerCase() === turnoNorm.toLowerCase()) || "Manhã";
+        document.getElementById("editInputTurno").value      = turnoMatch;
+        document.getElementById("editInputCapacidade").value  = turma.capacidade || "";
+        document.getElementById("editarTurmaSubtitulo").textContent = turma.nome || "Editar dados da turma";
+      }
+
+      gerarPreviewEditarTurma();
+      document.getElementById("modalEditarTurma").classList.add("show");
+    }
+
+    function gerarPreviewEditarTurma() {
+      const cursoEl    = document.getElementById("editInputCurso");
+      const periodoEl  = document.getElementById("editInputPeriodo");
+      const semestreEl = document.getElementById("editInputSemestre");
+      const turnoEl    = document.getElementById("editInputTurno");
+      const preview    = document.getElementById("editPreviewTurma");
+      const preNome    = document.getElementById("editPreviewNome");
+      const preCodigo  = document.getElementById("editPreviewCodigo");
+
+      const cursoId  = cursoEl.value;
+      const periodo  = periodoEl.value;
+      const ano      = new Date().getFullYear();
+      const semestre = semestreEl.value;
+      const turno    = turnoEl.value;
+
+      if (!cursoId || !periodo) { preview.style.display = "none"; return; }
+
+      const opt     = cursoEl.querySelector(`option[value="${cursoId}"]`);
+      const prefixo = opt ? opt.dataset.prefixo : "?";
+      const turnoSigla = turno[0].toUpperCase();
+      const turmaAtual = todasTurmas.find(t => String(t.id) === String(editandoTurmaId));
+      const letraAtual = String((turmaAtual?.codigo || "").slice(-1) || "").trim().toUpperCase();
+      const letraPrevista = calcularProximaLetra(cursoId, periodo, ano, semestre, turno, editandoTurmaId, letraAtual);
+
+      preNome.textContent   = `${prefixo} ${ano}.${semestre} — ${turno}`;
+      preCodigo.textContent = `Código: ${prefixo}-${ano}-${semestre}-${turnoSigla}? (letra mantida)`;
+      preNome.textContent   = `${prefixo} ${ano}.${semestre} â€” ${turno}${letraPrevista && letraPrevista !== "A" ? ` ${letraPrevista}` : ""}`;
+      preCodigo.textContent = `CÃ³digo: ${prefixo}-${ano}-${semestre}-${turnoSigla}${letraPrevista}`;
+      preNome.textContent   = `${prefixo} ${ano}.${semestre} - ${turno}${letraPrevista && letraPrevista !== "A" ? ` ${letraPrevista}` : ""}`;
+      preCodigo.textContent = `Codigo: ${prefixo}-${ano}-${semestre}-${turnoSigla}${letraPrevista}`;
+      preview.style.display = "flex";
+    }
+
+    ["editInputCurso","editInputPeriodo","editInputSemestre","editInputTurno"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", gerarPreviewEditarTurma);
+    });
+
+    document.getElementById("fecharEditarTurma").addEventListener("click",  () => document.getElementById("modalEditarTurma").classList.remove("show"));
+    document.getElementById("cancelarEditarTurma").addEventListener("click", () => document.getElementById("modalEditarTurma").classList.remove("show"));
+    document.getElementById("modalEditarTurma").addEventListener("click", e => {
+      if (e.target === document.getElementById("modalEditarTurma")) document.getElementById("modalEditarTurma").classList.remove("show");
+    });
+
+    document.getElementById("confirmarEditarTurma").addEventListener("click", async () => {
+      const cursoId   = document.getElementById("editInputCurso").value;
+      const periodo   = document.getElementById("editInputPeriodo").value;
+      const semestre  = document.getElementById("editInputSemestre").value;
+      const turno     = document.getElementById("editInputTurno").value;
+      const capRaw    = document.getElementById("editInputCapacidade").value.trim();
+
+      const erros = [];
+      if (!cursoId)  erros.push("Selecione um curso.");
+      if (!periodo)  erros.push("Selecione o período.");
+      if (!capRaw)   erros.push("Informe a capacidade.");
+      else if (isNaN(capRaw) || +capRaw < 1 || +capRaw > 100)
+        erros.push("Capacidade deve ser entre 1 e 100.");
+
+      if (erros.length) { Swal.fire("Atenção", erros.join("<br>"), "warning"); return; }
+
+      const payload = {
+        curso_id:   Number(cursoId),
+        periodo:    Number(periodo),
+        semestre:   Number(semestre),
+        turno,
+        capacidade: Number(capRaw),
+      };
+
+      try {
+        const res = await fetch(`/api/turmas/${editandoTurmaId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
+          body: JSON.stringify(payload),
+        });
+        const dados = await res.json();
+        if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao editar turma.", "error"); return; }
+
+        if (dados.message && dados.message.includes("Nenhuma")) {
+          // Nada foi alterado: avisa mas mantém o modal aberto
+          Swal.fire({ icon:"info", title:"Sem alterações", text:"Nenhuma informação foi modificada.", timer:2000, showConfirmButton:false });
+        } else {
+          // Alteração real: fecha modal e recarrega
+          document.getElementById("modalEditarTurma").classList.remove("show");
+          Swal.fire({ icon:"success", title:"Turma atualizada!", html:`<strong>${dados.nome}</strong>`, timer:2000, showConfirmButton:false });
+          await carregarTurmas();
+        }
+      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+    });
 
     // ── Aba Gestão (mantida por compatibilidade, redireciona para o modal) ──
     async function carregarAbaGestao(turmaId) {
@@ -1689,25 +2176,179 @@
     modalGestao.addEventListener("click", e => { if (e.target === modalGestao) modalGestao.classList.remove("show"); });
 
     // ── Modal Nova Turma ──────────────────────────────────
-    btnNovaTurma.addEventListener("click", () => modalNovaTurma.classList.add("show"));
+
+    async function carregarCursos() {
+      try {
+        const res = await fetch("/api/cursos", { headers: { Authorization: `Bearer ${getToken()}` } });
+        if (!res.ok) return;
+        const dados = await res.json();
+        cursosCache = dados.cursos || [];
+        const sel = document.getElementById("inputCurso");
+        sel.innerHTML = `<option value="">Selecione um curso</option>` +
+          cursosCache.map(c => `<option value="${c.id}" data-prefixo="${c.codigo_prefixo}">${c.nome}</option>`).join("");
+        // Atualiza filtro de curso se turmas já carregadas
+        if (todasTurmas.length) popularFiltroCurso();
+      } catch { /* silencioso */ }
+    }
+
+    // Calcula a próxima letra disponível (A, B, C...) para uma combinação curso+ano+semestre+turno
+    function calcularProximaLetra(cursoId, periodo, ano, semestre, turno, turmaIdIgnorar = null, letraPreferida = null) {
+      enriquecerTurmasComCurso();
+
+      const curso = cursosCache.find(c => String(c.id) === String(cursoId));
+      const optAtual = document.getElementById("inputCurso")?.querySelector(`option[value="${cursoId}"]`)
+        || document.getElementById("editInputCurso")?.querySelector(`option[value="${cursoId}"]`);
+      const prefixoAtual = String(curso?.codigo_prefixo || optAtual?.dataset?.prefixo || "").trim().toUpperCase();
+      const turnoSiglaAtual = (turno || "M")[0].toUpperCase();
+      const letrasUsadasAtual = new Set();
+      const codigosExistentesAtual = new Set();
+      const letraPreferidaAtual = String(letraPreferida || "").trim().toUpperCase();
+      const prefixoEscapado = prefixoAtual.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regexAtual = new RegExp(`^${prefixoEscapado}-${ano}-${semestre}-${turnoSiglaAtual}([A-Z])$`);
+
+      todasTurmas.forEach(t => {
+        if (turmaIdIgnorar && String(t.id) === String(turmaIdIgnorar)) return;
+
+        const codigoAtual = String(t.codigo || "").trim().toUpperCase();
+        const prefixoTurmaAtual = (codigoAtual.split("-")[0] || "").toUpperCase();
+
+        if (codigoAtual.startsWith(`${prefixoAtual}-${ano}-${semestre}-${turnoSiglaAtual}`)) {
+          codigosExistentesAtual.add(codigoAtual);
+        }
+
+        const mesmaCombinacao =
+          (String(t.fk_curso_id || "") === String(cursoId) || prefixoTurmaAtual === prefixoAtual) &&
+          String(t.periodo) === String(periodo) &&
+          String(t.ano) === String(ano) &&
+          String(t.semestre) === String(semestre) &&
+          String(t.turno || "").trim().toLowerCase() === String(turno || "").trim().toLowerCase();
+
+        if (!mesmaCombinacao) return;
+
+        const matchAtual = codigoAtual.match(regexAtual);
+        if (matchAtual?.[1]) letrasUsadasAtual.add(matchAtual[1]);
+      });
+
+      const ordemLetrasAtuais = [];
+      if (/^[A-Z]$/.test(letraPreferidaAtual)) {
+        ordemLetrasAtuais.push(letraPreferidaAtual);
+      }
+
+      for (let i = 0; i < 26; i++) {
+        const letraAtual = String.fromCharCode(65 + i);
+        if (letraAtual !== letraPreferidaAtual) ordemLetrasAtuais.push(letraAtual);
+      }
+
+      for (const letraAtual of ordemLetrasAtuais) {
+        const codigoAtual = `${prefixoAtual}-${ano}-${semestre}-${turnoSiglaAtual}${letraAtual}`;
+        if (letrasUsadasAtual.has(letraAtual)) continue;
+        if (codigosExistentesAtual.has(codigoAtual)) continue;
+        return letraAtual;
+      }
+
+      return "A";
+
+      const opt = document.getElementById("inputCurso").querySelector(`option[value="${cursoId}"]`);
+      const prefixo = opt ? opt.dataset.prefixo : '';
+      const turnoSigla = (turno || 'M')[0].toUpperCase();
+      // Padrão do código: PREFIXO-ANO-SEMESTRE-TURNOSIGLA+LETRA
+      // ex: ADS-2026-1-MA, ADS-2026-1-MB
+      const regex = new RegExp(`^${prefixo}-${ano}-${semestre}-${turnoSigla}([A-Z])$`);
+      const letrasUsadas = new Set(
+        todasTurmas
+          .map(t => { const m = (t.codigo || '').match(regex); return m ? m[1] : null; })
+          .filter(Boolean)
+      );
+      for (let i = 0; i < 26; i++) {
+        const letra = String.fromCharCode(65 + i); // A=65
+        if (!letrasUsadas.has(letra)) return letra;
+      }
+      return 'A';
+    }
+
+    function gerarPreviewTurma() {
+      const cursoEl    = document.getElementById("inputCurso");
+      const periodoEl  = document.getElementById("inputPeriodo");
+      const anoEl      = document.getElementById("inputAno");
+      const semestreEl = document.getElementById("inputSemestre");
+      const turnoEl    = document.getElementById("inputTurno");
+      const preview    = document.getElementById("previewTurma");
+      const preNome    = document.getElementById("previewNome");
+      const preCodigo  = document.getElementById("previewCodigo");
+
+      const cursoId  = cursoEl.value;
+      const periodo  = periodoEl.value;
+      const ano      = anoEl.value || new Date().getFullYear();
+      const semestre = semestreEl.value;
+      const turno    = turnoEl.value;
+
+      if (!cursoId || !periodo) { preview.style.display = "none"; return; }
+
+      const opt        = cursoEl.querySelector(`option[value="${cursoId}"]`);
+      const prefixo    = opt ? opt.dataset.prefixo : "?";
+      const turnoSigla = turno[0].toUpperCase();  // M / T / N
+      const letra      = calcularProximaLetra(cursoId, periodo, ano, semestre, turno);
+
+      const codigo = `${prefixo}-${ano}-${semestre}-${turnoSigla}${letra}`;
+      const nome   = `${prefixo} ${ano}.${semestre} — ${turno}`;
+
+      preNome.textContent   = `${nome}  (Turma ${letra})`;
+      preCodigo.textContent = `Código: ${codigo}`;
+      preview.style.display = "flex";
+    }
+
+    ["inputCurso","inputPeriodo","inputAno","inputSemestre","inputTurno"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener("change", gerarPreviewTurma);
+      if (el && el.tagName === "INPUT") el.addEventListener("input", gerarPreviewTurma);
+    });
+
+    btnNovaTurma.addEventListener("click", () => {
+      // Ano sempre o corrente, apenas exibir (readonly)
+      document.getElementById("inputAno").value = new Date().getFullYear();
+      // Seleciona semestre atual
+      const mes = new Date().getMonth() + 1;
+      document.getElementById("inputSemestre").value = mes <= 6 ? "1" : "2";
+      carregarCursos();
+      gerarPreviewTurma();
+      modalNovaTurma.classList.add("show");
+    });
     fecharNovaTurma.addEventListener("click",  () => modalNovaTurma.classList.remove("show"));
     cancelarNovaTurma.addEventListener("click", () => modalNovaTurma.classList.remove("show"));
     modalNovaTurma.addEventListener("click", e => { if (e.target === modalNovaTurma) modalNovaTurma.classList.remove("show"); });
 
     confirmarNovaTurma.addEventListener("click", async () => {
-      const payload = {
-        nome:       document.getElementById("inputNome").value.trim(),
-        codigo:     document.getElementById("inputCodigo").value.trim(),
-        periodo:    document.getElementById("inputPeriodo").value,
-        ano:        document.getElementById("inputAno").value,
-        semestre:   document.getElementById("inputSemestre").value,
-        turno:      document.getElementById("inputTurno").value,
-        capacidade: document.getElementById("inputCapacidade").value,
-      };
+      const cursoId   = document.getElementById("inputCurso").value;
+      const periodo   = document.getElementById("inputPeriodo").value;
+      const anoRaw    = document.getElementById("inputAno").value.trim();
+      const ano       = anoRaw || String(new Date().getFullYear());
+      const semestre  = document.getElementById("inputSemestre").value;
+      const turno     = document.getElementById("inputTurno").value;
+      const capRaw    = document.getElementById("inputCapacidade").value.trim();
 
-      if (!payload.nome || !payload.codigo || !payload.periodo || !payload.capacidade) {
-        Swal.fire("Atenção", "Preencha todos os campos obrigatórios.", "warning"); return;
+      // ── Validação no front ────────────────────────────────────────────────
+      const erros = [];
+      if (!cursoId)  erros.push("Selecione um curso.");
+      if (!periodo)  erros.push("Selecione o período.");
+      if (!capRaw)   erros.push("Informe a capacidade.");
+      else if (isNaN(capRaw) || +capRaw < 1 || +capRaw > 100)
+        erros.push("Capacidade deve ser entre 1 e 100.");
+
+      if (erros.length) {
+        Swal.fire("Atenção", erros.join("<br>"), "warning"); return;
       }
+
+      const letra = calcularProximaLetra(cursoId, periodo, ano, semestre, turno);
+
+      const payload = {
+        curso_id:    Number(cursoId),
+        periodo:     Number(periodo),
+        ano:         Number(ano),
+        semestre:    Number(semestre),
+        turno,
+        capacidade:  Number(capRaw),
+        turma_letra: letra,   // frontend calcula a próxima letra disponível
+      };
 
       try {
         const res = await fetch("/api/turmas", {
@@ -1719,7 +2360,16 @@
         if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao criar turma.", "error"); return; }
 
         modalNovaTurma.classList.remove("show");
-        Swal.fire("Sucesso", "Turma criada com sucesso.", "success");
+        Swal.fire({
+          icon: "success",
+          title: "Turma criada!",
+          html: `<strong>${dados.nome}</strong><br><small style="color:#888">${dados.codigo}</small>`,
+        });
+        // Limpa formulário
+        document.getElementById("inputCurso").value     = "";
+        document.getElementById("inputPeriodo").value   = "";
+        document.getElementById("inputCapacidade").value = "";
+        document.getElementById("previewTurma").style.display = "none";
         await carregarTurmas();
       } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     });
@@ -1749,6 +2399,7 @@
 
     initFiltroCustom("wrapFiltroPeriodo","btnFiltroPeriodo","dropFiltroPeriodo","lblFiltroPeriodo","filtroPeriodo");
     initFiltroCustom("wrapFiltroTurno",  "btnFiltroTurno",  "dropFiltroTurno",  "lblFiltroTurno",  "filtroTurno");
+    initFiltroCustom("wrapFiltroCurso",  "btnFiltroCurso",  "dropFiltroCurso",  "lblFiltroCurso",  "filtroCurso");
 
     function atualizarDropdownPeriodo() {
       const periodos = [...new Set(todasTurmas.map(t => t.periodo).filter(Boolean))].sort((a,b) => a-b);
@@ -1770,9 +2421,28 @@
       });
     }
 
+    function atualizarDropdownCurso() {
+      const drop = document.getElementById("dropFiltroCurso");
+      if (!drop) return;
+      enriquecerTurmasComCurso();
+      const cursoMap = new Map();
+      // cursosCache é a fonte principal
+      cursosCache.forEach(c => cursoMap.set(String(c.id), c.nome));
+      // turmas enriquecidas como fallback
+      todasTurmas.forEach(t => {
+        if (t.fk_curso_id && t.curso_nome && !cursoMap.has(String(t.fk_curso_id)))
+          cursoMap.set(String(t.fk_curso_id), t.curso_nome);
+      });
+      drop.innerHTML = `<div class="filtro-custom-option selected" data-value="">Todos os cursos</div>`;
+      [...cursoMap.entries()].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR')).forEach(([id, nome]) => {
+        drop.innerHTML += `<div class="filtro-custom-option" data-value="${id}">${nome}</div>`;
+      });
+    }
+
     // ── Filtros ───────────────────────────────────────────
     if (filtroPeriodo) filtroPeriodo.addEventListener("change", renderizarTurmas);
     if (filtroTurno)   filtroTurno.addEventListener("change",   renderizarTurmas);
+    if (filtroCurso)   filtroCurso.addEventListener("change",   renderizarTurmas);
 
     // ── Header ───────────────────────────────────────────
     if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));

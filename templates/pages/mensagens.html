@@ -582,20 +582,45 @@
       const d = await r.json();
       if (!r.ok) { listaEnviados.innerHTML = vazio("Erro ao carregar mensagens."); return; }
       if (!d.mensagens.length) { listaEnviados.innerHTML = vazio("Nenhuma mensagem enviada."); return; }
-      listaEnviados.innerHTML = d.mensagens.map(a => cardEnviado(a)).join("");
+      // Log para ver campos disponíveis (remover após confirmar)
+      if (d.mensagens.length) console.log("[enviados] campos:", Object.keys(d.mensagens[0]), d.mensagens[0]);
+      // Monta mapa de id -> nome buscando nas APIs de professores e coordenadores
+      const ids = [...new Set(d.mensagens.map(m => m.usuario_destino_id).filter(Boolean))];
+      let nomesMap = {};
+      if (ids.length) {
+        try {
+          const [rProf, rCoord] = await Promise.allSettled([
+            fetch("/api/mensagens/todos-professores", { headers: authHeader() }).then(x => x.json()),
+            fetch("/api/mensagens/coordenadores",     { headers: authHeader() }).then(x => x.json()),
+          ]);
+          if (rProf.status === "fulfilled" && Array.isArray(rProf.value))
+            rProf.value.forEach(p => { nomesMap[String(p.id)] = p.nome; });
+          if (rCoord.status === "fulfilled" && Array.isArray(rCoord.value))
+            rCoord.value.forEach(c => { nomesMap[String(c.id)] = c.nome; });
+        } catch(e) { console.warn("Erro ao buscar nomes:", e); }
+      }
+      listaEnviados.innerHTML = d.mensagens.map(a => cardEnviado(a, nomesMap)).join("");
       document.querySelectorAll("#listaEnviados .mensagem-card[data-id]").forEach(card => {
         card.addEventListener("click", () => abrirModal(card.dataset.id, "enviado"));
       });
     } catch { listaEnviados.innerHTML = vazio("Falha na conexão."); }
   }
 
-  function cardEnviado(a) {
+  function cardEnviado(a, nomesMap) {
+    nomesMap = nomesMap || {};
     const lidos = a.total_lidos || 0;
     const total = a.total_destinatarios || 0;
+    // Pega nome do destinatário: campo direto da API ou via nomesMap
+    const nomeDestino = a.usuario_destino_nome || a.destinatario_nome || a.nome_destino
+      || (a.usuario_destino_id ? nomesMap[String(a.usuario_destino_id)] : null)
+      || null;
+    const chipDestino = nomeDestino
+      ? `<span class="mensagem-chip chip-remetente">${esc(nomeDestino)} (${formatarPapel(a.papel_destino)})</span>`
+      : `<span class="mensagem-chip chip-papel">${labelDestino(a.papel_destino)}</span>`;
     const chips = [
       a.turma_nome   ? `<span class="mensagem-chip chip-turma">${esc(a.turma_nome)}</span>` : "",
       a.materia_nome ? `<span class="mensagem-chip chip-materia">${esc(a.materia_nome)}</span>` : "",
-      `<span class="mensagem-chip chip-papel">${labelDestino(a.papel_destino)}</span>`,
+      chipDestino,
     ].filter(Boolean).join("");
     return `
       <div class="mensagem-card" data-id="${a.id}" data-titulo="${esc(a.titulo)}" data-body="${esc(a.descricao)}" data-footer="${esc(chips)}">
@@ -847,10 +872,22 @@
 
     if (!titulo)    { Swal.fire("Atenção","Preencha o título.","warning"); return; }
     if (!descricao) { Swal.fire("Atenção","Escreva a mensagem.","warning"); return; }
+    if (titulo.length <= 3)    { Swal.fire("Atenção","O título deve ter mais de 3 caracteres.","warning"); return; }
+    if (descricao.length <= 3) { Swal.fire("Atenção","A mensagem deve ter mais de 3 caracteres.","warning"); return; }
     if (!destino)   { Swal.fire("Atenção","Selecione para quem enviar.","warning"); return; }
 
     const dados = coletarDadosEnvio();
     if (!dados) return;
+
+    const confirmacao = await Swal.fire({
+      icon: "question",
+      title: "Deseja enviar a mensagem?",
+      text: "Confira os dados antes de confirmar o envio.",
+      showCancelButton: true,
+      confirmButtonText: "Sim, enviar",
+      cancelButtonText: "Cancelar"
+    });
+    if (!confirmacao.isConfirmed) return;
 
     btnEnviar.disabled = true;
     btnEnviar.innerHTML = `<div class="spinner" style="border-top-color:#173c4a"></div> Enviando...`;

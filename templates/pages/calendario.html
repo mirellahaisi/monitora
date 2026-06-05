@@ -656,6 +656,132 @@
       document.getElementById("modalEvento").classList.remove("open");
     }
 
+    function obterDataEvento(valor) {
+      if (!valor) return null;
+      const data = new Date(valor);
+      if (Number.isNaN(data.getTime())) return null;
+      data.setSeconds(0, 0);
+      return data;
+    }
+
+    function obterAgoraNoMinuto() {
+      const agora = new Date();
+      agora.setSeconds(0, 0);
+      return agora;
+    }
+
+    function formatarDataEventoComparacao(valor) {
+      const data = obterDataEvento(valor);
+      if (!data) return null;
+
+      const ano = data.getFullYear();
+      const mes = String(data.getMonth() + 1).padStart(2, "0");
+      const dia = String(data.getDate()).padStart(2, "0");
+      const hora = String(data.getHours()).padStart(2, "0");
+      const minuto = String(data.getMinutes()).padStart(2, "0");
+      return `${ano}-${mes}-${dia}T${hora}:${minuto}`;
+    }
+
+    function normalizarIdEvento(valor) {
+      return valor === null || valor === undefined || valor === "" ? null : String(valor);
+    }
+
+    function montarPayloadEvento() {
+      const isAluno = papelUsuario === "aluno";
+      const isProfessor = papelUsuario === "professor";
+      const isCoordenador = ["admin","adm","coordenador"].includes(papelUsuario);
+      const isPessoal = isAluno ? true : document.getElementById("checkPessoal").checked;
+      const estavaPessoal = !!eventoEmEdicao?.pessoal;
+
+      let visibilidade = "todos";
+      let turmaId = null;
+      let materiaId = null;
+
+      if (!isPessoal && isProfessor) {
+        turmaId = document.getElementById("selectTurma").value || null;
+        materiaId = document.getElementById("selectMateria").value || null;
+        visibilidade = estavaPessoal ? "alunos" : (eventoEmEdicao?.visibilidade || "alunos");
+      } else if (!isPessoal && isCoordenador) {
+        turmaId = document.getElementById("selectTurma").value || null;
+        visibilidade = document.getElementById("selectVisibilidade").value || "todos";
+      }
+
+      return {
+        titulo: document.getElementById("inputTitulo").value.trim(),
+        descricao: document.getElementById("inputDescricao").value.trim() || null,
+        data_inicio: document.getElementById("inputDataInicio").value,
+        data_fim: document.getElementById("inputDataFim").value || null,
+        cor: corSelecionada,
+        tipo: document.getElementById("selectTipo").value,
+        pessoal: isPessoal,
+        fk_turma_id: turmaId,
+        fk_materia_id: materiaId,
+        visibilidade
+      };
+    }
+
+    function normalizarEventoParaComparacao(evento) {
+      const isPessoal = !!evento.pessoal;
+      return {
+        titulo: (evento.titulo || "").trim(),
+        descricao: (evento.descricao || "").trim(),
+        data_inicio: formatarDataEventoComparacao(evento.data_inicio),
+        data_fim: formatarDataEventoComparacao(evento.data_fim),
+        cor: evento.cor || CORES[0],
+        tipo: evento.tipo || "evento",
+        pessoal: isPessoal,
+        fk_turma_id: isPessoal ? null : normalizarIdEvento(evento.fk_turma_id),
+        fk_materia_id: isPessoal ? null : normalizarIdEvento(evento.fk_materia_id),
+        visibilidade: isPessoal ? "todos" : (evento.visibilidade || "todos")
+      };
+    }
+
+    function eventoFoiAlterado(payload) {
+      if (!eventoEmEdicao) return true;
+
+      const atual = normalizarEventoParaComparacao(eventoEmEdicao);
+      const proximo = normalizarEventoParaComparacao(payload);
+      return Object.keys(atual).some((campo) => atual[campo] !== proximo[campo]);
+    }
+
+    function validarDadosEvento(payload) {
+      if (!payload.titulo || !payload.data_inicio) {
+        return "Preencha título e data de início.";
+      }
+
+      if (payload.titulo.length < 3) {
+        return "O título deve ter no mínimo 3 caracteres.";
+      }
+
+      const inicio = obterDataEvento(payload.data_inicio);
+      if (!inicio) {
+        return "Informe uma data e hora de início válida.";
+      }
+
+      const agora = obterAgoraNoMinuto();
+      if (inicio < agora) {
+        return "A data e hora de início não podem estar no passado.";
+      }
+
+      if (payload.data_fim) {
+        const fim = obterDataEvento(payload.data_fim);
+        if (!fim) {
+          return "Informe uma data e hora de fim válida.";
+        }
+
+        if (fim < agora) {
+          return "A data e hora de fim não podem estar no passado.";
+        }
+
+        const minimoFim = new Date(inicio.getTime() + (60 * 60 * 1000));
+        if (fim < minimoFim) {
+          return "A data e hora de fim deve ter pelo menos 1 hora de diferença do início.";
+        }
+      }
+
+      return null;
+    }
+
     async function salvarEvento() {
       const titulo     = document.getElementById("inputTitulo").value.trim();
       const dataInicio = document.getElementById("inputDataInicio").value;
@@ -701,6 +827,37 @@
 
       if (["admin","adm","coordenador"].includes(papelUsuario) && !isPessoal) {
         payload.visibilidade = document.getElementById("selectVisibilidade").value || "todos";
+      }
+
+      if (payload.pessoal) {
+        payload.fk_turma_id = null;
+        payload.fk_materia_id = null;
+        payload.visibilidade = "todos";
+      } else if (papelUsuario === "professor") {
+        payload.visibilidade = eventoEmEdicao?.pessoal ? "alunos" : (eventoEmEdicao?.visibilidade || "alunos");
+      }
+
+      const mensagemValidacao = validarDadosEvento(payload);
+      if (mensagemValidacao) {
+        Swal.fire("Atenção", mensagemValidacao, "warning");
+        return;
+      }
+
+      if (eventoEmEdicao && !eventoFoiAlterado(payload)) {
+        Swal.fire("Atenção", "Nenhum dado foi atualizado.", "info");
+        return;
+      }
+
+      if (eventoEmEdicao) {
+        const confirmacao = await Swal.fire({
+          icon: "question",
+          title: "Salvar alterações?",
+          text: "Deseja realmente editar este evento?",
+          showCancelButton: true,
+          confirmButtonText: "Sim, editar",
+          cancelButtonText: "Cancelar"
+        });
+        if (!confirmacao.isConfirmed) return;
       }
 
       try {

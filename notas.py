@@ -26,9 +26,9 @@ def listar_materias_professor(usuario):
         cursor.execute("""
             SELECT DISTINCT m.id, m.nome
             FROM materia m
-            INNER JOIN professor_materia pm
-                ON pm.fk_materia_id = m.id
-            WHERE pm.fk_usuario_id = %s
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_materia_id = m.id
+            WHERE ptm.fk_usuario_id = %s
               AND m.ativo = 1
             ORDER BY m.nome
         """, (usuario["id"],))
@@ -64,12 +64,10 @@ def listar_turmas_por_materia(usuario):
         cursor.execute("""
             SELECT DISTINCT t.id, t.nome, t.periodo
             FROM turma t
-            INNER JOIN materias_turma mt
-                ON mt.fk_turma_id = t.id
-            INNER JOIN professor_materia pm
-                ON pm.fk_materia_id = mt.fk_materia_id
-            WHERE pm.fk_usuario_id = %s
-              AND mt.fk_materia_id = %s
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_turma_id = t.id
+            WHERE ptm.fk_usuario_id = %s
+              AND ptm.fk_materia_id = %s
               AND t.ativo = 1
             ORDER BY t.nome
         """, (usuario["id"], materia_id))
@@ -175,8 +173,10 @@ def minhas_notas(usuario):
             INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
             INNER JOIN usuario_turma ut  ON ut.fk_turma_id   = mt.fk_turma_id
                                         AND ut.fk_usuario_id = %s
-            LEFT JOIN professor_materia pm ON pm.fk_materia_id = m.id
-            LEFT JOIN usuario u            ON u.id = pm.fk_usuario_id AND u.ativo = 1
+            LEFT JOIN professor_turma_materia ptm
+                ON ptm.fk_turma_id = mt.fk_turma_id
+               AND ptm.fk_materia_id = m.id
+            LEFT JOIN usuario u            ON u.id = ptm.fk_usuario_id AND u.ativo = 1
             LEFT JOIN nota n               ON n.fk_usuario_id  = %s
                                           AND n.fk_materia_id  = m.id
             WHERE m.ativo = 1
@@ -299,14 +299,12 @@ def listar_professores_coordenador(usuario):
         cursor.execute("""
             SELECT DISTINCT u.id, u.nome
             FROM usuario u
-            INNER JOIN professor_materia pm
-                ON pm.fk_usuario_id = u.id
-            INNER JOIN materias_turma mt
-                ON mt.fk_materia_id = pm.fk_materia_id
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_usuario_id = u.id
             INNER JOIN papel p
                 ON p.id = u.fk_papel_id
-            WHERE pm.fk_materia_id = %s
-              AND mt.fk_turma_id = %s
+            WHERE ptm.fk_materia_id = %s
+              AND ptm.fk_turma_id = %s
               AND LOWER(p.descricao) = 'professor'
               AND u.ativo = 1
             ORDER BY u.nome
@@ -342,7 +340,7 @@ def listar_notas_coordenador(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        parametros = [materia_id, turma_id, materia_id]
+        parametros = [materia_id, materia_id, turma_id]
         filtro_professor = ""
 
         if professor_id:
@@ -364,10 +362,11 @@ def listar_notas_coordenador(usuario):
             LEFT JOIN nota n
                 ON n.fk_usuario_id = aluno.id
                AND n.fk_materia_id = %s
-            LEFT JOIN professor_materia pm
-                ON pm.fk_materia_id = %s
+            LEFT JOIN professor_turma_materia ptm
+                ON ptm.fk_turma_id = ut.fk_turma_id
+               AND ptm.fk_materia_id = %s
             LEFT JOIN usuario prof
-                ON prof.id = pm.fk_usuario_id
+                ON prof.id = ptm.fk_usuario_id
                AND prof.ativo = 1
             WHERE ut.fk_turma_id = %s
               AND LOWER(p_aluno.descricao) = 'aluno'
@@ -536,11 +535,9 @@ def listar_turmas_por_professor(usuario):
         cursor.execute("""
             SELECT DISTINCT t.id, t.nome, t.periodo
             FROM turma t
-            INNER JOIN materias_turma mt
-                ON mt.fk_turma_id = t.id
-            INNER JOIN professor_materia pm
-                ON pm.fk_materia_id = mt.fk_materia_id
-            WHERE pm.fk_usuario_id = %s
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_turma_id = t.id
+            WHERE ptm.fk_usuario_id = %s
               AND t.ativo = 1
             ORDER BY t.periodo, t.nome
         """, (professor_id,))
@@ -578,12 +575,10 @@ def listar_materias_professor_turma(usuario):
         cursor.execute("""
             SELECT DISTINCT m.id, m.nome
             FROM materia m
-            INNER JOIN professor_materia pm
-                ON pm.fk_materia_id = m.id
-            INNER JOIN materias_turma mt
-                ON mt.fk_materia_id = m.id
-            WHERE pm.fk_usuario_id = %s
-              AND mt.fk_turma_id = %s
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_materia_id = m.id
+            WHERE ptm.fk_usuario_id = %s
+              AND ptm.fk_turma_id = %s
               AND m.ativo = 1
             ORDER BY m.nome
         """, (professor_id, turma_id))

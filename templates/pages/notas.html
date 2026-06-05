@@ -306,8 +306,8 @@
         const mediaGeral = comMedia.length
           ? (comMedia.reduce((s, m) => s + m.media, 0) / comMedia.length).toFixed(2)
           : null;
-        const aprovadas  = comMedia.filter(m => m.media >= 6).length;
-        const reprovadas = comMedia.filter(m => m.media < 6).length;
+        const aprovadas  = comMedia.filter(m => m.media >= 7).length;
+        const reprovadas = comMedia.filter(m => m.media < 7).length;
 
         resumoDiv.innerHTML = `
           <div class="aluno-resumo-card">
@@ -316,7 +316,7 @@
           </div>
           <div class="aluno-resumo-card">
             <span class="aluno-resumo-label">Média geral</span>
-            <span class="aluno-resumo-valor ${mediaGeral !== null ? (Number(mediaGeral) >= 6 ? 'aprovado' : 'reprovado') : ''}">
+            <span class="aluno-resumo-valor ${mediaGeral !== null ? (Number(mediaGeral) >= 7 ? 'aprovado' : 'reprovado') : ''}">
               ${mediaGeral !== null ? String(mediaGeral).replace(".", ",") : "—"}
             </span>
           </div>
@@ -335,7 +335,7 @@
           const n1     = m.nota1 !== null && m.nota1 !== undefined;
           const n2     = m.nota2 !== null && m.nota2 !== undefined;
           const temMedia = m.media !== null && m.media !== undefined;
-          const classeMedia = temMedia ? (m.media >= 6 ? "aprovado" : "reprovado") : "vazia";
+          const classeMedia = temMedia ? (m.media >= 7 ? "aprovado" : "reprovado") : "vazia";
           const mediaLabel  = temMedia ? String(m.media).replace(".", ",") : "—";
           const prof = m.professores || "Professor não informado";
 
@@ -346,7 +346,7 @@
                   <div class="aluno-materia-nome">${m.materia_nome}</div>
                   <div class="aluno-materia-prof">${prof}</div>
                 </div>
-                <span class="aluno-media-badge ${temMedia ? (m.media >= 6 ? 'aprovado' : 'reprovado') : 'sem-nota'}">
+                <span class="aluno-media-badge ${temMedia ? (m.media >= 7 ? 'aprovado' : 'reprovado') : 'sem-nota'}">
                   ${temMedia ? "Média " + mediaLabel : "Sem notas"}
                 </span>
               </div>
@@ -427,17 +427,21 @@
         const rascunhoSalvo = JSON.parse(localStorage.getItem(chaveRascunhoAtual()) || "[]");
         tabelaNotas.innerHTML = dados.alunos.map(aluno => {
           const r = rascunhoSalvo.find(x => String(x.aluno_id) === String(aluno.id));
-          const nota1 = r ? r.nota1 : aluno.nota1;
-          const nota2 = r ? r.nota2 : aluno.nota2;
+          // Normaliza para exibição com vírgula
+          const fmtNota = v => (v !== null && v !== undefined && v !== "") ? String(v).replace(".", ",") : "";
+          const nota1 = fmtNota(r ? r.nota1 : aluno.nota1);
+          const nota2 = fmtNota(r ? r.nota2 : aluno.nota2);
           let media = "-";
-          if (nota1 !== "" && nota1 != null && nota2 !== "" && nota2 != null) {
-            media = ((Number(nota1) + Number(nota2)) / 2).toFixed(2);
+          if (nota1 !== "" && nota2 !== "") {
+            const n1 = Number(normalizarNota(nota1));
+            const n2 = Number(normalizarNota(nota2));
+            if (!isNaN(n1) && !isNaN(n2)) media = ((n1 + n2) / 2).toFixed(2);
           }
           return `
             <tr data-aluno-id="${aluno.id}">
               <td>${aluno.nome}</td>
-              <td><input type="number" class="nota-input nota1" min="0" max="10" step="0.1" value="${nota1 ?? ""}"></td>
-              <td><input type="number" class="nota-input nota2" min="0" max="10" step="0.1" value="${nota2 ?? ""}"></td>
+              <td><input type="text" class="nota-input nota1" placeholder="0 a 10" maxlength="5" inputmode="decimal" value="${nota1}"></td>
+              <td><input type="text" class="nota-input nota2" placeholder="0 a 10" maxlength="5" inputmode="decimal" value="${nota2}"></td>
               <td><span class="media-badge ${classeMedia(media)}">${media === "-" ? "-" : media.replace(".", ",")}</span></td>
             </tr>`;
         }).join("");
@@ -451,33 +455,89 @@
 
     function classeMedia(media) {
       if (media === null || media === undefined || media === "-") return "media-neutra";
-      return Number(media) >= 6 ? "media-aprovada" : "media-baixa";
+      return Number(media) >= 7 ? "media-aprovada" : "media-baixa";
+    }
+
+    // Valida formato de nota: aceita "x" ou "x,xx" ou "x.xx", máx 2 casas decimais, 0-10
+    function validarFormatoNota(val) {
+      if (val === "" || val === null || val === undefined) return true; // vazio é ok (rascunho)
+      const norm = String(val).replace(",", ".");
+      if (!/^\d{1,2}(\.\d{1,2})?$/.test(norm)) return false;
+      const n = Number(norm);
+      return n >= 0 && n <= 10;
+    }
+
+    function normalizarNota(val) {
+      return String(val).replace(",", ".");
     }
 
     function atualizarMediaLinha(event) {
-      const linha = event.target.closest("tr");
+      const input = event.target;
+      const val = input.value;
+      // Feedback visual de formato inválido
+      if (val !== "" && !validarFormatoNota(val)) {
+        input.style.borderColor = "#e74c3c";
+        input.title = "Formato inválido. Use: 7 ou 7,5 ou 7,50 (máx 2 casas decimais, entre 0 e 10)";
+      } else {
+        input.style.borderColor = "";
+        input.title = "";
+      }
+      const linha = input.closest("tr");
       const nota1 = linha.querySelector(".nota1").value;
       const nota2 = linha.querySelector(".nota2").value;
       const mediaSpan = linha.querySelector(".media-badge");
       if (nota1 === "" || nota2 === "") {
         mediaSpan.textContent = "-"; mediaSpan.className = "media-badge media-neutra"; return;
       }
-      const media = ((Number(nota1) + Number(nota2)) / 2).toFixed(2);
+      const n1 = Number(normalizarNota(nota1));
+      const n2 = Number(normalizarNota(nota2));
+      if (isNaN(n1) || isNaN(n2)) {
+        mediaSpan.textContent = "-"; mediaSpan.className = "media-badge media-neutra"; return;
+      }
+      const media = ((n1 + n2) / 2).toFixed(2);
       mediaSpan.textContent = media.replace(".", ",");
       mediaSpan.className = `media-badge ${classeMedia(media)}`;
     }
 
-    function coletarNotas() {
+    function coletarNotas(modoPublicar = false) {
       const linhas = document.querySelectorAll("#tabelaNotas tr[data-aluno-id]");
       const alunos = [];
+      const errosFormato = [];
+      const semNota = [];
+
       for (const linha of linhas) {
-        const nota1 = linha.querySelector(".nota1").value;
-        const nota2 = linha.querySelector(".nota2").value;
-        if ((nota1 && (nota1 < 0 || nota1 > 10)) || (nota2 && (nota2 < 0 || nota2 > 10))) {
-          Swal.fire("Atenção", "As notas devem estar entre 0 e 10.", "warning"); return null;
+        const nome  = linha.querySelector("td:first-child").textContent.trim();
+        const rawN1 = linha.querySelector(".nota1").value.trim();
+        const rawN2 = linha.querySelector(".nota2").value.trim();
+        const nota1 = normalizarNota(rawN1);
+        const nota2 = normalizarNota(rawN2);
+
+        // Valida formato
+        if (rawN1 !== "" && !validarFormatoNota(rawN1)) {
+          errosFormato.push(`${nome} — Nota 1: "${rawN1}"`);
         }
-        alunos.push({ aluno_id: linha.dataset.alunoId, nota1, nota2 });
+        if (rawN2 !== "" && !validarFormatoNota(rawN2)) {
+          errosFormato.push(`${nome} — Nota 2: "${rawN2}"`);
+        }
+
+        // No modo publicar: todas as notas precisam estar preenchidas
+        if (modoPublicar && (rawN1 === "" || rawN2 === "")) {
+          semNota.push(nome);
+        }
+
+        alunos.push({ aluno_id: linha.dataset.alunoId, nota1: rawN1 === "" ? "" : nota1, nota2: rawN2 === "" ? "" : nota2 });
       }
+
+      if (errosFormato.length) {
+        Swal.fire("Formato inválido", `Corrija as notas abaixo antes de continuar:<br><br><b>${errosFormato.join("<br>")}</b><br><br>Use: <b>7</b> ou <b>7,5</b> ou <b>7,50</b> (máx 2 casas decimais, de 0 a 10).`, "warning");
+        return null;
+      }
+
+      if (modoPublicar && semNota.length) {
+        Swal.fire("Notas incompletas", `Para publicar, todos os alunos precisam ter as duas notas preenchidas.<br><br>Alunos sem nota:<br><b>${semNota.join("<br>")}</b>`, "warning");
+        return null;
+      }
+
       return alunos;
     }
 
@@ -485,19 +545,29 @@
       if (!selectMateria.value || !selectTurma.value) {
         Swal.fire("Atenção", "Selecione a matéria e a turma.", "warning"); return;
       }
-      const alunos = coletarNotas();
+      const modoPublicar = tipo === "publicar";
+      const alunos = coletarNotas(modoPublicar);
       if (!alunos) return;
 
       if (tipo === "rascunho") {
         localStorage.setItem(chaveRascunhoAtual(), JSON.stringify(alunos));
-        Swal.fire({ icon: "success", title: "Rascunho salvo", text: "As notas foram salvas apenas neste navegador." });
+        Swal.fire({ icon: "success", title: "Rascunho salvo", text: "As notas foram salvas apenas neste navegador. Use 'Publicar notas' para registrar no sistema." });
         return;
       }
 
+      // Monta resumo para o SweetAlert de confirmação
+      const nomeMateria = selectMateria.options[selectMateria.selectedIndex].text;
+      const nomeTurma   = selectTurma.options[selectTurma.selectedIndex].text;
+      const totalAlunos = alunos.length;
       const confirmacao = await Swal.fire({
-        icon: "question", title: "Publicar notas?",
-        text: "As notas serão registradas no banco de dados.",
-        showCancelButton: true, confirmButtonText: "Sim, publicar", cancelButtonText: "Cancelar"
+        icon: "question",
+        title: "Publicar notas?",
+        text: "As notas serão registradas e ficarão visíveis para os alunos.",
+        showCancelButton: true,
+        confirmButtonText: "Sim, publicar",
+        cancelButtonText: "Cancelar",
+        confirmButtonColor: "#57dbbd",
+        cancelButtonColor: "#aaa"
       });
       if (!confirmacao.isConfirmed) return;
 
@@ -510,7 +580,7 @@
         const dados = await resposta.json();
         if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao publicar notas.", "error"); return; }
         localStorage.removeItem(chaveRascunhoAtual());
-        Swal.fire("Sucesso", "Notas publicadas com sucesso.", "success");
+        Swal.fire({ icon: "success", title: "Notas publicadas!", text: `As notas de ${nomeMateria} – ${nomeTurma} foram registradas com sucesso.` });
       } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     }
 
@@ -632,7 +702,7 @@
 
     function coordClasseMedia(media) {
       if (media === null || media === undefined) return "media-neutra";
-      return Number(media) >= 6 ? "media-aprovada" : "media-baixa";
+      return Number(media) >= 7 ? "media-aprovada" : "media-baixa";
     }
 
     function coordRenderizarTabela(alunos) {
@@ -659,8 +729,8 @@
       }
 
       const comMedia   = alunos.filter(a => a.media !== null && a.media !== undefined);
-      const aprovados  = comMedia.filter(a => a.media >= 6).length;
-      const reprovados = comMedia.filter(a => a.media < 6).length;
+      const aprovados  = comMedia.filter(a => a.media >= 7).length;
+      const reprovados = comMedia.filter(a => a.media < 7).length;
       const semNota    = alunos.filter(a => a.media === null || a.media === undefined).length;
       const mediaGeral = comMedia.length
         ? (comMedia.reduce((s, a) => s + a.media, 0) / comMedia.length).toFixed(2)

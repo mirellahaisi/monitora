@@ -89,6 +89,7 @@
     const cpfInput           = document.getElementById("cpf");
     const novaSenhaInput     = document.getElementById("novaSenha");
     const btnCancelar        = document.getElementById("btnCancelar");
+    let perfilOriginal       = null;
 
     // Elementos do header/sidebar — injetados pelos includes; guards evitam erros
     const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
@@ -159,6 +160,45 @@
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
     }
 
+    function idadeMinimaValida(dataIso, idadeMinima = 12) {
+      const dataNascimento = new Date(`${dataIso}T00:00:00`);
+      if (Number.isNaN(dataNascimento.getTime())) return false;
+
+      const hoje = new Date();
+      let idade = hoje.getFullYear() - dataNascimento.getFullYear();
+      const aniversarioAindaNaoChegou =
+        hoje.getMonth() < dataNascimento.getMonth() ||
+        (hoje.getMonth() === dataNascimento.getMonth() && hoje.getDate() < dataNascimento.getDate());
+
+      if (aniversarioAindaNaoChegou) idade -= 1;
+      return idade >= idadeMinima;
+    }
+
+    function normalizarPerfilParaComparacao(dados) {
+      return {
+        nome: (dados.nome || "").trim(),
+        email: (dados.email || "").trim().toLowerCase(),
+        telefone: somenteNumeros(dados.telefone || ""),
+        data_nascimento: dados.data_nascimento || ""
+      };
+    }
+
+    function obterPerfilAtual() {
+      return normalizarPerfilParaComparacao({
+        nome: nomeInput.value,
+        email: emailInput.value,
+        telefone: telefoneInput.value,
+        data_nascimento: dataNascimentoInput.value
+      });
+    }
+
+    function perfilFoiAlterado() {
+      if (!perfilOriginal) return true;
+
+      const perfilAtual = obterPerfilAtual();
+      return Object.keys(perfilAtual).some((campo) => perfilAtual[campo] !== perfilOriginal[campo]);
+    }
+
     // ── Preenche dados no topo (header component) ──────────────────────
     function preencherTopo(usuario) {
       if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
@@ -191,6 +231,10 @@
       }
       if (!dataNascimentoInput.value) {
         Swal.fire({ icon:"warning", title:"Data obrigatória", text:"Informe a data de nascimento." });
+        return false;
+      }
+      if (!idadeMinimaValida(dataNascimentoInput.value)) {
+        Swal.fire({ icon:"warning", title:"Idade inválida", text:"A idade mínima permitida é de 12 anos." });
         return false;
       }
       return true;
@@ -230,6 +274,12 @@
         cpfInput.value            = formatarCpf(usuario.cpf || "");
         dataNascimentoInput.value = usuario.data_nascimento || "";
         novaSenhaInput.value      = "";
+        perfilOriginal = normalizarPerfilParaComparacao({
+          nome: usuario.nome,
+          email: usuario.email,
+          telefone: usuario.telefone,
+          data_nascimento: usuario.data_nascimento
+        });
 
       } catch (erro) {
         console.error("Erro ao carregar perfil:", erro);
@@ -245,6 +295,11 @@
 
       let senhaAtual = "";
       const novaSenha = novaSenhaInput.value.trim();
+
+      if (!perfilFoiAlterado() && !novaSenha) {
+        Swal.fire({ icon:"info", title:"Nenhum dado foi atualizado", text:"Altere pelo menos um campo antes de salvar." });
+        return;
+      }
 
       if (novaSenha) {
         const res = await Swal.fire({
@@ -275,7 +330,7 @@
       const token = obterToken();
       const dadosPerfil = {
         nome:           nomeInput.value.trim(),
-        email:          emailInput.value.trim(),
+        email:          emailInput.value.trim().toLowerCase(),
         telefone:       somenteNumeros(telefoneInput.value),
         data_nascimento:dataNascimentoInput.value,
         senha_atual:    senhaAtual,
@@ -305,6 +360,7 @@
 
         novaSenhaInput.value = "";
         preencherTopo(dados.usuario);
+        perfilOriginal = obterPerfilAtual();
 
         Swal.fire({
           icon: "success",

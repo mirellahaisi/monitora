@@ -36,6 +36,10 @@ INSERT INTO materias_turma (fk_materia_id, fk_turma_id) VALUES
 (1, 1),
 (2, 1);
 
+INSERT INTO professor_turma_materia (fk_usuario_id, fk_turma_id, fk_materia_id) VALUES
+(2, 1, 1),
+(2, 1, 2);
+
 INSERT INTO materia_aviso (fk_materia_id, fk_aviso_id) VALUES
 (1, 1),
 (2, 2);
