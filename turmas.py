@@ -433,7 +433,7 @@ def listar_materias_turma(usuario, turma_id):
             conexao.close()
 
 
-@turmas_bp.get("/api/cursos")
+@turmas_bp.get("/api/turmas/cursos")
 @token_obrigatorio
 @papel_obrigatorio("admin", "adm", "coordenador")
 def listar_cursos(usuario):

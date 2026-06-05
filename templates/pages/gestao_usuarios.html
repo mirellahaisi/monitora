@@ -108,6 +108,9 @@
       <div class="campo-grupo">
         <label for="dataNascimento">Data de nascimento</label>
         <input type="date" id="dataNascimento">
+        <small style="display:block;margin-top:6px;color:var(--muted);font-size:0.78rem;">
+          A senha inicial usa a data de nascimento no formato DDMMAA.
+        </small>
       </div>
 
       <div id="grupoEspecialidade" class="campo-grupo">
@@ -311,6 +314,11 @@
       if (idade == null) return false;
       return String(papel || "").toLowerCase() === "aluno" ? idade > 12 : idade > 18;
     }
+    function senhaInicialPorData(dataIso) {
+      if (!dataIso || !/^\d{4}-\d{2}-\d{2}$/.test(dataIso)) return "";
+      const [ano, mes, dia] = dataIso.split("-");
+      return `${dia}${mes}${ano.slice(-2)}`;
+    }
     function obterDadosFormulario() {
       return {
         nome: document.getElementById("nome").value,
@@ -481,7 +489,14 @@
           Swal.fire("Atenção", res.message || "Nenhuma informação foi alterada.", "info");
           return;
         }
-        Swal.fire("Sucesso", res.message, "success");
+        const senhaInicial = res.senha_inicial || (!modoEdicao ? senhaInicialPorData(dadosNormalizados.data_nascimento) : "");
+        Swal.fire({
+          icon: "success",
+          title: "Sucesso",
+          html: senhaInicial
+            ? `${res.message}<br><br><strong>${modoEdicao ? "Nova senha:" : "Senha inicial:"}</strong> ${senhaInicial}`
+            : res.message
+        });
         fecharModal();
         estadoOriginalModal = null;
         dadosAba[abaAtual] = null;

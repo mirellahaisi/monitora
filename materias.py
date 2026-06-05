@@ -7,6 +7,25 @@ from login import token_obrigatorio, papel_obrigatorio
 materias_bp = Blueprint("materias", __name__)
 
 
+def normalizar_ativo(valor, padrao=False):
+    if valor is None:
+        return padrao
+    if isinstance(valor, bool):
+        return valor
+    if isinstance(valor, (bytes, bytearray)):
+        return any(valor)
+
+    try:
+        return int(valor) != 0
+    except (TypeError, ValueError):
+        texto = str(valor).strip().lower()
+        if texto in {"1", "true", "sim", "yes", "ativo", "on"}:
+            return True
+        if texto in {"0", "false", "nao", "não", "no", "inativo", "off", ""}:
+            return False
+        return bool(valor)
+
+
 # ─────────────────────────────────────────────
 # PÁGINA HTML
 # ─────────────────────────────────────────────
@@ -52,7 +71,7 @@ def listar_materias(usuario):
                 m["data_criacao"] = m["data_criacao"].strftime("%Y-%m-%d %H:%M:%S")
             if m.get("data_atualizacao"):
                 m["data_atualizacao"] = m["data_atualizacao"].strftime("%Y-%m-%d %H:%M:%S")
-            m["ativo"] = bool(int(m["ativo"]) if m["ativo"] is not None else 0)
+            m["ativo"] = normalizar_ativo(m.get("ativo"))
             m["carga_horaria"] = int(m["carga_horaria"]) if m["carga_horaria"] else None
 
         return jsonify({"materias": materias}), 200
@@ -81,7 +100,7 @@ def criar_materia(usuario):
     codigo        = str(dados.get("codigo", "")).strip().upper()
     carga_horaria = dados.get("carga_horaria")
     descricao     = str(dados.get("descricao", "") or "").strip() or None
-    ativo         = bool(dados.get("ativo", True))
+    ativo         = normalizar_ativo(dados.get("ativo", True), padrao=True)
 
     # ── Validações ──
     erros = []
@@ -166,7 +185,7 @@ def atualizar_materia(usuario, materia_id):
     codigo        = str(dados.get("codigo", "")).strip().upper()
     carga_horaria = dados.get("carga_horaria")
     descricao     = str(dados.get("descricao", "") or "").strip() or None
-    ativo         = bool(dados.get("ativo", True))
+    ativo         = normalizar_ativo(dados.get("ativo", True), padrao=True)
 
     # ── Validações ──
     erros = []

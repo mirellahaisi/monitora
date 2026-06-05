@@ -87,7 +87,10 @@
       overflow: hidden;
       box-shadow: 0 2px 12px rgba(0,0,0,.05);
     }
-    .cursos-table-wrap { overflow-x: auto; }
+    .cursos-table-wrap {
+      overflow-x: auto;
+      background: var(--card-bg, #fff);
+    }
     .cursos-table {
       width: 100%;
       border-collapse: collapse;
@@ -172,6 +175,56 @@
       background: var(--table-head-bg, #f4f7fa);
       font-size: .8rem;
       color: var(--muted, #6b7c8d);
+    }
+
+    body.dark .cursos-card,
+    html.dark .cursos-card,
+    html[data-theme="dark"] .cursos-card,
+    [data-theme="dark"] .cursos-card,
+    body.dark .cursos-table-wrap,
+    html.dark .cursos-table-wrap,
+    html[data-theme="dark"] .cursos-table-wrap,
+    [data-theme="dark"] .cursos-table-wrap {
+      background: var(--card-bg, #162433) !important;
+      border-color: var(--border, #2d4a5e) !important;
+    }
+    body.dark .cursos-table thead tr,
+    html.dark .cursos-table thead tr,
+    html[data-theme="dark"] .cursos-table thead tr,
+    [data-theme="dark"] .cursos-table thead tr,
+    body.dark .cursos-rodape,
+    html.dark .cursos-rodape,
+    html[data-theme="dark"] .cursos-rodape,
+    [data-theme="dark"] .cursos-rodape {
+      background: var(--table-head-bg, #1a2e3b) !important;
+      color: var(--muted, #8fa8b8) !important;
+      border-color: var(--border, #2d4a5e) !important;
+    }
+    body.dark .cursos-table tbody tr:hover,
+    html.dark .cursos-table tbody tr:hover,
+    html[data-theme="dark"] .cursos-table tbody tr:hover,
+    [data-theme="dark"] .cursos-table tbody tr:hover {
+      background: var(--row-hover, #1e3548) !important;
+    }
+    body.dark .cursos-search,
+    html.dark .cursos-search,
+    html[data-theme="dark"] .cursos-search,
+    [data-theme="dark"] .cursos-search,
+    body.dark .modal-box,
+    html.dark .modal-box,
+    html[data-theme="dark"] .modal-box,
+    [data-theme="dark"] .modal-box,
+    body.dark .form-group input,
+    html.dark .form-group input,
+    html[data-theme="dark"] .form-group input,
+    [data-theme="dark"] .form-group input,
+    body.dark .form-group select,
+    html.dark .form-group select,
+    html[data-theme="dark"] .form-group select,
+    [data-theme="dark"] .form-group select {
+      background: var(--input-bg, #1a2e3b) !important;
+      color: var(--text, #e2eaf0) !important;
+      border-color: var(--border, #2d4a5e) !important;
     }
 
     /* ── MODAL ── */
@@ -385,6 +438,14 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     // ── Utilitários ──
+    function normalizarAtivo(v) {
+      if (v === null || v === undefined) return false;
+      if (typeof v === "boolean") return v;
+      if (typeof v === "number") return v !== 0;
+      const s = String(v).trim().toLowerCase();
+      return s === "1" || s === "true" || s === "sim" || s === "yes" || s === "ativo";
+    }
+
     function getToken() { return localStorage.getItem("token"); }
     function authHeader() { return { "Authorization": `Bearer ${getToken()}`, "Content-Type": "application/json" }; }
 
@@ -431,8 +492,8 @@
         const botao = document.getElementById("botaoMenuUsuario");
         const menu  = document.getElementById("menuUsuario");
         if (botao && menu) {
-          botao.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("open"); });
-          document.addEventListener("click", () => menu.classList.remove("open"));
+          botao.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("show"); });
+          document.addEventListener("click", () => menu.classList.remove("show"));
         }
         const btnEditar = document.getElementById("btnEditarPerfil");
         if (btnEditar) btnEditar.addEventListener("click", () => window.location.href = "/perfil");
@@ -479,7 +540,7 @@
         const r = await fetch("/api/cursos", { headers: authHeader() });
         const dados = await r.json();
         if (!r.ok) { mostrarErroTabela(dados.message || "Erro ao carregar cursos."); return; }
-        cursos = (dados.cursos || []).map(c => ({ ...c, ativo: c.ativo === true || c.ativo === 1 }));
+        cursos = (dados.cursos || []).map(c => ({ ...c, ativo: normalizarAtivo(c.ativo) }));
         renderizarTabela();
       } catch {
         mostrarErroTabela("Falha de conexão ao carregar cursos.");
