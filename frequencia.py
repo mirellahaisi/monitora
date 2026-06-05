@@ -1,8 +1,16 @@
 from flask import Blueprint, render_template, request, Response, jsonify
 
 from conexao import criar_conexao
+from gerador_token import validar_token
 
 frequencia_bp = Blueprint("frequencia", __name__)
+
+
+def _usuario_do_token(req):
+    auth = req.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    return validar_token(auth.split(" ", 1)[1])
 
 
 # ========================
@@ -23,16 +31,52 @@ def frequencia():
 
 @frequencia_bp.get("/api/frequencia/materias")
 def api_todas_materias():
-    """Retorna todas as matérias ativas (primeiro select)."""
+    """Retorna as matérias disponíveis para o perfil logado."""
+    curso_id = request.args.get("curso_id")
+    usuario = _usuario_do_token(request)
+    papel = str((usuario or {}).get("papel", "")).lower()
     conexao = criar_conexao()
     cursor = conexao.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT id, nome
-        FROM materia
-        WHERE ativo = 1
-        ORDER BY nome
-    """)
+    if papel == "professor" and usuario:
+        parametros = [usuario["id"]]
+        filtro_curso = ""
+
+        if curso_id:
+            filtro_curso = " AND t.fk_curso_id = %s"
+            parametros.append(curso_id)
+
+        cursor.execute(f"""
+            SELECT DISTINCT m.id, m.nome
+            FROM materia m
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_materia_id = m.id
+            INNER JOIN turma t
+                ON t.id = ptm.fk_turma_id
+            WHERE ptm.fk_usuario_id = %s
+              AND m.ativo = 1
+              AND t.ativo = 1
+              {filtro_curso}
+            ORDER BY m.nome
+        """, tuple(parametros))
+    elif curso_id:
+        cursor.execute("""
+            SELECT DISTINCT m.id, m.nome
+            FROM materia m
+            INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
+            INNER JOIN turma t ON t.id = mt.fk_turma_id
+            WHERE m.ativo = 1
+              AND t.ativo = 1
+              AND t.fk_curso_id = %s
+            ORDER BY m.nome
+        """, (curso_id,))
+    else:
+        cursor.execute("""
+            SELECT id, nome
+            FROM materia
+            WHERE ativo = 1
+            ORDER BY nome
+        """)
 
     materias = cursor.fetchall()
     cursor.close()
@@ -43,8 +87,11 @@ def api_todas_materias():
 
 @frequencia_bp.get("/api/frequencia/turmas")
 def api_turmas_por_materia():
-    """Retorna as turmas que possuem a matéria selecionada."""
+    """Retorna as turmas da matéria selecionada."""
     materia_id = request.args.get("materia_id")
+    curso_id = request.args.get("curso_id")
+    usuario = _usuario_do_token(request)
+    papel = str((usuario or {}).get("papel", "")).lower()
 
     if not materia_id:
         return jsonify([])
@@ -52,13 +99,44 @@ def api_turmas_por_materia():
     conexao = criar_conexao()
     cursor = conexao.cursor(dictionary=True)
 
-    cursor.execute("""
-        SELECT t.id, t.nome, t.periodo
-        FROM turma t
-        INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
-        WHERE mt.fk_materia_id = %s AND t.ativo = 1
-        ORDER BY t.periodo, t.nome
-    """, (materia_id,))
+    if papel == "professor" and usuario:
+        parametros = [materia_id, usuario["id"]]
+        filtro_curso = ""
+
+        if curso_id:
+            filtro_curso = " AND t.fk_curso_id = %s"
+            parametros.append(curso_id)
+
+        cursor.execute(f"""
+            SELECT DISTINCT t.id, t.nome, t.periodo
+            FROM turma t
+            INNER JOIN professor_turma_materia ptm
+                ON ptm.fk_turma_id = t.id
+            WHERE ptm.fk_materia_id = %s
+              AND ptm.fk_usuario_id = %s
+              AND t.ativo = 1
+              {filtro_curso}
+            ORDER BY t.periodo, t.nome
+        """, tuple(parametros))
+    elif curso_id:
+        cursor.execute("""
+            SELECT DISTINCT t.id, t.nome, t.periodo
+            FROM turma t
+            INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
+            WHERE mt.fk_materia_id = %s
+              AND t.fk_curso_id = %s
+              AND t.ativo = 1
+            ORDER BY t.periodo, t.nome
+        """, (materia_id, curso_id))
+    else:
+        cursor.execute("""
+            SELECT DISTINCT t.id, t.nome, t.periodo
+            FROM turma t
+            INNER JOIN materias_turma mt ON mt.fk_turma_id = t.id
+            WHERE mt.fk_materia_id = %s
+              AND t.ativo = 1
+            ORDER BY t.periodo, t.nome
+        """, (materia_id,))
 
     turmas = cursor.fetchall()
     cursor.close()
@@ -90,6 +168,7 @@ def api_alunos_por_turma():
     """, (turma_id,))
 
     alunos = cursor.fetchall()
+    alunos.sort(key=lambda aluno: str(aluno.get("nome") or "").casefold())
     cursor.close()
     conexao.close()
 

@@ -255,15 +255,32 @@ def listar_enviados():
             a.papel_destino,
             t.nome  AS turma_nome,
             m.nome  AS materia_nome,
-            COUNT(ad.id)              AS total_destinatarios,
-            SUM(ad.lido = 1)          AS total_lidos
+            COUNT(DISTINCT ad.fk_usuario_id)                AS total_destinatarios,
+            COALESCE(SUM(ad.lido = 1), 0)                   AS total_lidos,
+            CASE
+                WHEN COUNT(DISTINCT dest.id) = 1 THEN MAX(dest.nome)
+                ELSE NULL
+            END                                             AS destinatario_nome,
+            CASE
+                WHEN COUNT(DISTINCT dest.id) = 1 THEN MAX(p_dest.descricao)
+                ELSE NULL
+            END                                             AS destinatario_papel
         FROM mensagem a
         LEFT JOIN turma   t  ON t.id = a.fk_turma_id
         LEFT JOIN materia m  ON m.id = a.fk_materia_id
         LEFT JOIN mensagem_destinatario ad ON ad.fk_mensagem_id = a.id
+        LEFT JOIN usuario dest ON dest.id = ad.fk_usuario_id
+        LEFT JOIN papel p_dest ON p_dest.id = dest.fk_papel_id
         WHERE a.fk_remetente_id = %s
           AND a.ativo = 1
-        GROUP BY a.id
+        GROUP BY
+            a.id,
+            a.titulo,
+            a.descricao,
+            a.data_publicacao,
+            a.papel_destino,
+            t.nome,
+            m.nome
         ORDER BY a.data_publicacao DESC
         LIMIT 100
     """, (payload.get("id"),))

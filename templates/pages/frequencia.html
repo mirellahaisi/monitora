@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Monitora+ | Frequência</title>
+  <title>Monitora+ | Frequencia</title>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -27,21 +27,26 @@
         </svg>
       </div>
       <div>
-        <h2 id="pageHeadingTitle">Frequência do Aluno</h2>
-        <p id="pageHeadingDesc">Selecione a matéria, turma e aluno para visualizar a frequência</p>
+        <h2 id="pageHeadingTitle">Frequencia do Aluno</h2>
+        <p id="pageHeadingDesc">Selecione curso, materia, turma e aluno para visualizar a frequencia</p>
       </div>
     </div>
 
-    <!-- Filtros: visíveis apenas para papel != 3 -->
     <div class="notas-filtros" id="filtrosAdmin">
-      <div class="filtro-group">
-        <label for="selectMateria">Matéria</label>
-        <select id="selectMateria">
-          <option value="">Selecione a matéria</option>
+      <div class="filtro-group" id="grupoCurso" style="display:none;">
+        <label for="selectCurso">Curso</label>
+        <select id="selectCurso" disabled>
+          <option value="">Selecione o curso</option>
         </select>
       </div>
       <div class="filtro-group">
-        <label for="selectTurma">Turma / Período</label>
+        <label for="selectMateria">Materia</label>
+        <select id="selectMateria">
+          <option value="">Selecione a materia</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label for="selectTurma">Turma / Periodo</label>
         <select id="selectTurma" disabled>
           <option value="">Selecione a turma</option>
         </select>
@@ -63,7 +68,7 @@
     <div class="freq-result-area" id="freqResultArea">
       <div class="freq-empty" id="freqEmpty">
         <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
-        <p>Selecione matéria, turma e aluno para visualizar a frequência.</p>
+        <p>Selecione curso, materia, turma e aluno para visualizar a frequencia.</p>
       </div>
     </div>
 
@@ -71,66 +76,104 @@
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="/static/js/searchable-select.js"></script>
 <script>
-  const selectMateria  = document.getElementById("selectMateria");
-  const selectTurma    = document.getElementById("selectTurma");
-  const selectAluno    = document.getElementById("selectAluno");
-  const btnLimpar      = document.getElementById("btnLimpar");
+  const selectCurso = document.getElementById("selectCurso");
+  const selectMateria = document.getElementById("selectMateria");
+  const selectTurma = document.getElementById("selectTurma");
+  const selectAluno = document.getElementById("selectAluno");
+  const btnLimpar = document.getElementById("btnLimpar");
   const freqResultArea = document.getElementById("freqResultArea");
-  const filtrosAdmin   = document.getElementById("filtrosAdmin");
+  const filtrosAdmin = document.getElementById("filtrosAdmin");
+  const grupoCurso = document.getElementById("grupoCurso");
 
-  const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
-  const papelUsuario     = document.getElementById("papelUsuario");
-  const avatarUsuario    = document.getElementById("avatarUsuario");
+  const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
+  const papelUsuario = document.getElementById("papelUsuario");
+  const avatarUsuario = document.getElementById("avatarUsuario");
   const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-  const menuUsuario      = document.getElementById("menuUsuario");
-  const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
-  const btnSair          = document.getElementById("btnSair");
+  const menuUsuario = document.getElementById("menuUsuario");
+  const btnEditarPerfil = document.getElementById("btnEditarPerfil");
+  const btnSair = document.getElementById("btnSair");
 
-  function getToken() { return localStorage.getItem("token"); }
+  let filtroCursoAtivo = false;
+
+  function getToken() {
+    return localStorage.getItem("token");
+  }
+
   function limparSessao() {
     localStorage.removeItem("token");
     localStorage.removeItem("usuario");
     localStorage.removeItem("sessaoExpiracao");
   }
-  function tokenExpirado(exp) { return Number(exp) < Math.floor(Date.now() / 1000); }
+
+  function tokenExpirado(exp) {
+    return Number(exp) < Math.floor(Date.now() / 1000);
+  }
+
   function verificarToken() {
     const exp = localStorage.getItem("sessaoExpiracao");
     if (!getToken() || !exp || tokenExpirado(exp)) {
-      limparSessao(); window.location.href = "/"; return false;
+      limparSessao();
+      window.location.href = "/";
+      return false;
     }
     return true;
   }
-  function decodeJwtPayload(token) {
-    try {
-      const part = token.split('.')[1];
-      const b64  = part.replace(/-/g, '+').replace(/_/g, '/');
-      const pad  = '='.repeat((4 - b64.length % 4) % 4);
-      return JSON.parse(atob(b64 + pad));
-    } catch { return null; }
-  }
-  function formatarPapel(papel) {
-    const p = String(papel).toLowerCase();
-    if (["admin","adm","coordenador"].includes(p)) return "Coordenador";
-    if (p === "professor") return "Professor";
-    if (p === "aluno") return "Aluno";
-    return papel;
-  }
-  function isPapel3(usuario) {
-    // papel_id === 3  OU  fk_papel_id === 3
-    return Number(usuario.papel_id) === 3
-        || Number(usuario.fk_papel_id) === 3
-        || Number(usuario.papel) === 3;
+
+  function getAuthHeaders() {
+    return { "Authorization": `Bearer ${getToken()}` };
   }
 
-  // ── Renderiza um card único (fluxo admin/professor) ──────────────────────
-  function renderizarResultado(d, alunoId, materiaId, turmaId) {
-    const pct = d.presenca_raw;
-    const statusClass = pct >= 75 ? "freq-alert-ok" : "freq-alert-danger";
-    const statusIcon  = pct >= 75 ? "ph-check-circle" : "ph-warning";
-    const statusMsg   = pct >= 75
-      ? "Frequência regular — acima do mínimo exigido (75%)"
-      : "Frequência insuficiente — abaixo do mínimo exigido (75%)";
+  function formatarPapel(papel) {
+    const valor = String(papel).toLowerCase();
+    if (["admin", "adm", "coordenador"].includes(valor)) return "Coordenador";
+    if (valor === "professor") return "Professor";
+    if (valor === "aluno") return "Aluno";
+    return papel;
+  }
+
+  function isAluno(usuario) {
+    return Number(usuario.papel_id) === 3
+      || Number(usuario.fk_papel_id) === 3
+      || Number(usuario.papel) === 3
+      || String(usuario.papel || "").toLowerCase() === "aluno";
+  }
+
+  function isCoordenador(usuario) {
+    return ["coordenador", "admin", "adm"].includes(String(usuario?.papel || "").toLowerCase());
+  }
+
+  function atualizarFiltrosPesquisaveis() {
+    if (!window.SearchableSelect) return;
+
+    SearchableSelect.enhance(selectCurso, { placeholder: "Pesquise o curso" });
+    SearchableSelect.enhance(selectMateria, { placeholder: "Pesquise a materia" });
+    SearchableSelect.enhance(selectTurma, { placeholder: "Pesquise a turma" });
+    SearchableSelect.enhance(selectAluno, { placeholder: "Pesquise o aluno" });
+  }
+
+  function getMensagemVazia() {
+    return filtroCursoAtivo
+      ? "Selecione curso, materia, turma e aluno para visualizar a frequencia."
+      : "Selecione materia, turma e aluno para visualizar a frequencia.";
+  }
+
+  function mostrarVazio() {
+    freqResultArea.innerHTML = `
+      <div class="freq-empty">
+        <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
+        <p>${getMensagemVazia()}</p>
+      </div>`;
+  }
+
+  function renderizarResultado(dados, alunoId, materiaId, turmaId) {
+    const percentual = dados.presenca_raw;
+    const statusClass = percentual >= 75 ? "freq-alert-ok" : "freq-alert-danger";
+    const statusIcon = percentual >= 75 ? "ph-check-circle" : "ph-warning";
+    const statusMsg = percentual >= 75
+      ? "Frequencia regular - acima do minimo exigido (75%)"
+      : "Frequencia insuficiente - abaixo do minimo exigido (75%)";
 
     freqResultArea.innerHTML = `
       <div class="freq-alert ${statusClass}">
@@ -139,84 +182,81 @@
       </div>
       <div class="freq-card">
         <div class="freq-info">
-          <h3 class="freq-nome">${d.nome}</h3>
-          <p class="freq-sub">${d.materia} &mdash; ${d.turma}</p>
+          <h3 class="freq-nome">${dados.nome}</h3>
+          <p class="freq-sub">${dados.materia} &mdash; ${dados.turma}</p>
           <div class="freq-stats">
-            <div class="freq-stat-row"><span>Total de Aulas</span><strong>${d.total}</strong></div>
-            <div class="freq-stat-row"><span>Presenças</span><strong class="freq-val-green">${d.presencas}</strong></div>
-            <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${d.faltas}</strong></div>
-            <div class="freq-stat-row freq-stat-highlight"><span>Frequência</span><strong>${d.presenca}</strong></div>
+            <div class="freq-stat-row"><span>Total de Aulas</span><strong>${dados.total}</strong></div>
+            <div class="freq-stat-row"><span>Presencas</span><strong class="freq-val-green">${dados.presencas}</strong></div>
+            <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${dados.faltas}</strong></div>
+            <div class="freq-stat-row freq-stat-highlight"><span>Frequencia</span><strong>${dados.presenca}</strong></div>
           </div>
         </div>
         <div class="freq-chart-col">
-          <div class="freq-donut" style="--pct: ${pct}">
+          <div class="freq-donut" style="--pct: ${percentual}">
             <div class="freq-donut-inner">
-              <span class="freq-donut-pct">${d.presenca}</span>
-              <span class="freq-donut-label">Frequência</span>
+              <span class="freq-donut-pct">${dados.presenca}</span>
+              <span class="freq-donut-label">Frequencia</span>
             </div>
           </div>
           <div class="freq-legend">
-            <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presenças</div>
+            <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presencas</div>
             <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> Faltas</div>
           </div>
-          <a class="btn-publicar"
-             href="/frequencia/relatorio?aluno=${alunoId}&materia=${materiaId}&turma=${turmaId}">
-            <i class="ph ph-download-simple"></i> Baixar relatório
+          <a class="btn-publicar" href="/frequencia/relatorio?aluno=${alunoId}&materia=${materiaId}&turma=${turmaId}">
+            <i class="ph ph-download-simple"></i> Baixar relatorio
           </a>
         </div>
       </div>`;
   }
 
-  // ── Renderiza múltiplos cards (fluxo aluno — papel 3) ────────────────────
   function renderizarPropriaFrequencia(dados) {
     if (!dados.materias || dados.materias.length === 0) {
       freqResultArea.innerHTML = `
         <div class="freq-empty">
           <i class="ph ph-books" style="font-size:3.5rem; opacity:0.3;"></i>
-          <p>Nenhuma matéria encontrada para o seu cadastro.</p>
+          <p>Nenhuma materia encontrada para o seu cadastro.</p>
         </div>`;
       return;
     }
 
     let html = "";
-    dados.materias.forEach(m => {
-      const pct = m.presenca_raw;
-      const statusClass = pct >= 75 ? "freq-alert-ok" : "freq-alert-danger";
-      const statusIcon  = pct >= 75 ? "ph-check-circle" : "ph-warning";
-      const statusMsg   = pct >= 75
-        ? "Frequência regular — acima do mínimo exigido (75%)"
-        : "Frequência insuficiente — abaixo do mínimo exigido (75%)";
+    dados.materias.forEach((materia) => {
+      const percentual = materia.presenca_raw;
+      const statusClass = percentual >= 75 ? "freq-alert-ok" : "freq-alert-danger";
+      const statusIcon = percentual >= 75 ? "ph-check-circle" : "ph-warning";
+      const statusMsg = percentual >= 75
+        ? "Frequencia regular - acima do minimo exigido (75%)"
+        : "Frequencia insuficiente - abaixo do minimo exigido (75%)";
 
       html += `
         <div class="freq-alert ${statusClass}" style="margin-bottom:0;">
           <i class="ph ${statusIcon}" style="font-size:1.2rem;"></i>
-          <strong style="margin-right:6px;">${m.materia}:</strong> ${statusMsg}
+          <strong style="margin-right:6px;">${materia.materia}:</strong> ${statusMsg}
         </div>
         <div class="freq-card" style="margin-bottom:28px;">
           <div class="freq-info">
-            <h3 class="freq-nome">${m.materia}</h3>
-            <p class="freq-sub">${m.turma}</p>
+            <h3 class="freq-nome">${materia.materia}</h3>
+            <p class="freq-sub">${materia.turma}</p>
             <div class="freq-stats">
-              <div class="freq-stat-row"><span>Total de Aulas</span><strong>${m.total}</strong></div>
-              <div class="freq-stat-row"><span>Presenças</span><strong class="freq-val-green">${m.presencas}</strong></div>
-              <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${m.faltas}</strong></div>
-              <div class="freq-stat-row freq-stat-highlight"><span>Frequência</span><strong>${m.presenca}</strong></div>
+              <div class="freq-stat-row"><span>Total de Aulas</span><strong>${materia.total}</strong></div>
+              <div class="freq-stat-row"><span>Presencas</span><strong class="freq-val-green">${materia.presencas}</strong></div>
+              <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${materia.faltas}</strong></div>
+              <div class="freq-stat-row freq-stat-highlight"><span>Frequencia</span><strong>${materia.presenca}</strong></div>
             </div>
           </div>
           <div class="freq-chart-col">
-            <div class="freq-donut" style="--pct: ${pct}">
+            <div class="freq-donut" style="--pct: ${percentual}">
               <div class="freq-donut-inner">
-                <span class="freq-donut-pct">${m.presenca}</span>
-                <span class="freq-donut-label">Frequência</span>
+                <span class="freq-donut-pct">${materia.presenca}</span>
+                <span class="freq-donut-label">Frequencia</span>
               </div>
             </div>
             <div class="freq-legend">
-              <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presenças</div>
+              <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presencas</div>
               <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> Faltas</div>
             </div>
-            <a class="btn-publicar"
-               href="/frequencia/relatorio?aluno=${dados.aluno_id}&materia=${m.materia_id}&turma=${m.turma_id}">
-              <i class="ph ph-download-simple"></i> Baixar relatório
+            <a class="btn-publicar" href="/frequencia/relatorio?aluno=${dados.aluno_id}&materia=${materia.materia_id}&turma=${materia.turma_id}">
+              <i class="ph ph-download-simple"></i> Baixar relatorio
             </a>
           </div>
         </div>`;
@@ -225,153 +265,282 @@
     freqResultArea.innerHTML = html;
   }
 
-  // ── Carrega a própria frequência (papel 3) ───────────────────────────────
   async function carregarPropriaFrequencia(alunoId) {
     freqResultArea.innerHTML = `
       <div class="freq-empty">
         <i class="ph ph-spinner" style="font-size:2.5rem; opacity:0.4;"></i>
-        <p>Carregando sua frequência…</p>
+        <p>Carregando sua frequencia...</p>
       </div>`;
+
     try {
-      const r = await fetch(`/api/frequencia/dados-proprios?aluno_id=${alunoId}`);
-      if (!r.ok) throw new Error("Erro na requisição");
-      const dados = await r.json();
-      dados.aluno_id = alunoId; // passa para o render poder montar o link de relatório
+      const resposta = await fetch(`/api/frequencia/dados-proprios?aluno_id=${alunoId}`);
+      if (!resposta.ok) throw new Error("Erro na requisicao");
+      const dados = await resposta.json();
+      dados.aluno_id = alunoId;
       renderizarPropriaFrequencia(dados);
     } catch {
       freqResultArea.innerHTML = `
         <div class="freq-empty">
           <i class="ph ph-warning" style="font-size:2.5rem; opacity:0.4;"></i>
-          <p>Não foi possível carregar sua frequência. Tente novamente.</p>
+          <p>Nao foi possivel carregar sua frequencia. Tente novamente.</p>
         </div>`;
     }
   }
 
-  // ── Fluxo admin/professor ────────────────────────────────────────────────
-  async function carregarMaterias() {
-    try {
-      const r = await fetch("/api/frequencia/materias");
-      const lista = await r.json();
-      selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
-      lista.forEach(m => {
-        selectMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
-      });
-    } catch { console.error("Erro ao carregar matérias"); }
-  }
-
-  async function carregarTurmas() {
-    const materiaId = selectMateria.value;
+  async function carregarCursos() {
+    selectCurso.innerHTML = `<option value="">Selecione o curso</option>`;
+    selectCurso.disabled = true;
+    selectMateria.innerHTML = `<option value="">Selecione a materia</option>`;
+    selectMateria.disabled = true;
     selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
     selectTurma.disabled = true;
     selectAluno.innerHTML = `<option value="">Selecione o aluno</option>`;
     selectAluno.disabled = true;
+    atualizarFiltrosPesquisaveis();
     mostrarVazio();
-    if (!materiaId) return;
+
     try {
-      const r = await fetch(`/api/frequencia/turmas?materia_id=${materiaId}`);
-      const lista = await r.json();
-      lista.forEach(t => {
-        selectTurma.innerHTML += `<option value="${t.id}">${t.nome} — ${t.periodo}º Período</option>`;
+      const resposta = await fetch("/api/turmas/cursos", { headers: getAuthHeaders() });
+      const dados = await resposta.json();
+      const cursos = dados.cursos || [];
+
+      cursos.forEach((curso) => {
+        selectCurso.innerHTML += `<option value="${curso.id}">${curso.nome}</option>`;
       });
+
+      selectCurso.disabled = false;
+      atualizarFiltrosPesquisaveis();
+    } catch {
+      console.error("Erro ao carregar cursos");
+    }
+  }
+
+  async function carregarMaterias() {
+    const params = new URLSearchParams();
+
+    selectMateria.innerHTML = `<option value="">Selecione a materia</option>`;
+    selectMateria.disabled = filtroCursoAtivo;
+    selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+    selectTurma.disabled = true;
+    selectAluno.innerHTML = `<option value="">Selecione o aluno</option>`;
+    selectAluno.disabled = true;
+    atualizarFiltrosPesquisaveis();
+    mostrarVazio();
+
+    if (filtroCursoAtivo) {
+      const cursoId = selectCurso.value;
+      if (!cursoId) return;
+      params.set("curso_id", cursoId);
+    }
+
+    try {
+      const query = params.toString();
+      const resposta = await fetch(`/api/frequencia/materias${query ? `?${query}` : ""}`, {
+        headers: getAuthHeaders()
+      });
+      const materias = await resposta.json();
+
+      materias.forEach((materia) => {
+        selectMateria.innerHTML += `<option value="${materia.id}">${materia.nome}</option>`;
+      });
+
+      selectMateria.disabled = false;
+      atualizarFiltrosPesquisaveis();
+    } catch {
+      console.error("Erro ao carregar materias");
+    }
+  }
+
+  async function carregarTurmas() {
+    const materiaId = selectMateria.value;
+    const params = new URLSearchParams({ materia_id: materiaId });
+
+    if (filtroCursoAtivo && selectCurso.value) {
+      params.set("curso_id", selectCurso.value);
+    }
+
+    selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+    selectTurma.disabled = true;
+    selectAluno.innerHTML = `<option value="">Selecione o aluno</option>`;
+    selectAluno.disabled = true;
+    atualizarFiltrosPesquisaveis();
+    mostrarVazio();
+
+    if (!materiaId) return;
+
+    try {
+      const resposta = await fetch(`/api/frequencia/turmas?${params.toString()}`, {
+        headers: getAuthHeaders()
+      });
+      const turmas = await resposta.json();
+
+      turmas.forEach((turma) => {
+        selectTurma.innerHTML += `<option value="${turma.id}">${turma.nome} - ${turma.periodo}o Periodo</option>`;
+      });
+
       selectTurma.disabled = false;
-    } catch { console.error("Erro ao carregar turmas"); }
+      atualizarFiltrosPesquisaveis();
+    } catch {
+      console.error("Erro ao carregar turmas");
+    }
   }
 
   async function carregarAlunos() {
     const turmaId = selectTurma.value;
     selectAluno.innerHTML = `<option value="">Selecione o aluno</option>`;
     selectAluno.disabled = true;
+    atualizarFiltrosPesquisaveis();
     mostrarVazio();
+
     if (!turmaId) return;
+
     try {
-      const r = await fetch(`/api/frequencia/alunos?turma_id=${turmaId}`);
-      const lista = await r.json();
-      lista.forEach(a => {
-        selectAluno.innerHTML += `<option value="${a.id}">${a.nome}</option>`;
+      const resposta = await fetch(`/api/frequencia/alunos?turma_id=${turmaId}`, {
+        headers: getAuthHeaders()
       });
+      const alunos = await resposta.json();
+
+      alunos.forEach((aluno) => {
+        selectAluno.innerHTML += `<option value="${aluno.id}">${aluno.nome}</option>`;
+      });
+
       selectAluno.disabled = false;
-    } catch { console.error("Erro ao carregar alunos"); }
+      atualizarFiltrosPesquisaveis();
+    } catch {
+      console.error("Erro ao carregar alunos");
+    }
   }
 
   async function carregarFrequencia() {
     const materiaId = selectMateria.value;
-    const turmaId   = selectTurma.value;
-    const alunoId   = selectAluno.value;
-    if (!materiaId || !turmaId || !alunoId) { mostrarVazio(); return; }
-    try {
-      const r = await fetch(`/api/frequencia/dados?aluno_id=${alunoId}&materia_id=${materiaId}&turma_id=${turmaId}`);
-      const dados = await r.json();
-      renderizarResultado(dados, alunoId, materiaId, turmaId);
-    } catch { console.error("Erro ao carregar frequência"); }
-  }
+    const turmaId = selectTurma.value;
+    const alunoId = selectAluno.value;
 
-  function mostrarVazio() {
-    freqResultArea.innerHTML = `
-      <div class="freq-empty">
-        <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
-        <p>Selecione matéria, turma e aluno para visualizar a frequência.</p>
-      </div>`;
+    if (!materiaId || !turmaId || !alunoId) {
+      mostrarVazio();
+      return;
+    }
+
+    try {
+      const resposta = await fetch(`/api/frequencia/dados?aluno_id=${alunoId}&materia_id=${materiaId}&turma_id=${turmaId}`, {
+        headers: getAuthHeaders()
+      });
+      const dados = await resposta.json();
+      renderizarResultado(dados, alunoId, materiaId, turmaId);
+    } catch {
+      console.error("Erro ao carregar frequencia");
+    }
   }
 
   function limparFiltros() {
-    selectMateria.value = "";
+    if (filtroCursoAtivo) {
+      selectCurso.value = "";
+      selectMateria.innerHTML = `<option value="">Selecione a materia</option>`;
+      selectMateria.disabled = true;
+    } else {
+      selectMateria.value = "";
+      selectMateria.disabled = false;
+    }
+
     selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
     selectTurma.disabled = true;
     selectAluno.innerHTML = `<option value="">Selecione o aluno</option>`;
     selectAluno.disabled = true;
+    atualizarFiltrosPesquisaveis();
     mostrarVazio();
   }
 
   async function sair() {
-    const c = await Swal.fire({
-      icon: "question", title: "Deseja sair?", text: "Sua sessão será encerrada.",
-      showCancelButton: true, confirmButtonText: "Sim, sair", cancelButtonText: "Cancelar"
+    const confirmacao = await Swal.fire({
+      icon: "question",
+      title: "Deseja sair?",
+      text: "Sua sessao sera encerrada.",
+      showCancelButton: true,
+      confirmButtonText: "Sim, sair",
+      cancelButtonText: "Cancelar"
     });
-    if (!c.isConfirmed) return;
-    limparSessao(); window.location.href = "/";
+
+    if (!confirmacao.isConfirmed) return;
+
+    limparSessao();
+    window.location.href = "/";
   }
 
-  // ── Init ─────────────────────────────────────────────────────────────────
   async function carregarUsuarioLogado() {
     if (!verificarToken()) return;
+
     try {
-      const r = await fetch("/api/usuario-logado", { headers: { "Authorization": `Bearer ${getToken()}` } });
-      if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
-      const { usuario } = await r.json();
-
-      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
-      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
-      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
-
-      const btnGestao = document.getElementById("btnGestaoUsuarios");
-      if (btnGestao && ["coordenador","admin","adm"].includes(String(usuario.papel).toLowerCase()))
-        btnGestao.style.display = "block";
-
-      // ── Papel 3 (aluno): esconde filtros e carrega direto ──
-      if (isPapel3(usuario)) {
-        filtrosAdmin.style.display = "none";
-        const heading = document.getElementById("pageHeadingTitle");
-        const desc    = document.getElementById("pageHeadingDesc");
-        if (heading) heading.textContent = "Minha Frequência";
-        if (desc)    desc.textContent    = "Confira sua frequência em cada matéria";
-        carregarPropriaFrequencia(usuario.id);
-      } else {
-        // Fluxo normal: carrega selects
-        carregarMaterias();
+      const resposta = await fetch("/api/usuario-logado", { headers: getAuthHeaders() });
+      if (!resposta.ok) {
+        limparSessao();
+        window.location.href = "/";
+        return;
       }
 
-    } catch { limparSessao(); window.location.href = "/"; }
+      const { usuario } = await resposta.json();
+
+      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+      if (papelUsuario) papelUsuario.textContent = formatarPapel(usuario.papel);
+      if (avatarUsuario) avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
+
+      const btnGestao = document.getElementById("btnGestaoUsuarios");
+      if (btnGestao && isCoordenador(usuario)) {
+        btnGestao.style.display = "block";
+      }
+
+      const heading = document.getElementById("pageHeadingTitle");
+      const desc = document.getElementById("pageHeadingDesc");
+
+      if (isAluno(usuario)) {
+        filtrosAdmin.style.display = "none";
+        if (heading) heading.textContent = "Minha Frequencia";
+        if (desc) desc.textContent = "Confira sua frequencia em cada materia";
+        carregarPropriaFrequencia(usuario.id);
+        return;
+      }
+
+      filtrosAdmin.style.display = "grid";
+      filtroCursoAtivo = !isAluno(usuario);
+
+      if (filtroCursoAtivo) {
+        grupoCurso.style.display = "";
+        filtrosAdmin.classList.add("notas-filtros--curso");
+        if (desc) desc.textContent = "Selecione curso, materia, turma e aluno para visualizar a frequencia";
+        atualizarFiltrosPesquisaveis();
+        await carregarCursos();
+      } else {
+        grupoCurso.style.display = "none";
+        filtrosAdmin.classList.remove("notas-filtros--curso");
+        if (desc) desc.textContent = "Selecione a materia, turma e aluno para visualizar a frequencia";
+        atualizarFiltrosPesquisaveis();
+        await carregarMaterias();
+      }
+    } catch {
+      limparSessao();
+      window.location.href = "/";
+    }
   }
 
+  if (selectCurso) selectCurso.addEventListener("change", carregarMaterias);
   selectMateria.addEventListener("change", carregarTurmas);
   selectTurma.addEventListener("change", carregarAlunos);
   selectAluno.addEventListener("change", carregarFrequencia);
   btnLimpar.addEventListener("click", limparFiltros);
 
-  if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
-  if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click", () => window.location.href = "/perfil");
-  if (btnSair) btnSair.addEventListener("click", sair);
+  if (botaoMenuUsuario) {
+    botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
+  }
 
+  if (btnEditarPerfil) {
+    btnEditarPerfil.addEventListener("click", () => window.location.href = "/perfil");
+  }
+
+  if (btnSair) {
+    btnSair.addEventListener("click", sair);
+  }
+
+  atualizarFiltrosPesquisaveis();
+  mostrarVazio();
   carregarUsuarioLogado();
 </script>
 

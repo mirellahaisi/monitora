@@ -16,6 +16,7 @@ def tela_presenca():
 @token_obrigatorio
 @papel_obrigatorio("professor")
 def listar_materias_professor(usuario):
+    curso_id = request.args.get("curso_id")
     conexao = None
     cursor = None
 
@@ -23,15 +24,33 @@ def listar_materias_professor(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT m.id, m.nome
-            FROM materia m
-            INNER JOIN professor_turma_materia ptm
-                ON ptm.fk_materia_id = m.id
-            WHERE ptm.fk_usuario_id = %s
-              AND m.ativo = 1
-            ORDER BY m.nome
-        """, (usuario["id"],))
+        if curso_id:
+            cursor.execute("""
+                SELECT DISTINCT m.id, m.nome
+                FROM materia m
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_materia_id = m.id
+                INNER JOIN turma t
+                    ON t.id = ptm.fk_turma_id
+                WHERE ptm.fk_usuario_id = %s
+                  AND t.fk_curso_id = %s
+                  AND t.ativo = 1
+                  AND m.ativo = 1
+                ORDER BY m.nome
+            """, (usuario["id"], curso_id))
+        else:
+            cursor.execute("""
+                SELECT DISTINCT m.id, m.nome
+                FROM materia m
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_materia_id = m.id
+                INNER JOIN turma t
+                    ON t.id = ptm.fk_turma_id
+                WHERE ptm.fk_usuario_id = %s
+                  AND t.ativo = 1
+                  AND m.ativo = 1
+                ORDER BY m.nome
+            """, (usuario["id"],))
 
         return jsonify({"materias": cursor.fetchall()}), 200
 
@@ -50,6 +69,7 @@ def listar_materias_professor(usuario):
 @papel_obrigatorio("professor")
 def listar_turmas_por_materia(usuario):
     materia_id = request.args.get("materia_id")
+    curso_id = request.args.get("curso_id")
 
     if not materia_id:
         return jsonify({"message": "Informe a matéria."}), 400
@@ -61,16 +81,29 @@ def listar_turmas_por_materia(usuario):
         conexao = criar_conexao()
         cursor = conexao.cursor(dictionary=True)
 
-        cursor.execute("""
-            SELECT DISTINCT t.id, t.nome, t.periodo
-            FROM turma t
-            INNER JOIN professor_turma_materia ptm
-                ON ptm.fk_turma_id = t.id
-            WHERE ptm.fk_usuario_id = %s
-              AND ptm.fk_materia_id = %s
-              AND t.ativo = 1
-            ORDER BY t.nome
-        """, (usuario["id"], materia_id))
+        if curso_id:
+            cursor.execute("""
+                SELECT DISTINCT t.id, t.nome, t.periodo
+                FROM turma t
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_turma_id = t.id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_materia_id = %s
+                  AND t.fk_curso_id = %s
+                  AND t.ativo = 1
+                ORDER BY t.nome
+            """, (usuario["id"], materia_id, curso_id))
+        else:
+            cursor.execute("""
+                SELECT DISTINCT t.id, t.nome, t.periodo
+                FROM turma t
+                INNER JOIN professor_turma_materia ptm
+                    ON ptm.fk_turma_id = t.id
+                WHERE ptm.fk_usuario_id = %s
+                  AND ptm.fk_materia_id = %s
+                  AND t.ativo = 1
+                ORDER BY t.nome
+            """, (usuario["id"], materia_id))
 
         return jsonify({"turmas": cursor.fetchall()}), 200
 
@@ -123,7 +156,10 @@ def listar_alunos_presenca(usuario):
             ORDER BY u.nome
         """, (materia_id, data_aula, turma_id))
 
-        return jsonify({"alunos": cursor.fetchall()}), 200
+        alunos = cursor.fetchall()
+        alunos.sort(key=lambda aluno: str(aluno.get("nome") or "").casefold())
+
+        return jsonify({"alunos": alunos}), 200
 
     except mysql.connector.Error as erro:
         return jsonify({"message": "Erro ao buscar alunos.", "erro": str(erro)}), 500

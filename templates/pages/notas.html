@@ -30,7 +30,7 @@
         </div>
         <div>
           <h2 id="tituloNotas">Lançamento de notas</h2>
-          <p id="subtituloNotas">Selecione a matéria e turma para registrar as notas</p>
+          <p id="subtituloNotas">Selecione curso, matéria e turma para registrar as notas</p>
         </div>
       </div>
 
@@ -39,8 +39,14 @@
         <!-- Filtros -->
         <div class="notas-filtros">
           <div class="filtro-group">
+            <label for="selectCursoProfessor">Curso</label>
+            <select id="selectCursoProfessor">
+              <option value="">Selecione o curso</option>
+            </select>
+          </div>
+          <div class="filtro-group">
             <label for="selectMateria">Matéria</label>
-            <select id="selectMateria">
+            <select id="selectMateria" disabled>
               <option value="">Selecione a matéria</option>
             </select>
           </div>
@@ -67,7 +73,7 @@
               <tbody id="tabelaNotas">
                 <tr>
                   <td colspan="4" class="notas-vazio">
-                    Selecione uma matéria e uma turma para carregar os alunos.
+                    Selecione um curso, uma matéria e uma turma para carregar os alunos.
                   </td>
                 </tr>
               </tbody>
@@ -109,8 +115,14 @@
         <!-- Filtros: Professor → Turma → Matéria -->
         <div class="coord-filtros">
           <div class="filtro-group">
+            <label for="coordSelectCurso">Curso</label>
+            <select id="coordSelectCurso">
+              <option value="">Selecione o curso</option>
+            </select>
+          </div>
+          <div class="filtro-group">
             <label for="coordSelectProfessor">Professor</label>
-            <select id="coordSelectProfessor">
+            <select id="coordSelectProfessor" disabled>
               <option value="">Selecione o professor</option>
             </select>
           </div>
@@ -145,10 +157,12 @@
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="/static/js/searchable-select.js"></script>
   <script>
-    const selectMateria    = document.getElementById("selectMateria");
-    const selectTurma      = document.getElementById("selectTurma");
-    const tabelaNotas      = document.getElementById("tabelaNotas");
+    const selectCursoProfessor = document.getElementById("selectCursoProfessor");
+    const selectMateria       = document.getElementById("selectMateria");
+    const selectTurma         = document.getElementById("selectTurma");
+    const tabelaNotas         = document.getElementById("tabelaNotas");
     const btnSalvarRascunho = document.getElementById("btnSalvarRascunho");
     const btnPublicarNotas  = document.getElementById("btnPublicarNotas");
 
@@ -210,6 +224,29 @@
       return true;
     }
 
+    function aplicarFiltrosPesquisaveis() {
+      if (!window.SearchableSelect) return;
+
+      if (selectCursoProfessor) {
+        SearchableSelect.enhance(selectCursoProfessor, { placeholder: "Pesquise o curso" });
+      }
+      SearchableSelect.enhance(selectMateria, { placeholder: "Pesquise a matéria" });
+      SearchableSelect.enhance(selectTurma, { placeholder: "Pesquise a turma" });
+
+      if (coordSelectCurso) {
+        SearchableSelect.enhance(coordSelectCurso, { placeholder: "Pesquise o curso" });
+      }
+      if (coordSelectProfessor) {
+        SearchableSelect.enhance(coordSelectProfessor, { placeholder: "Pesquise o professor" });
+      }
+      if (coordSelectTurma) {
+        SearchableSelect.enhance(coordSelectTurma, { placeholder: "Pesquise a turma" });
+      }
+      if (coordSelectMateria) {
+        SearchableSelect.enhance(coordSelectMateria, { placeholder: "Pesquise a matéria" });
+      }
+    }
+
     function chaveRascunhoAtual() {
       return `rascunho_notas_${selectMateria.value}_${selectTurma.value}`;
     }
@@ -251,14 +288,16 @@
             await carregarMinhasNotas();
           } else if (isCoordenador(usuario.papel)) {
             document.getElementById("tituloNotas").textContent    = "Notas por Turma";
-            document.getElementById("subtituloNotas").textContent = "Selecione professor, turma e matéria para visualizar as notas";
+            document.getElementById("subtituloNotas").textContent = "Selecione curso, professor, turma e matéria para visualizar as notas";
             document.getElementById("secaoProfessor").style.display   = "none";
             document.getElementById("secaoAluno").style.display       = "none";
             document.getElementById("secaoCoordenador").style.display = "block";
-            await coordCarregarProfessores();
+            await coordCarregarCursos();
           } else {
             document.getElementById("secaoCoordenador").style.display = "none";
-            await carregarMaterias();
+            document.getElementById("tituloNotas").textContent = "Lançamento de notas";
+            document.getElementById("subtituloNotas").textContent = "Selecione curso, matéria e turma para registrar as notas";
+            await carregarCursosProfessor();
           }
         }
       } catch (e) { console.warn("Erro ao aplicar usuario do cache:", e); }
@@ -372,29 +411,66 @@
       } catch { resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">Erro ao carregar suas notas.</div>`; }
     }
 
+    async function carregarCursosProfessor() {
+      if (!verificarTokenFront()) return;
+
+      selectCursoProfessor.innerHTML = `<option value="">Selecione o curso</option>`;
+      selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      selectMateria.disabled = true;
+      selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      selectTurma.disabled = true;
+      aplicarFiltrosPesquisaveis();
+      limparTabela();
+
+      try {
+        const resposta = await fetch("/api/turmas/cursos", {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar cursos.", "error"); return; }
+        (dados.cursos || []).forEach(curso => {
+          selectCursoProfessor.innerHTML += `<option value="${curso.id}">${curso.nome}</option>`;
+        });
+        aplicarFiltrosPesquisaveis();
+      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+    }
+
     async function carregarMaterias() {
       if (!verificarTokenFront()) return;
+      const cursoId = selectCursoProfessor.value;
+      selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      selectMateria.disabled = true;
+      selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      selectTurma.disabled = true;
+      aplicarFiltrosPesquisaveis();
+      limparTabela();
+      if (!cursoId) return;
       try {
-        const resposta = await fetch("/api/notas/materias", {
+        const params = new URLSearchParams({ curso_id: cursoId });
+        const resposta = await fetch(`/api/notas/materias?${params.toString()}`, {
           headers: { "Authorization": `Bearer ${getToken()}` }
         });
         const dados = await resposta.json();
         if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error"); return; }
-        selectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
         dados.materias.forEach(m => {
           selectMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
         });
+        selectMateria.disabled = false;
+        aplicarFiltrosPesquisaveis();
       } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     }
 
     async function carregarTurmas() {
+      const cursoId = selectCursoProfessor.value;
       const materiaId = selectMateria.value;
       selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
       selectTurma.disabled = true;
+      aplicarFiltrosPesquisaveis();
       limparTabela();
-      if (!materiaId) return;
+      if (!cursoId || !materiaId) return;
       try {
-        const resposta = await fetch(`/api/notas/turmas?materia_id=${materiaId}`, {
+        const params = new URLSearchParams({ materia_id: materiaId, curso_id: cursoId });
+        const resposta = await fetch(`/api/notas/turmas?${params.toString()}`, {
           headers: { "Authorization": `Bearer ${getToken()}` }
         });
         const dados = await resposta.json();
@@ -404,6 +480,7 @@
           selectTurma.innerHTML += `<option value="${t.id}">${t.nome}${periodo}</option>`;
         });
         selectTurma.disabled = false;
+        aplicarFiltrosPesquisaveis();
       } catch { Swal.fire("Erro", "Falha ao buscar turmas.", "error"); }
     }
 
@@ -420,12 +497,15 @@
         });
         const dados = await resposta.json();
         if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar alunos.", "error"); limparTabela(); return; }
-        if (!dados.alunos || dados.alunos.length === 0) {
+        const alunosOrdenados = [...(dados.alunos || [])].sort((a, b) =>
+          String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", { sensitivity: "base" })
+        );
+        if (!alunosOrdenados.length) {
           tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Nenhum aluno encontrado para essa turma.</td></tr>`;
           return;
         }
         const rascunhoSalvo = JSON.parse(localStorage.getItem(chaveRascunhoAtual()) || "[]");
-        tabelaNotas.innerHTML = dados.alunos.map(aluno => {
+        tabelaNotas.innerHTML = alunosOrdenados.map(aluno => {
           const r = rascunhoSalvo.find(x => String(x.aluno_id) === String(aluno.id));
           // Normaliza para exibição com vírgula
           const fmtNota = v => (v !== null && v !== undefined && v !== "") ? String(v).replace(".", ",") : "";
@@ -450,7 +530,7 @@
     }
 
     function limparTabela() {
-      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Selecione uma matéria e uma turma para carregar os alunos.</td></tr>`;
+      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Selecione um curso, uma matéria e uma turma para carregar os alunos.</td></tr>`;
     }
 
     function classeMedia(media) {
@@ -594,6 +674,7 @@
       window.location.href = "/";
     }
 
+    if (selectCursoProfessor) selectCursoProfessor.addEventListener("change", carregarMaterias);
     selectMateria.addEventListener("change", carregarTurmas);
     selectTurma.addEventListener("change", carregarAlunos);
     btnSalvarRascunho.addEventListener("click", () => salvarNotas("rascunho"));
@@ -603,11 +684,16 @@
     // LÓGICA DO COORDENADOR (papel 1)
     // ══════════════════════════════════════
 
+    const coordSelectCurso     = document.getElementById("coordSelectCurso");
     const coordSelectProfessor = document.getElementById("coordSelectProfessor");
     const coordSelectTurma     = document.getElementById("coordSelectTurma");
     const coordSelectMateria   = document.getElementById("coordSelectMateria");
     const coordBtnLimpar       = document.getElementById("coordBtnLimpar");
     const coordResultado       = document.getElementById("coordResultado");
+
+    function coordMensagemPadrao() {
+      return "Selecione curso, professor, turma e matéria para visualizar as notas.";
+    }
 
     function coordMostrarVazio(msg) {
       coordResultado.innerHTML = `
@@ -706,11 +792,14 @@
     }
 
     function coordRenderizarTabela(alunos) {
+      const alunosOrdenados = [...alunos].sort((a, b) =>
+        String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", { sensitivity: "base" })
+      );
       const nomeProfessor = coordSelectProfessor.options[coordSelectProfessor.selectedIndex].text;
       const nomeTurma     = coordSelectTurma.options[coordSelectTurma.selectedIndex].text;
       const nomeMateria   = coordSelectMateria.options[coordSelectMateria.selectedIndex].text;
 
-      if (!alunos.length) {
+      if (!alunosOrdenados.length) {
         coordResultado.innerHTML = `
           <div class="coord-card">
             ${coordCabecalho(nomeProfessor, nomeTurma, nomeMateria, 0)}
@@ -728,15 +817,15 @@
         return;
       }
 
-      const comMedia   = alunos.filter(a => a.media !== null && a.media !== undefined);
+      const comMedia   = alunosOrdenados.filter(a => a.media !== null && a.media !== undefined);
       const aprovados  = comMedia.filter(a => a.media >= 7).length;
       const reprovados = comMedia.filter(a => a.media < 7).length;
-      const semNota    = alunos.filter(a => a.media === null || a.media === undefined).length;
+      const semNota    = alunosOrdenados.filter(a => a.media === null || a.media === undefined).length;
       const mediaGeral = comMedia.length
         ? (comMedia.reduce((s, a) => s + a.media, 0) / comMedia.length).toFixed(2)
         : null;
 
-      const linhas = alunos.map((aluno, idx) => {
+      const linhas = alunosOrdenados.map((aluno, idx) => {
         const n1       = aluno.nota1 !== null && aluno.nota1 !== undefined;
         const n2       = aluno.nota2 !== null && aluno.nota2 !== undefined;
         const temMedia = aluno.media !== null && aluno.media !== undefined;
@@ -769,7 +858,7 @@
 
       const rodape = `
         <div class="coord-rodape coord-rodape-clean">
-          <span>Total: <strong>${alunos.length} aluno${alunos.length !== 1 ? "s" : ""}</strong></span>
+          <span>Total: <strong>${alunosOrdenados.length} aluno${alunosOrdenados.length !== 1 ? "s" : ""}</strong></span>
           <span>Aprovados: <strong>${aprovados}</strong></span>
           <span>Em atenção: <strong>${reprovados}</strong></span>
           ${mediaGeral !== null ? `<span class="coord-rodape-media">Média da turma: <strong>${String(mediaGeral).replace(".", ",")}</strong></span>` : ""}
@@ -777,7 +866,7 @@
 
       coordResultado.innerHTML = `
         <div class="coord-card">
-          ${coordCabecalho(nomeProfessor, nomeTurma, nomeMateria, alunos.length)}
+          ${coordCabecalho(nomeProfessor, nomeTurma, nomeMateria, alunosOrdenados.length)}
           <div class="coord-table-wrap">
             <table class="coord-table">
               <thead>
@@ -815,6 +904,148 @@
       coordMostrarVazio();
     }
 
+    async function coordCarregarCursos() {
+      if (!verificarTokenFront()) return;
+
+      coordSelectCurso.innerHTML = `<option value="">Selecione o curso</option>`;
+      coordSelectProfessor.innerHTML = `<option value="">Selecione o professor</option>`;
+      coordSelectProfessor.disabled = true;
+      coordSelectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      coordSelectTurma.disabled = true;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled = true;
+      aplicarFiltrosPesquisaveis();
+      coordMostrarVazio(coordMensagemPadrao());
+
+      try {
+        const resposta = await fetch("/api/turmas/cursos", {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar cursos.", "error"); return; }
+
+        (dados.cursos || []).forEach(curso => {
+          coordSelectCurso.innerHTML += `<option value="${curso.id}">${curso.nome}</option>`;
+        });
+        aplicarFiltrosPesquisaveis();
+      } catch { Swal.fire("Erro", "Falha ao buscar cursos.", "error"); }
+    }
+
+    function coordMostrarVazio(msg) {
+      coordResultado.innerHTML = `
+        <div class="coord-vazio">
+          <i class="ph ph-magnifying-glass"></i>
+          <p>${msg || coordMensagemPadrao()}</p>
+        </div>`;
+    }
+
+    function coordMostrarCarregando() {
+      coordResultado.innerHTML = `
+        <div class="coord-vazio">
+          <i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;"></i>
+          <p>Carregando notas...</p>
+        </div>
+        <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>`;
+    }
+
+    async function coordCarregarProfessores() {
+      const cursoId = coordSelectCurso.value;
+      coordSelectProfessor.innerHTML = `<option value="">Selecione o professor</option>`;
+      coordSelectProfessor.disabled = true;
+      coordSelectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      coordSelectTurma.disabled = true;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled = true;
+      aplicarFiltrosPesquisaveis();
+      coordMostrarVazio();
+      if (!cursoId) return;
+
+      try {
+        const resposta = await fetch(`/api/notas/coordenador/professores-lista?curso_id=${cursoId}`, {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar professores.", "error"); return; }
+
+        (dados.professores || []).forEach(professor => {
+          coordSelectProfessor.innerHTML += `<option value="${professor.id}">${professor.nome}</option>`;
+        });
+        coordSelectProfessor.disabled = false;
+        aplicarFiltrosPesquisaveis();
+      } catch { Swal.fire("Erro", "Falha ao buscar professores.", "error"); }
+    }
+
+    async function coordCarregarTurmas() {
+      const cursoId = coordSelectCurso.value;
+      const professorId = coordSelectProfessor.value;
+      coordSelectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      coordSelectTurma.disabled = true;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled = true;
+      aplicarFiltrosPesquisaveis();
+      coordMostrarVazio();
+      if (!cursoId || !professorId) return;
+
+      try {
+        const params = new URLSearchParams({ curso_id: cursoId, professor_id: professorId });
+        const resposta = await fetch(`/api/notas/coordenador/turmas-por-professor?${params.toString()}`, {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error"); return; }
+
+        (dados.turmas || []).forEach(turma => {
+          const periodo = turma.periodo ? ` - ${turma.periodo}º Periodo` : "";
+          coordSelectTurma.innerHTML += `<option value="${turma.id}">${turma.nome}${periodo}</option>`;
+        });
+        coordSelectTurma.disabled = false;
+        aplicarFiltrosPesquisaveis();
+      } catch { Swal.fire("Erro", "Falha ao buscar turmas.", "error"); }
+    }
+
+    async function coordCarregarMaterias() {
+      const cursoId = coordSelectCurso.value;
+      const professorId = coordSelectProfessor.value;
+      const turmaId = coordSelectTurma.value;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled = true;
+      aplicarFiltrosPesquisaveis();
+      coordMostrarVazio();
+      if (!cursoId || !professorId || !turmaId) return;
+
+      try {
+        const params = new URLSearchParams({
+          curso_id: cursoId,
+          professor_id: professorId,
+          turma_id: turmaId
+        });
+        const resposta = await fetch(`/api/notas/coordenador/materias-por-professor-turma?${params.toString()}`, {
+          headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        const dados = await resposta.json();
+        if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar matérias.", "error"); return; }
+
+        (dados.materias || []).forEach(materia => {
+          coordSelectMateria.innerHTML += `<option value="${materia.id}">${materia.nome}</option>`;
+        });
+        coordSelectMateria.disabled = false;
+        aplicarFiltrosPesquisaveis();
+      } catch { Swal.fire("Erro", "Falha ao buscar matérias.", "error"); }
+    }
+
+    function coordLimpar() {
+      coordSelectCurso.value = "";
+      coordSelectProfessor.innerHTML = `<option value="">Selecione o professor</option>`;
+      coordSelectProfessor.disabled = true;
+      coordSelectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
+      coordSelectTurma.disabled  = true;
+      coordSelectMateria.innerHTML = `<option value="">Selecione a matéria</option>`;
+      coordSelectMateria.disabled  = true;
+      aplicarFiltrosPesquisaveis();
+      coordMostrarVazio(coordMensagemPadrao());
+    }
+
+    if (coordSelectCurso)     coordSelectCurso.addEventListener("change", coordCarregarProfessores);
     if (coordSelectProfessor) coordSelectProfessor.addEventListener("change", coordCarregarTurmas);
     if (coordSelectTurma)     coordSelectTurma.addEventListener("change", coordCarregarMaterias);
     if (coordSelectMateria)   coordSelectMateria.addEventListener("change", coordCarregarNotas);
@@ -824,6 +1055,7 @@
     if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");
     if (btnSair)          btnSair.addEventListener("click", sair);
 
+    aplicarFiltrosPesquisaveis();
     carregarUsuarioLogado();
   </script>
 
