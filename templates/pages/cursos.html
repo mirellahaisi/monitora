@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -456,51 +456,6 @@
       return s === "coordenador" || s === "admin" || s === "adm" || Number(p) === 1;
     }
 
-    // ── Popula header com dados do usuário ──
-    (function popularHeader() {
-      try {
-        let usuario = null;
-        const token = localStorage.getItem("token");
-        if (token) {
-          const part = token.split(".")[1];
-          const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
-          const pad = "=".repeat((4 - b64.length % 4) % 4);
-          usuario = JSON.parse(atob(b64 + pad));
-        }
-        if (!usuario) {
-          const raw = localStorage.getItem("usuario");
-          if (raw) usuario = JSON.parse(raw);
-        }
-        if (!usuario) return;
-
-        const nome = usuario.nome || usuario.name || "";
-        const papel = String(usuario.papel || usuario.papel_id || usuario.fk_papel_id || "").toLowerCase();
-        const labelPapel = papel === "coordenador" || papel === "admin" || papel === "adm" || Number(usuario.papel_id || usuario.fk_papel_id) === 1
-          ? "Coordenador"
-          : papel === "professor" || Number(usuario.papel_id || usuario.fk_papel_id) === 2
-            ? "Professor"
-            : "Aluno";
-
-        const elNome = document.getElementById("nomeUsuarioTopo");
-        const elPapel = document.getElementById("papelUsuario");
-        const elAvatar = document.getElementById("avatarUsuario");
-
-        if (elNome) elNome.textContent = nome;
-        if (elPapel) elPapel.textContent = labelPapel;
-        if (elAvatar) elAvatar.textContent = nome ? nome.charAt(0).toUpperCase() : "U";
-
-        // Menu dropdown do header
-        const botao = document.getElementById("botaoMenuUsuario");
-        const menu  = document.getElementById("menuUsuario");
-        if (botao && menu) {
-          botao.addEventListener("click", e => { e.stopPropagation(); menu.classList.toggle("show"); });
-          document.addEventListener("click", () => menu.classList.remove("show"));
-        }
-        const btnEditar = document.getElementById("btnEditarPerfil");
-        if (btnEditar) btnEditar.addEventListener("click", () => window.location.href = "/perfil");
-      } catch(e) { console.warn("Header populate error", e); }
-    })();
-
     // ── Verificação de acesso ──
     (function verificarAcesso() {
       const token = localStorage.getItem("token");
@@ -783,14 +738,6 @@
     document.addEventListener("keydown", e => {
       if (e.key === "Enter" && modalOverlay.classList.contains("open")) salvar();
       if (e.key === "Escape" && modalOverlay.classList.contains("open")) fecharModal();
-    });
-
-    // ── Sidebar: logout ──
-    const btnSair = document.getElementById("btnSair");
-    if (btnSair) btnSair.addEventListener("click", () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("usuario");
-      window.location.href = "/login";
     });
 
     // ── Init ──

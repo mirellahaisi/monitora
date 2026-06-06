@@ -313,13 +313,6 @@
         papelUsuario    = String(u.papel || "").toLowerCase();
         idUsuarioLogado = u.id;
 
-        const nomeEl   = document.getElementById("nomeUsuarioTopo");
-        const papelEl  = document.getElementById("papelUsuario");
-        const avatarEl = document.getElementById("avatarUsuario");
-        if (nomeEl)   nomeEl.textContent   = u.nome;
-        if (papelEl)  papelEl.textContent  = formatarPapel(u.papel);
-        if (avatarEl) avatarEl.textContent = u.nome.charAt(0).toUpperCase();
-
         // Todos podem criar eventos (aluno cria pessoal, outros criam para a turma)
         document.getElementById("btnNovoEvento").classList.remove("hidden");
 
@@ -1033,19 +1026,6 @@
     });
     document.getElementById("modalDetalhe").addEventListener("click", (e) => {
       if (e.target === e.currentTarget) document.getElementById("modalDetalhe").classList.remove("open");
-    });
-
-    // User menu
-    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-    const menuUsuario      = document.getElementById("menuUsuario");
-    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
-    const btnSair          = document.getElementById("btnSair");
-
-    if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario?.classList.toggle("show"));
-    if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");
-    if (btnSair) btnSair.addEventListener("click", async () => {
-      const c = await Swal.fire({ icon:"question", title:"Deseja sair?", showCancelButton:true, confirmButtonText:"Sim, sair", cancelButtonText:"Cancelar" });
-      if (c.isConfirmed) { limparSessao(); window.location.href = "/"; }
     });
 
     // ══════════════════════════════════════

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -1064,14 +1064,6 @@
     const cancelarNovaTurma = document.getElementById("cancelarNovaTurma");
     const confirmarNovaTurma = document.getElementById("confirmarNovaTurma");
 
-    const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
-    const papelUsuario     = document.getElementById("papelUsuario");
-    const avatarUsuario    = document.getElementById("avatarUsuario");
-    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-    const menuUsuario      = document.getElementById("menuUsuario");
-    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
-    const btnSair          = document.getElementById("btnSair");
-
     // ── Estado ────────────────────────────────────────────
     let todasTurmas    = [];
     let tabAtiva       = "alunos";
@@ -1139,19 +1131,7 @@
         if (usuarioCache) {
           const usuario = JSON.parse(usuarioCache);
           papelAtual = usuario.papel;
-          if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
-          if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
-          if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
-
-          const btnGestao = document.getElementById("btnGestaoUsuarios");
-          if (btnGestao && ehCoordenador(usuario.papel)) btnGestao.style.display = "block";
-
           const ehAluno = isAluno(usuario.papel);
-          const labelLink = document.getElementById("labelLinkTurmas");
-          if (labelLink && ehAluno) labelLink.textContent = "Minha Turma";
-          const linkPresenca = document.getElementById("linkPresenca");
-          if (linkPresenca && !isProfessor(usuario.papel)) linkPresenca.style.display = "none";
-
           if (ehAluno) {
             document.querySelector(".page-heading h2").textContent = "Minha Turma";
             document.getElementById("subtituloTurmas").textContent = "Sua turma e colegas matriculados";
@@ -1179,9 +1159,6 @@
         // Atualiza cache e UI com dados do servidor
         localStorage.setItem("usuario", JSON.stringify(usuario));
         papelAtual = usuario.papel;
-        if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
-        if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
-        if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
       } catch { limparSessao(); window.location.href = "/"; }
     }
 
@@ -2446,14 +2423,6 @@
     if (filtroCurso)   filtroCurso.addEventListener("change",   renderizarTurmas);
 
     // ── Header ───────────────────────────────────────────
-    if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
-    if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");
-    if (btnSair) btnSair.addEventListener("click", async () => {
-      const ok = await Swal.fire({ icon:"question", title:"Deseja sair?", text:"Sua sessão será encerrada.",
-        showCancelButton:true, confirmButtonText:"Sim, sair", cancelButtonText:"Cancelar" });
-      if (ok.isConfirmed) { limparSessao(); window.location.href = "/"; }
-    });
-
     // ── Init ─────────────────────────────────────────────
     carregarUsuarioLogado();
   </script>

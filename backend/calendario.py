@@ -2,8 +2,8 @@ from flask import Blueprint, jsonify, render_template, request
 from datetime import datetime, timedelta
 import mysql.connector
 
-from conexao import criar_conexao
-from login import token_obrigatorio, papel_obrigatorio
+from .conexao import criar_conexao
+from .login import token_obrigatorio, papel_obrigatorio
 
 calendario_bp = Blueprint("calendario", __name__)
 

@@ -5,9 +5,9 @@ import re
 from flask import Blueprint, jsonify, render_template, request
 import mysql.connector
 
-from conexao import criar_conexao
-from login import token_obrigatorio, papel_obrigatorio
-from seguranca import gerar_hash_senha, senha_padrao_data_nascimento
+from .conexao import criar_conexao
+from .login import token_obrigatorio, papel_obrigatorio
+from .seguranca import gerar_hash_senha, senha_padrao_data_nascimento
 
 
 gestao_usuarios_bp = Blueprint("gestao_usuarios", __name__)

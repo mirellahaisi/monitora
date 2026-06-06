@@ -5,9 +5,9 @@ import re
 from flask import Blueprint, jsonify, render_template, request
 import mysql.connector
 
-from conexao import criar_conexao
-from gerador_token import gerar_token, validar_token, TEMPO_SESSAO
-from seguranca import (
+from .conexao import criar_conexao
+from .gerador_token import gerar_token, validar_token, TEMPO_SESSAO
+from .seguranca import (
     gerar_hash_senha,
     senha_padrao_data_nascimento,
     senha_precisa_upgrade,

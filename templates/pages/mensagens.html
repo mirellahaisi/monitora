@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
@@ -517,12 +517,7 @@
       })();
       if (usuarioCache) {
         const usuario = JSON.parse(usuarioCache);
-        document.getElementById("nomeUsuarioTopo").textContent = usuario.nome;
-        document.getElementById("papelUsuario").textContent    = formatarPapel(usuario.papel);
-        document.getElementById("avatarUsuario").textContent   = usuario.nome.charAt(0).toUpperCase();
         papelUsuario = String(usuario.papel).toLowerCase();
-        const btnG = document.getElementById("btnGestaoUsuarios");
-        if (btnG && ["coordenador","admin","adm"].includes(papelUsuario)) btnG.style.display = "block";
       }
     } catch (e) { console.warn("Erro ao aplicar usuario do cache:", e); }
 
@@ -532,12 +527,7 @@
       if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
       const { usuario } = await r.json();
       localStorage.setItem("usuario", JSON.stringify(usuario));
-      document.getElementById("nomeUsuarioTopo").textContent = usuario.nome;
-      document.getElementById("papelUsuario").textContent    = formatarPapel(usuario.papel);
-      document.getElementById("avatarUsuario").textContent   = usuario.nome.charAt(0).toUpperCase();
       papelUsuario = usuario.papel.toLowerCase();
-      const btnG = document.getElementById("btnGestaoUsuarios");
-      if (btnG && ["coordenador","admin","adm"].includes(papelUsuario)) btnG.style.display = "block";
       await carregarOpcoes();
     } catch { limparSessao(); window.location.href = "/"; }
   }
@@ -920,19 +910,6 @@
       btnEnviar.disabled = false;
       btnEnviar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar mensagem`;
     }
-  });
-
-  // ─── Menu usuário ─────────────────────────────────
-  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-  const menuUsuarioEl    = document.getElementById("menuUsuario");
-  if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuarioEl.classList.toggle("show"));
-  const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-  if (btnEditarPerfil) btnEditarPerfil.addEventListener("click", () => window.location.href = "/perfil");
-  const btnSair = document.getElementById("btnSair");
-  if (btnSair) btnSair.addEventListener("click", async () => {
-    const c = await Swal.fire({ icon:"question", title:"Deseja sair?", text:"Sua sessão será encerrada.", showCancelButton:true, confirmButtonText:"Sim, sair", cancelButtonText:"Cancelar" });
-    if (!c.isConfirmed) return;
-    limparSessao(); window.location.href = "/";
   });
 
   // ─── Busca local ──────────────────────────────────

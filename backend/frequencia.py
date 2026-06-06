@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, Response, jsonify
 
-from conexao import criar_conexao
-from gerador_token import validar_token
+from .conexao import criar_conexao
+from .gerador_token import validar_token
 
 frequencia_bp = Blueprint("frequencia", __name__)
 
@@ -335,7 +335,7 @@ def api_resumo_aluno():
     Retorna a frequência média (%) do aluno logado em todas as suas matérias.
     Usado no dashboard do aluno (stat de frequência).
     """
-    from gerador_token import validar_token
+    from .gerador_token import validar_token
 
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
@@ -411,7 +411,7 @@ def api_alertas_professor():
     Retorna alunos com frequência abaixo de 75% nas turmas/matérias
     onde o professor logado leciona.
     """
-    from gerador_token import validar_token
+    from .gerador_token import validar_token
 
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
@@ -495,7 +495,7 @@ def api_alertas_coordenador():
     Retorna alunos com frequência abaixo de 75% em qualquer matéria.
     Usado no dashboard do coordenador.
     """
-    from gerador_token import validar_token
+    from .gerador_token import validar_token
 
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
@@ -569,7 +569,7 @@ def api_resumo_coordenador():
     Usa o mesmo cálculo da tela de frequência: 100% - (faltas * 2%).
     Usado no donut do dashboard do coordenador.
     """
-    from gerador_token import validar_token
+    from .gerador_token import validar_token
 
     auth = request.headers.get("Authorization", "")
     if not auth.startswith("Bearer "):
