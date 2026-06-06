@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { getStoredUser, isCoordinator, isProfessor, isStudent } from "../layoutSession.js";
 
 function getToken() {
@@ -163,6 +164,16 @@ function IconLogout() {
   );
 }
 
+function IconSidebarToggle() {
+  return (
+    <svg className="sidebar-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="9" y1="4" x2="9" y2="20" />
+      <path d="M15 10l-2 2 2 2" />
+    </svg>
+  );
+}
+
 function LaptopArt() {
   return (
     <svg viewBox="0 0 80 60" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -180,7 +191,7 @@ function SidebarLink({ activePage, page, href, id, children, icon }) {
   return (
     <a href={href} id={id} className={`sidebar-link${active ? " active" : ""}`}>
       {icon}
-      {children}
+      <span className="sidebar-label">{children}</span>
     </a>
   );
 }
@@ -190,9 +201,38 @@ export default function Sidebar({ activePage = "" }) {
   const student = isStudent(user);
   const professor = isProfessor(user);
   const coordinator = isCoordinator(user);
+  const [collapsed, setCollapsed] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem("sidebarCollapsed");
+      if (stored !== null) return stored === "1";
+      return window.matchMedia?.("(max-width: 800px)")?.matches || false;
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.body.classList.toggle("sidebar-collapsed", collapsed);
+    try {
+      window.localStorage.setItem("sidebarCollapsed", collapsed ? "1" : "0");
+    } catch {
+      // Apenas mantem o estado visual se o navegador bloquear localStorage.
+    }
+  }, [collapsed]);
 
   return (
     <aside className="sidebar">
+      <button
+        className="sidebar-toggle-button"
+        type="button"
+        title={collapsed ? "Expandir menu" : "Minimizar menu"}
+        aria-label={collapsed ? "Expandir menu" : "Minimizar menu"}
+        aria-pressed={collapsed ? "true" : "false"}
+        onClick={() => setCollapsed((value) => !value)}
+      >
+        <IconSidebarToggle />
+      </button>
+
       <div className="sidebar-brand">
         <img src="/static/images/logomonitora.png" alt="Logo Monitora+" className="sidebar-logo" />
         <h1>
@@ -259,7 +299,7 @@ export default function Sidebar({ activePage = "" }) {
 
         <button className="logout-button" id="btnSair" type="button" onClickCapture={logout}>
           <IconLogout />
-          Sair
+          <span className="sidebar-label">Sair</span>
         </button>
       </div>
     </aside>
