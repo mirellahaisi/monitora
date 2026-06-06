@@ -6116,3 +6116,1687 @@ body.dark .btn-dark-mode:hover {
   .dv-g3 { grid-template-columns:1fr; }
   .dv-week { grid-template-columns:1fr 1fr; }
 }
+
+/* =========================================================
+   RESPONSIVE CONSOLIDATION
+   ========================================================= */
+@media (max-width: 1180px) {
+  .inicio-body .inicio-main {
+    padding: 22px 24px 28px !important;
+  }
+
+  .inicio-body .sidebar {
+    width: 176px !important;
+    padding: 20px 10px !important;
+  }
+
+  .notas-page .notas-filtros,
+  .notas-page .coord-filtros,
+  .freq-page .notas-filtros,
+  .cursos-toolbar,
+  .materias-toolbar,
+  .turmas-toolbar,
+  .toolbar {
+    gap: 12px !important;
+  }
+
+  .notas-page .coord-filtros,
+  .freq-page .notas-filtros.notas-filtros--curso {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .freq-page .filtro-group--btn {
+    grid-column: 1 / -1 !important;
+  }
+
+  .freq-page .btn-limpar {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .notas-page .aluno-resumo {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .turmas-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)) !important;
+  }
+
+  .cursos-table,
+  .materias-table,
+  .usuarios-table,
+  .notas-table,
+  .coord-table,
+  .colegas-tabela,
+  .modal-table {
+    min-width: 720px !important;
+  }
+
+  .table-card,
+  .cursos-table-wrap,
+  .materias-table-wrap,
+  .notas-card,
+  .coord-table-wrap,
+  .presenca-card,
+  .minha-turma-colegas,
+  .modal-body {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+}
+
+@media (max-width: 800px) {
+  body {
+    overflow-x: hidden !important;
+  }
+
+  .inicio-body {
+    min-height: 100vh !important;
+    height: auto !important;
+    overflow: visible !important;
+    flex-direction: column !important;
+  }
+
+  .inicio-body .sidebar {
+    position: static !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    min-height: auto !important;
+    max-height: none !important;
+    margin: 10px !important;
+    padding: 12px !important;
+    border-radius: 16px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    gap: 10px !important;
+  }
+
+  .inicio-body .sidebar-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    flex: 0 0 auto !important;
+  }
+
+  .inicio-body .sidebar-logo {
+    width: 42px !important;
+    height: 42px !important;
+  }
+
+  .inicio-body .sidebar-brand h1 {
+    font-size: 1rem !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .inicio-body .sidebar-menu {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    width: auto !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    padding-bottom: 2px !important;
+  }
+
+  .inicio-body .sidebar-link {
+    width: auto !important;
+    min-width: max-content !important;
+    padding: 9px 11px !important;
+    font-size: 0.82rem !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+  }
+
+  .inicio-body .sidebar-bottom {
+    margin: 0 0 0 auto !important;
+    width: auto !important;
+    flex-direction: row !important;
+    gap: 6px !important;
+    flex: 0 0 auto !important;
+  }
+
+  .inicio-body .sidebar-laptop {
+    display: none !important;
+  }
+
+  .inicio-body .logout-button {
+    width: auto !important;
+    min-width: max-content !important;
+    padding: 9px 11px !important;
+    margin: 0 !important;
+    font-size: 0.82rem !important;
+  }
+
+  .inicio-body .inicio-main {
+    width: 100% !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow: visible !important;
+    padding: 14px 14px 24px !important;
+  }
+
+  .inicio-body .inicio-header {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .inicio-body .search-box {
+    order: 3 !important;
+    width: 100% !important;
+  }
+
+  .inicio-body .search-box input {
+    width: 100% !important;
+  }
+
+  .inicio-body .user-menu {
+    margin-left: auto !important;
+    max-width: 100% !important;
+  }
+
+  .inicio-body .user-menu-button {
+    max-width: 100% !important;
+  }
+
+  .inicio-body .user-text strong {
+    max-width: 150px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .page-heading {
+    align-items: flex-start !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .page-heading-icon {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  .page-heading h2 {
+    font-size: 1.18rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .page-heading p {
+    font-size: 0.8rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .notas-content,
+  .freq-content,
+  .usuarios-content,
+  .cursos-content,
+  .materias-content,
+  .turmas-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .notas-page #secaoProfessor,
+  .notas-page #secaoCoordenador,
+  .notas-page #secaoAluno,
+  .freq-page .freq-content {
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  .notas-page .notas-filtros,
+  .notas-page .coord-filtros,
+  .freq-page .notas-filtros,
+  #filtrosPresenca,
+  #filtrosAdmin {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    padding: 14px !important;
+    gap: 12px !important;
+    width: 100% !important;
+    margin-bottom: 16px !important;
+  }
+
+  .filtro-group,
+  .notas-page .filtro-group,
+  .freq-page .filtro-group {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .btn-limpar,
+  .notas-page .btn-limpar,
+  .freq-page .btn-limpar,
+  .btn-novo,
+  .btn-novo-curso,
+  .btn-nova-materia,
+  .btn-nova-turma,
+  .btn-enviar,
+  .btn-publicar,
+  .btn-rascunho,
+  .btn-salvar,
+  .btn-cancelar,
+  .btn-confirmar {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .cursos-toolbar,
+  .materias-toolbar,
+  .turmas-toolbar,
+  .toolbar,
+  .tabs {
+    width: 100% !important;
+    align-items: stretch !important;
+  }
+
+  .cursos-search-wrap,
+  .materias-search-wrap {
+    max-width: none !important;
+    width: 100% !important;
+    flex-basis: 100% !important;
+  }
+
+  .turmas-filtros {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .filtro-custom,
+  .filtro-custom-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .tabs {
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding: 6px !important;
+  }
+
+  .tab-btn {
+    min-width: max-content !important;
+    flex: 0 0 auto !important;
+  }
+
+  .dv-hero {
+    padding: 18px !important;
+  }
+
+  .dv-hero-body {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 14px !important;
+  }
+
+  .dv-hero-text h1 {
+    font-size: 1.35rem !important;
+    line-height: 1.15 !important;
+  }
+
+  .dv-hero-text p {
+    font-size: 0.84rem !important;
+  }
+
+  .dv-hero-pills {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .dv-stats--3,
+  .dv-stats--4,
+  .dv-g2,
+  .dv-g3,
+  .dv-gw,
+  .aluno-resumo,
+  .notas-page .aluno-resumo {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dv-card,
+  .freq-card,
+  .aluno-materia-card,
+  .coord-card,
+  .notas-card,
+  .table-card,
+  .cursos-card,
+  .materias-card,
+  .envio-card,
+  .minha-turma-info,
+  .minha-turma-colegas {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .freq-card {
+    flex-direction: column !important;
+  }
+
+  .freq-info {
+    border-right: 0 !important;
+    padding: 20px !important;
+  }
+
+  .freq-chart-col {
+    width: 100% !important;
+    border-top: 1.5px solid rgba(147, 215, 223, 0.2) !important;
+    padding: 20px !important;
+  }
+
+  .presenca-card-wrap,
+  .freq-result-area,
+  #coordResultado,
+  .notas-card,
+  .coord-table-wrap,
+  .table-card,
+  .cursos-table-wrap,
+  .materias-table-wrap,
+  .minha-turma-colegas {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .presenca-card table,
+  .notas-table,
+  .coord-table,
+  .usuarios-table,
+  .cursos-table,
+  .materias-table,
+  .colegas-tabela,
+  .modal-table {
+    min-width: 680px !important;
+  }
+
+  .modal-overlay,
+  #modalUsuario {
+    align-items: flex-start !important;
+    justify-content: center !important;
+    overflow-y: auto !important;
+    padding: 14px !important;
+  }
+
+  .modal-box,
+  .modal,
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 16px !important;
+    padding: 22px 18px !important;
+  }
+
+  .modal-header,
+  .modal-title {
+    gap: 12px !important;
+  }
+
+  .modal-tabs {
+    overflow-x: auto !important;
+    padding: 0 16px !important;
+  }
+
+  .modal-tab {
+    min-width: max-content !important;
+  }
+
+  .modal-body {
+    padding: 16px !important;
+    overflow: auto !important;
+  }
+
+  .modal-footer,
+  .modal-actions,
+  .modal-acoes,
+  .notas-actions {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .form-row,
+  .form-row-3,
+  .campos-grid,
+  .gestao-grid-2col {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .gestao-add-row,
+  .gestao-materia-prof-row,
+  .mensagem-card-top,
+  .aluno-materia-header,
+  .minha-turma-header,
+  .turma-card-header,
+  .coord-card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+
+  .gestao-add-row select,
+  .gestao-materia-prof-row select {
+    width: 100% !important;
+  }
+
+  .mensagem-data {
+    white-space: normal !important;
+  }
+
+  .mensagem-card,
+  .envio-card {
+    padding: 16px !important;
+  }
+
+  .cal-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .cal-nav {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .cal-nav-left {
+    justify-content: space-between !important;
+  }
+
+  .cal-grid,
+  .cal-week-row {
+    min-width: 640px !important;
+  }
+
+  .cal-day-cell {
+    min-height: 72px !important;
+  }
+
+  .turmas-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .turma-card-stats,
+  .turma-card-footer,
+  .minha-turma-meta,
+  .aluno-materia-notas {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .nota-bloco {
+    width: 100% !important;
+  }
+
+  .report-page {
+    padding: 24px 14px !important;
+  }
+
+  .report-card {
+    padding: 20px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .inicio-body .sidebar {
+    margin: 8px !important;
+    padding: 10px !important;
+  }
+
+  .inicio-body .sidebar-brand h1 {
+    display: none !important;
+  }
+
+  .inicio-body .sidebar-link {
+    padding: 8px 10px !important;
+    font-size: 0.78rem !important;
+  }
+
+  .page-heading p {
+    display: none !important;
+  }
+
+  .user-text {
+    display: none !important;
+  }
+
+  .dv-week {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .dv-col-chart {
+    min-width: 520px !important;
+  }
+
+  .dv-bars-wrap,
+  #coordDesempenho,
+  #profDesempenho {
+    overflow-x: auto !important;
+  }
+
+  .index-page nav {
+    padding: 12px 14px !important;
+  }
+
+  .index-page .nav-title {
+    font-size: 1rem !important;
+  }
+
+  .index-page .hero {
+    padding: 92px 16px 48px !important;
+    min-height: auto !important;
+  }
+
+  .index-page .hero-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .index-page .btn-primary,
+  .index-page .btn-secondary,
+  .index-page .cta-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    text-align: center !important;
+  }
+
+  .index-page .stats,
+  .index-page .features,
+  .index-page .team,
+  .index-page .cta-section {
+    padding: 44px 16px !important;
+  }
+
+  .auth-page nav {
+    padding: 10px 12px !important;
+  }
+
+  .auth-page .nav-title {
+    display: none !important;
+  }
+
+  .auth-page .right-panel {
+    padding: 22px 12px 34px !important;
+  }
+
+  .auth-page .login-card {
+    padding: 22px 18px !important;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE REFINEMENTS
+   ========================================================= */
+@media (max-width: 800px) {
+  .inicio-body .sidebar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    overflow: visible !important;
+  }
+
+  .inicio-body .sidebar-brand {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .inicio-body .sidebar-brand h1 {
+    display: block !important;
+    white-space: nowrap !important;
+  }
+
+  .inicio-body .sidebar-menu {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    overflow: visible !important;
+    gap: 6px !important;
+  }
+
+  .inicio-body .sidebar-link {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+    white-space: normal !important;
+    line-height: 1.2 !important;
+  }
+
+  .inicio-body .sidebar-bottom {
+    width: 100% !important;
+    margin: 8px 0 0 !important;
+  }
+
+  .inicio-body .logout-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+  }
+
+  .inicio-body .inicio-header,
+  .cal-page .inicio-header,
+  .freq-page .inicio-header,
+  .notas-page .inicio-header,
+  .gestao-page .inicio-header,
+  .msg-page .inicio-header {
+    display: grid !important;
+    grid-template-columns: 44px minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 10px !important;
+    width: 100% !important;
+    margin-bottom: 18px !important;
+  }
+
+  .inicio-body .nav-theme-toggle,
+  .cal-page .nav-theme-toggle,
+  .freq-page .nav-theme-toggle,
+  .notas-page .nav-theme-toggle,
+  .gestao-page .nav-theme-toggle,
+  .msg-page .nav-theme-toggle {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    justify-self: start !important;
+  }
+
+  .inicio-body .user-menu,
+  .cal-page .user-menu,
+  .freq-page .user-menu,
+  .notas-page .user-menu,
+  .gestao-page .user-menu,
+  .msg-page .user-menu {
+    width: auto !important;
+    max-width: 100% !important;
+    justify-self: end !important;
+    margin-left: 0 !important;
+  }
+
+  .inicio-body .user-menu-button,
+  .cal-page .user-menu-button,
+  .freq-page .user-menu-button,
+  .notas-page .user-menu-button,
+  .gestao-page .user-menu-button,
+  .msg-page .user-menu-button {
+    max-width: min(240px, calc(100vw - 92px)) !important;
+    overflow: hidden !important;
+  }
+
+  .inicio-body .user-dropdown,
+  .cal-page .user-dropdown,
+  .freq-page .user-dropdown,
+  .notas-page .user-dropdown,
+  .gestao-page .user-dropdown,
+  .msg-page .user-dropdown {
+    right: 0 !important;
+    left: auto !important;
+    max-width: calc(100vw - 28px) !important;
+  }
+
+  .notas-page #coordResultado {
+    min-width: 0 !important;
+    overflow: visible !important;
+  }
+
+  .notas-page .coord-card {
+    min-width: 0 !important;
+  }
+
+  .notas-page .coord-table-wrap {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .notas-page .coord-table {
+    min-width: 720px !important;
+  }
+
+  .freq-page .aluno-frequencia-filtros {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .freq-page .freq-result-area {
+    overflow: visible !important;
+  }
+
+  .freq-page .freq-alert {
+    align-items: flex-start !important;
+    line-height: 1.4 !important;
+  }
+
+  .msg-page .inicio-body {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+  }
+
+  .msg-page .inicio-main {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .msg-page .tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    overflow: visible !important;
+    gap: 6px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .msg-page .tab-btn {
+    min-width: 0 !important;
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 8px !important;
+    font-size: 0.78rem !important;
+    white-space: normal !important;
+    text-align: center !important;
+    line-height: 1.15 !important;
+  }
+
+  .msg-page .envio-card,
+  .msg-page .mensagem-card {
+    border-radius: 14px !important;
+  }
+
+  .msg-page .form-select,
+  .msg-page .form-input,
+  .msg-page .form-textarea {
+    min-width: 0 !important;
+  }
+
+  .cal-page .cal-wrapper {
+    overflow: visible !important;
+    border-radius: 14px !important;
+  }
+
+  .cal-page .cal-nav {
+    padding: 12px !important;
+    gap: 10px !important;
+  }
+
+  .cal-page .cal-nav-left {
+    width: 100% !important;
+  }
+
+  .cal-page .cal-month-label {
+    min-width: 0 !important;
+    flex: 1 !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+  }
+
+  .cal-page .btn-novo-evento {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .cal-page .month-picker-dropdown {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: min(280px, calc(100vw - 48px)) !important;
+  }
+
+  .cal-page .cal-grid,
+  .cal-page .cal-week-row {
+    min-width: 0 !important;
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+
+  .cal-page .cal-day-header {
+    height: 32px !important;
+    font-size: 0.56rem !important;
+    letter-spacing: 0 !important;
+  }
+
+  .cal-page .cal-week-row {
+    min-height: 68px !important;
+  }
+
+  .cal-page .cal-day-cell {
+    min-height: 68px !important;
+    padding: 4px 2px !important;
+  }
+
+  .cal-page .day-num {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 0.68rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .cal-page .event-tag {
+    height: auto !important;
+    min-height: 16px !important;
+    padding: 1px 3px !important;
+    border-radius: 4px !important;
+    font-size: 0.56rem !important;
+    line-height: 1.35 !important;
+  }
+
+  body.inicio-body .notas-content {
+    overflow: visible !important;
+  }
+
+  .role-view {
+    min-width: 0 !important;
+  }
+
+  .dv-card {
+    overflow: visible !important;
+  }
+
+  .dv-card-head {
+    flex-wrap: wrap !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    padding: 14px !important;
+  }
+
+  .dv-card-body {
+    padding: 12px 14px !important;
+  }
+
+  .dv-card-title {
+    white-space: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .dv-card-link {
+    margin-left: 0 !important;
+  }
+
+  .dv-stat {
+    padding: 14px !important;
+    min-width: 0 !important;
+  }
+
+  .dv-stat-val {
+    font-size: 1.6rem !important;
+  }
+
+  .dv-donut-wrap {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .dv-col-chart {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  #coordDesempenho,
+  #profDesempenho {
+    overflow-x: auto !important;
+    justify-content: flex-start !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .inicio-body .sidebar-brand h1 {
+    display: none !important;
+  }
+
+  .inicio-body .sidebar-menu {
+    grid-template-columns: 1fr !important;
+  }
+
+  .msg-page .tabs {
+    grid-template-columns: 1fr !important;
+  }
+
+  .cal-page .cal-nav {
+    align-items: stretch !important;
+  }
+
+  .cal-page .cal-nav-left {
+    justify-content: space-between !important;
+  }
+
+  .cal-page .cal-arrow {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  .cal-page .cal-day-cell {
+    min-height: 58px !important;
+  }
+
+  .cal-page .event-tag {
+    font-size: 0 !important;
+    width: 7px !important;
+    height: 7px !important;
+    min-height: 7px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-block !important;
+    margin: 2px !important;
+  }
+
+  .dv-hero-pills {
+    display: grid !important;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE FIXES REQUESTED
+   ========================================================= */
+.freq-page .filtro-oculto {
+  display: none !important;
+}
+
+.sidebar {
+  position: relative;
+}
+
+.sidebar-toggle-button {
+  position: absolute;
+  top: 14px;
+  right: 12px;
+  z-index: 20;
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.92);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s, color 0.18s;
+}
+
+.sidebar-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.28);
+  color: white;
+}
+
+.sidebar-toggle-icon {
+  width: 18px;
+  height: 18px;
+  transition: transform 0.2s;
+}
+
+body.sidebar-collapsed .sidebar-toggle-icon {
+  transform: rotate(180deg);
+}
+
+body.sidebar-collapsed .sidebar {
+  width: 82px !important;
+  padding: 52px 10px 16px !important;
+  align-items: center !important;
+}
+
+body.sidebar-collapsed .sidebar-brand {
+  margin: 0 0 18px !important;
+}
+
+body.sidebar-collapsed .sidebar-logo {
+  width: 44px !important;
+  height: 44px !important;
+}
+
+body.sidebar-collapsed .sidebar-brand h1,
+body.sidebar-collapsed .sidebar-label,
+body.sidebar-collapsed .sidebar-laptop {
+  display: none !important;
+}
+
+body.sidebar-collapsed .sidebar-menu {
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+body.sidebar-collapsed .sidebar-link,
+body.sidebar-collapsed .logout-button {
+  width: 44px !important;
+  height: 44px !important;
+  min-width: 44px !important;
+  padding: 0 !important;
+  justify-content: center !important;
+  gap: 0 !important;
+}
+
+body.sidebar-collapsed .sidebar-icon,
+body.sidebar-collapsed .logout-button svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+@media (max-width: 800px) {
+  html,
+  body {
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  .inicio-body .inicio-main,
+  .msg-page .inicio-main,
+  .cal-page .inicio-main,
+  .freq-page .inicio-main,
+  .notas-page .inicio-main {
+    width: 100% !important;
+    max-width: 100vw !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .inicio-body .inicio-header,
+  .cal-page .inicio-header,
+  .freq-page .inicio-header,
+  .notas-page .inicio-header,
+  .gestao-page .inicio-header,
+  .msg-page .inicio-header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .inicio-body .nav-theme-toggle,
+  .cal-page .nav-theme-toggle,
+  .freq-page .nav-theme-toggle,
+  .notas-page .nav-theme-toggle,
+  .gestao-page .nav-theme-toggle,
+  .msg-page .nav-theme-toggle {
+    flex: 0 0 auto !important;
+  }
+
+  .inicio-body .user-menu,
+  .cal-page .user-menu,
+  .freq-page .user-menu,
+  .notas-page .user-menu,
+  .gestao-page .user-menu,
+  .msg-page .user-menu {
+    flex: 0 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .inicio-body .user-menu-button,
+  .cal-page .user-menu-button,
+  .freq-page .user-menu-button,
+  .notas-page .user-menu-button,
+  .gestao-page .user-menu-button,
+  .msg-page .user-menu-button {
+    max-width: calc(100vw - 92px) !important;
+    min-width: 0 !important;
+  }
+
+  .inicio-body .user-text,
+  .cal-page .user-text,
+  .freq-page .user-text,
+  .notas-page .user-text,
+  .gestao-page .user-text,
+  .msg-page .user-text {
+    display: flex !important;
+    min-width: 0 !important;
+  }
+
+  .inicio-body .user-text strong,
+  .cal-page .user-text strong,
+  .freq-page .user-text strong,
+  .notas-page .user-text strong,
+  .gestao-page .user-text strong,
+  .msg-page .user-text strong {
+    max-width: 150px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .msg-page .inicio-body {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+  }
+
+  .msg-page .tabs {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
+    gap: 6px !important;
+  }
+
+  .msg-page .tab-btn {
+    min-width: 0 !important;
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 6px !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+  }
+
+  .msg-page .mensagens-lista,
+  .msg-page .envio-card {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  body.inicio-body .notas-content,
+  .role-view,
+  .role-view.ativo,
+  .dv-hero,
+  .dv-card,
+  .dv-stats,
+  .dv-g2,
+  .dv-g3,
+  .dv-gw {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .dv-hero {
+    min-height: auto !important;
+    overflow: hidden !important;
+  }
+
+  .dv-hero-body {
+    min-width: 0 !important;
+    padding: 24px 22px !important;
+  }
+
+  .dv-hero-text,
+  .dv-hero-text h1,
+  .dv-hero-text p {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .dv-hero-text h1 {
+    font-size: clamp(1.45rem, 6.5vw, 1.9rem) !important;
+    overflow-wrap: anywhere;
+  }
+
+  .dv-stats--3,
+  .dv-stats--4,
+  .dv-g2,
+  .dv-g3,
+  .dv-gw {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .cal-page .event-tag {
+    display: block !important;
+    width: auto !important;
+    height: 15px !important;
+    min-height: 0 !important;
+    padding: 0 4px !important;
+    border-radius: 5px !important;
+    font-size: 0.6rem !important;
+    line-height: 15px !important;
+    margin: 1px 0 !important;
+  }
+
+  body.sidebar-collapsed .sidebar {
+    width: calc(100% - 16px) !important;
+    min-height: auto !important;
+    height: auto !important;
+    margin: 8px !important;
+    padding: 10px 54px 10px 10px !important;
+    border-radius: 16px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    overflow: hidden !important;
+  }
+
+  body.sidebar-collapsed .sidebar-toggle-button {
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+  }
+
+  body.sidebar-collapsed .sidebar-brand {
+    display: none !important;
+  }
+
+  body.sidebar-collapsed .sidebar-menu {
+    display: flex !important;
+    flex-direction: row !important;
+    width: auto !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    gap: 6px !important;
+  }
+
+  body.sidebar-collapsed .sidebar-bottom {
+    width: auto !important;
+    margin: 0 0 0 auto !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .inicio-body .user-text,
+  .cal-page .user-text,
+  .freq-page .user-text,
+  .notas-page .user-text,
+  .gestao-page .user-text,
+  .msg-page .user-text {
+    display: flex !important;
+  }
+
+  .inicio-body .user-text strong,
+  .cal-page .user-text strong,
+  .freq-page .user-text strong,
+  .notas-page .user-text strong,
+  .gestao-page .user-text strong,
+  .msg-page .user-text strong {
+    max-width: 118px !important;
+  }
+}
+
+/* =========================================================
+   FINAL MOBILE FIT FIXES
+   ========================================================= */
+.inicio-body .user-menu,
+.cal-page .user-menu,
+.freq-page .user-menu,
+.notas-page .user-menu,
+.gestao-page .user-menu,
+.msg-page .user-menu {
+  position: relative !important;
+}
+
+.inicio-body .user-dropdown,
+.cal-page .user-dropdown,
+.freq-page .user-dropdown,
+.notas-page .user-dropdown,
+.gestao-page .user-dropdown,
+.msg-page .user-dropdown {
+  box-sizing: border-box !important;
+  left: auto !important;
+  right: 0 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+}
+
+.inicio-body .user-dropdown button,
+.cal-page .user-dropdown button,
+.freq-page .user-dropdown button,
+.notas-page .user-dropdown button,
+.gestao-page .user-dropdown button,
+.msg-page .user-dropdown button {
+  width: 100% !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.msg-page .searchable-select {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.msg-page .searchable-select-input {
+  width: 100%;
+  height: 44px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0 36px 0 14px;
+  border: 1px solid rgba(76, 190, 190, 0.22);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--dark);
+  font: inherit;
+  cursor: text;
+}
+
+.msg-page .searchable-select::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  color: var(--muted);
+  pointer-events: none;
+  transform: translateY(-70%) rotate(45deg);
+}
+
+.msg-page .searchable-select-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(76, 190, 190, 0.1);
+  outline: none;
+}
+
+.msg-page .searchable-select.is-disabled .searchable-select-input,
+.msg-page .searchable-select-input:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.msg-page .searchable-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 260;
+  display: none;
+  width: 100%;
+  max-width: 100%;
+  max-height: 220px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  border: 1px solid rgba(76, 190, 190, 0.32);
+  border-radius: 10px;
+  background: var(--white);
+  box-shadow: 0 16px 36px rgba(23, 60, 74, 0.18);
+}
+
+.msg-page .searchable-select-dropdown.is-open {
+  display: block;
+}
+
+.msg-page .searchable-select-option,
+.msg-page .searchable-select-empty {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 11px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--dark);
+  font: inherit;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.msg-page .searchable-select-option {
+  cursor: pointer;
+}
+
+.msg-page .searchable-select-option:hover,
+.msg-page .searchable-select-option:focus,
+.msg-page .searchable-select-option.is-selected {
+  background: rgba(76, 190, 190, 0.12);
+  outline: none;
+}
+
+.msg-page .searchable-select-empty {
+  color: var(--muted);
+}
+
+.msg-page .envio-card,
+.msg-page .form-group,
+.msg-page .tab-panel {
+  overflow: visible !important;
+}
+
+body.inicio-body:not(.notas-page):not(.freq-page):not(.cal-page):not(.gestao-page) .notas-content {
+  margin-right: auto !important;
+  margin-left: auto !important;
+}
+
+@media (max-width: 800px) {
+  body.inicio-body:not(.notas-page):not(.freq-page):not(.cal-page):not(.gestao-page) .inicio-main {
+    align-items: center !important;
+  }
+
+  body.inicio-body:not(.notas-page):not(.freq-page):not(.cal-page):not(.gestao-page) .notas-content {
+    width: min(100%, 430px) !important;
+    max-width: calc(100vw - 28px) !important;
+  }
+
+  body.sidebar-collapsed .sidebar {
+    padding: 10px 12px !important;
+    overflow: visible !important;
+    gap: 8px !important;
+  }
+
+  body.sidebar-collapsed .sidebar-toggle-button {
+    position: static !important;
+    order: 99 !important;
+    flex: 0 0 38px !important;
+    width: 38px !important;
+    height: 38px !important;
+    margin-left: auto !important;
+    transform: none !important;
+  }
+
+  body.sidebar-collapsed .sidebar-menu {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    padding-right: 4px !important;
+  }
+
+  body.sidebar-collapsed .sidebar-bottom {
+    display: none !important;
+  }
+}
+
+/* =========================================================
+   DESKTOP FIXES AFTER MOBILE PASS
+   ========================================================= */
+@media (min-width: 801px) {
+  body.inicio-body {
+    height: 100vh !important;
+    overflow: hidden !important;
+  }
+
+  body.inicio-body > .sidebar {
+    height: calc(100vh - 24px) !important;
+    min-height: calc(100vh - 24px) !important;
+    overflow-y: auto !important;
+  }
+
+  body.inicio-body > .inicio-main {
+    height: 100vh !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+  }
+
+  body.msg-page {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  body.msg-page .inicio-body {
+    width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+  }
+
+  body.msg-page .inicio-main {
+    width: auto !important;
+    max-width: none !important;
+    flex: 1 1 auto !important;
+  }
+
+  body.msg-page .mensagens-lista {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+.freq-page .aluno-frequencia-toolbar {
+  width: 100%;
+  margin-bottom: 28px;
+}
+
+.freq-page .aluno-frequencia-toolbar.filtro-oculto {
+  display: none !important;
+}
+
+.freq-page .aluno-frequencia-custom-filtros {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.freq-page .aluno-frequencia-custom-filtros .filtro-custom-btn {
+  min-width: 246px;
+  background: var(--white);
+}
+
+.freq-page .filtro-custom--materia .filtro-custom-dropdown {
+  width: min(320px, calc(100vw - 48px));
+}
+
+.freq-page .filtro-custom-search {
+  width: 100%;
+  height: 36px;
+  margin-bottom: 6px;
+  padding: 0 10px;
+  border: 1.5px solid rgba(147, 215, 223, 0.35);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--mid);
+  font: inherit;
+  font-size: 0.84rem;
+  outline: none;
+}
+
+.freq-page .filtro-custom-search:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(76, 190, 190, 0.1);
+}
+
+.freq-page .filtro-custom-option {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+}
+
+.freq-page .filtro-custom-empty {
+  padding: 9px 12px;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+@media (max-width: 800px) {
+  .freq-page .aluno-frequencia-custom-filtros {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .freq-page .aluno-frequencia-custom-filtros .filtro-custom,
+  .freq-page .aluno-frequencia-custom-filtros .filtro-custom-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .freq-page .filtro-custom--materia .filtro-custom-dropdown {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   SCREENSHOT FOLLOW-UP FIXES
+   ========================================================= */
+#filtrosAdmin.filtro-oculto,
+#filtrosAlunoFreq.filtro-oculto,
+.freq-page #filtrosAdmin.filtro-oculto,
+.freq-page #filtrosAlunoFreq.filtro-oculto {
+  display: none !important;
+}
+
+.sidebar-toggle-button {
+  display: inline-flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  flex-shrink: 0 !important;
+  z-index: 1000 !important;
+}
+
+@media (min-width: 801px) {
+  body.msg-page .tab-panel.active,
+  body.msg-page .mensagens-lista,
+  body.msg-page .envio-card {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  body.msg-page .envio-card {
+    box-sizing: border-box !important;
+  }
+}
+
+@media (max-width: 800px) {
+  body.sidebar-collapsed .sidebar {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 40px !important;
+    align-items: center !important;
+  }
+
+  body.sidebar-collapsed .sidebar-menu {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  body.sidebar-collapsed .sidebar-toggle-button {
+    position: relative !important;
+    top: auto !important;
+    right: auto !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: end !important;
+    align-self: center !important;
+    margin-left: 0 !important;
+    transform: none !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .inicio-body .user-dropdown,
+  .cal-page .user-dropdown,
+  .freq-page .user-dropdown,
+  .notas-page .user-dropdown,
+  .gestao-page .user-dropdown,
+  .msg-page .user-dropdown {
+    width: auto !important;
+    min-width: 124px !important;
+    max-width: 146px !important;
+    padding: 6px !important;
+  }
+
+  .inicio-body .user-dropdown button,
+  .cal-page .user-dropdown button,
+  .freq-page .user-dropdown button,
+  .notas-page .user-dropdown button,
+  .gestao-page .user-dropdown button,
+  .msg-page .user-dropdown button {
+    padding: 8px 10px !important;
+    font-size: 0.8rem !important;
+    text-align: center !important;
+  }
+}

@@ -33,7 +33,7 @@
       </div>
     </div>
 
-    <div class="notas-filtros" id="filtrosAdmin">
+    <div class="notas-filtros filtro-oculto" id="filtrosAdmin">
       <div class="filtro-group" id="grupoCurso" style="display:none;">
         <label for="selectCurso">Curso</label>
         <select id="selectCurso" disabled>
@@ -66,6 +66,44 @@
       </div>
     </div>
 
+    <div class="aluno-frequencia-toolbar filtro-oculto" id="filtrosAlunoFreq">
+      <div class="turmas-filtros aluno-frequencia-custom-filtros">
+        <div class="filtro-custom" id="wrapOrdenacaoFreq">
+          <button class="filtro-custom-btn" id="btnOrdenacaoFreq" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0">
+              <path d="M3 7h18"/><path d="M6 12h12"/><path d="M10 17h4"/>
+            </svg>
+            <span id="lblOrdenacaoFreq">Materia em ordem alfabetica</span>
+          </button>
+          <div class="filtro-custom-dropdown" id="dropOrdenacaoFreq">
+            <button class="filtro-custom-option selected" type="button" data-value="alfabetica">Materia em ordem alfabetica</button>
+            <button class="filtro-custom-option" type="button" data-value="freq-asc">Frequencia menor para maior</button>
+            <button class="filtro-custom-option" type="button" data-value="freq-desc">Frequencia maior para menor</button>
+          </div>
+        </div>
+        <div class="filtro-custom filtro-custom--materia" id="wrapMateriaAlunoFreq">
+          <button class="filtro-custom-btn" id="btnMateriaAlunoFreq" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;flex-shrink:0">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/>
+            </svg>
+            <span id="lblMateriaAlunoFreq">Todas as materias</span>
+          </button>
+          <div class="filtro-custom-dropdown" id="dropMateriaAlunoFreq">
+            <input type="search" class="filtro-custom-search" id="inputBuscaMateriaAlunoFreq" placeholder="Pesquisar materia">
+            <div id="opcoesMateriaAlunoFreq"></div>
+          </div>
+        </div>
+        <select id="selectOrdenacaoFreq" style="display:none">
+          <option value="alfabetica">Materia em ordem alfabetica</option>
+          <option value="freq-asc">Frequencia menor para maior</option>
+          <option value="freq-desc">Frequencia maior para menor</option>
+        </select>
+        <select id="selectMateriaAluno" style="display:none">
+          <option value="">Todas as materias</option>
+        </select>
+      </div>
+    </div>
+
     <div class="freq-result-area" id="freqResultArea">
       <div class="freq-empty" id="freqEmpty">
         <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
@@ -84,6 +122,17 @@
   const selectTurma = document.getElementById("selectTurma");
   const selectAluno = document.getElementById("selectAluno");
   const btnLimpar = document.getElementById("btnLimpar");
+  const filtrosAlunoFreq = document.getElementById("filtrosAlunoFreq");
+  const selectOrdenacaoFreq = document.getElementById("selectOrdenacaoFreq");
+  const selectMateriaAluno = document.getElementById("selectMateriaAluno");
+  const wrapOrdenacaoFreq = document.getElementById("wrapOrdenacaoFreq");
+  const btnOrdenacaoFreq = document.getElementById("btnOrdenacaoFreq");
+  const lblOrdenacaoFreq = document.getElementById("lblOrdenacaoFreq");
+  const wrapMateriaAlunoFreq = document.getElementById("wrapMateriaAlunoFreq");
+  const btnMateriaAlunoFreq = document.getElementById("btnMateriaAlunoFreq");
+  const lblMateriaAlunoFreq = document.getElementById("lblMateriaAlunoFreq");
+  const inputBuscaMateriaAlunoFreq = document.getElementById("inputBuscaMateriaAlunoFreq");
+  const opcoesMateriaAlunoFreq = document.getElementById("opcoesMateriaAlunoFreq");
   const freqResultArea = document.getElementById("freqResultArea");
   const filtrosAdmin = document.getElementById("filtrosAdmin");
   const grupoCurso = document.getElementById("grupoCurso");
@@ -97,6 +146,8 @@
   const btnSair = document.getElementById("btnSair");
 
   let filtroCursoAtivo = false;
+  let frequenciaAlunoDados = null;
+  let materiasAlunoFiltro = [];
 
   function getToken() {
     return localStorage.getItem("token");
@@ -152,6 +203,92 @@
     SearchableSelect.enhance(selectMateria, { placeholder: "Pesquise a materia" });
     SearchableSelect.enhance(selectTurma, { placeholder: "Pesquise a turma" });
     SearchableSelect.enhance(selectAluno, { placeholder: "Pesquise o aluno" });
+  }
+
+  function normalizarTexto(valor) {
+    return String(valor || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .trim();
+  }
+
+  function fecharFiltrosAluno(exceto) {
+    [wrapOrdenacaoFreq, wrapMateriaAlunoFreq].forEach((wrap) => {
+      if (wrap && wrap !== exceto) wrap.classList.remove("open");
+    });
+  }
+
+  function alternarFiltroAluno(wrap) {
+    if (!wrap) return;
+    const vaiAbrir = !wrap.classList.contains("open");
+    fecharFiltrosAluno(wrap);
+    wrap.classList.toggle("open", vaiAbrir);
+
+    if (vaiAbrir && wrap === wrapMateriaAlunoFreq && inputBuscaMateriaAlunoFreq) {
+      inputBuscaMateriaAlunoFreq.focus();
+      inputBuscaMateriaAlunoFreq.select();
+    }
+  }
+
+  function atualizarLabelOrdenacaoAluno() {
+    const option = selectOrdenacaoFreq.options[selectOrdenacaoFreq.selectedIndex];
+    if (lblOrdenacaoFreq && option) lblOrdenacaoFreq.textContent = option.textContent;
+
+    document.querySelectorAll("#dropOrdenacaoFreq .filtro-custom-option").forEach((btn) => {
+      btn.classList.toggle("selected", btn.dataset.value === selectOrdenacaoFreq.value);
+    });
+  }
+
+  function atualizarLabelMateriaAluno() {
+    const option = selectMateriaAluno.options[selectMateriaAluno.selectedIndex];
+    if (lblMateriaAlunoFreq && option) lblMateriaAlunoFreq.textContent = option.textContent;
+
+    document.querySelectorAll("#opcoesMateriaAlunoFreq .filtro-custom-option").forEach((btn) => {
+      btn.classList.toggle("selected", btn.dataset.value === selectMateriaAluno.value);
+    });
+  }
+
+  function criarOpcaoMateriaAluno(valor, texto) {
+    const botao = document.createElement("button");
+    botao.type = "button";
+    botao.className = "filtro-custom-option";
+    botao.dataset.value = valor;
+    botao.textContent = texto;
+    botao.addEventListener("click", () => {
+      selectMateriaAluno.value = valor;
+      atualizarLabelMateriaAluno();
+      fecharFiltrosAluno();
+      atualizarFrequenciaAluno();
+    });
+    return botao;
+  }
+
+  function renderizarFiltroMateriasAluno() {
+    if (!opcoesMateriaAlunoFreq) return;
+
+    const termo = normalizarTexto(inputBuscaMateriaAlunoFreq?.value || "");
+    const fragment = document.createDocumentFragment();
+
+    if (normalizarTexto("Todas as materias").includes(termo)) {
+      fragment.appendChild(criarOpcaoMateriaAluno("", "Todas as materias"));
+    }
+
+    materiasAlunoFiltro
+      .filter((materia) => normalizarTexto(materia.materia).includes(termo))
+      .forEach((materia) => {
+        fragment.appendChild(criarOpcaoMateriaAluno(getMateriaAlunoKey(materia), materia.materia));
+      });
+
+    if (!fragment.childNodes.length) {
+      const vazio = document.createElement("div");
+      vazio.className = "filtro-custom-empty";
+      vazio.textContent = "Nenhuma materia encontrada";
+      fragment.appendChild(vazio);
+    }
+
+    opcoesMateriaAlunoFreq.replaceChildren(fragment);
+    atualizarLabelMateriaAluno();
   }
 
   function getMensagemVazia() {
@@ -210,18 +347,77 @@
       </div>`;
   }
 
-  function renderizarPropriaFrequencia(dados) {
-    if (!dados.materias || dados.materias.length === 0) {
+  function getMateriaAlunoKey(materia) {
+    return `${materia.materia_id || ""}:${materia.turma_id || ""}`;
+  }
+
+  function compararMateriaAluno(a, b) {
+    return String(a.materia || "").localeCompare(String(b.materia || ""), "pt-BR", { sensitivity: "base" });
+  }
+
+  function ordenarMateriasAluno(materias) {
+    const ordenacao = selectOrdenacaoFreq?.value || "alfabetica";
+    const lista = [...materias];
+
+    if (ordenacao === "freq-asc") {
+      return lista.sort((a, b) =>
+        Number(a.presenca_raw || 0) - Number(b.presenca_raw || 0) || compararMateriaAluno(a, b)
+      );
+    }
+
+    if (ordenacao === "freq-desc") {
+      return lista.sort((a, b) =>
+        Number(b.presenca_raw || 0) - Number(a.presenca_raw || 0) || compararMateriaAluno(a, b)
+      );
+    }
+
+    return lista.sort(compararMateriaAluno);
+  }
+
+  function configurarFiltrosAluno(dados) {
+    const materias = [...(dados.materias || [])].sort(compararMateriaAluno);
+    materiasAlunoFiltro = materias;
+    selectMateriaAluno.innerHTML = `<option value="">Todas as materias</option>`;
+
+    materias.forEach((materia) => {
+      const option = document.createElement("option");
+      option.value = getMateriaAlunoKey(materia);
+      option.textContent = materia.materia;
+      selectMateriaAluno.appendChild(option);
+    });
+
+    selectMateriaAluno.disabled = materias.length === 0;
+    selectOrdenacaoFreq.disabled = materias.length === 0;
+    selectOrdenacaoFreq.value = "alfabetica";
+    selectMateriaAluno.value = "";
+    if (inputBuscaMateriaAlunoFreq) inputBuscaMateriaAlunoFreq.value = "";
+    atualizarLabelOrdenacaoAluno();
+    renderizarFiltroMateriasAluno();
+  }
+
+  function getMateriasAlunoFiltradas() {
+    if (!frequenciaAlunoDados) return [];
+
+    const materiaSelecionada = selectMateriaAluno?.value || "";
+    const materias = (frequenciaAlunoDados.materias || []).filter((materia) =>
+      !materiaSelecionada || getMateriaAlunoKey(materia) === materiaSelecionada
+    );
+
+    return ordenarMateriasAluno(materias);
+  }
+
+  function renderizarListaPropriaFrequencia(materias) {
+    if (!materias || materias.length === 0) {
       freqResultArea.innerHTML = `
         <div class="freq-empty">
           <i class="ph ph-books" style="font-size:3.5rem; opacity:0.3;"></i>
-          <p>Nenhuma materia encontrada para o seu cadastro.</p>
+          <p>Nenhuma materia encontrada para esse filtro.</p>
         </div>`;
       return;
     }
 
     let html = "";
-    dados.materias.forEach((materia) => {
+    materias.forEach((materia) => {
       const percentual = materia.presenca_raw;
       const statusClass = percentual >= 75 ? "freq-alert-ok" : "freq-alert-danger";
       const statusIcon = percentual >= 75 ? "ph-check-circle" : "ph-warning";
@@ -256,7 +452,7 @@
               <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presencas</div>
               <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> Faltas</div>
             </div>
-            <a class="btn-publicar" href="/frequencia/relatorio?aluno=${dados.aluno_id}&materia=${materia.materia_id}&turma=${materia.turma_id}">
+            <a class="btn-publicar" href="/frequencia/relatorio?aluno=${frequenciaAlunoDados.aluno_id}&materia=${materia.materia_id}&turma=${materia.turma_id}">
               <i class="ph ph-download-simple"></i> Baixar relatorio
             </a>
           </div>
@@ -264,6 +460,10 @@
     });
 
     freqResultArea.innerHTML = html;
+  }
+
+  function atualizarFrequenciaAluno() {
+    renderizarListaPropriaFrequencia(getMateriasAlunoFiltradas());
   }
 
   async function carregarPropriaFrequencia(alunoId) {
@@ -278,7 +478,9 @@
       if (!resposta.ok) throw new Error("Erro na requisicao");
       const dados = await resposta.json();
       dados.aluno_id = alunoId;
-      renderizarPropriaFrequencia(dados);
+      frequenciaAlunoDados = dados;
+      configurarFiltrosAluno(dados);
+      atualizarFrequenciaAluno();
     } catch {
       freqResultArea.innerHTML = `
         <div class="freq-empty">
@@ -493,14 +695,16 @@
       const desc = document.getElementById("pageHeadingDesc");
 
       if (isAluno(usuario)) {
-        filtrosAdmin.style.display = "none";
+        filtrosAdmin.classList.add("filtro-oculto");
+        filtrosAlunoFreq.classList.remove("filtro-oculto");
         if (heading) heading.textContent = "Minha Frequencia";
-        if (desc) desc.textContent = "Confira sua frequencia em cada materia";
+        if (desc) desc.textContent = "Filtre suas materias e acompanhe da menor para a maior frequencia";
         carregarPropriaFrequencia(usuario.id);
         return;
       }
 
-      filtrosAdmin.style.display = "grid";
+      filtrosAlunoFreq.classList.add("filtro-oculto");
+      filtrosAdmin.classList.remove("filtro-oculto");
       filtroCursoAtivo = !isAluno(usuario);
 
       if (filtroCursoAtivo) {
@@ -523,6 +727,23 @@
   }
 
   if (selectCurso) selectCurso.addEventListener("change", carregarMaterias);
+  selectOrdenacaoFreq.addEventListener("change", atualizarFrequenciaAluno);
+  selectMateriaAluno.addEventListener("change", atualizarFrequenciaAluno);
+  btnOrdenacaoFreq.addEventListener("click", () => alternarFiltroAluno(wrapOrdenacaoFreq));
+  btnMateriaAlunoFreq.addEventListener("click", () => alternarFiltroAluno(wrapMateriaAlunoFreq));
+  inputBuscaMateriaAlunoFreq.addEventListener("input", renderizarFiltroMateriasAluno);
+  document.querySelectorAll("#dropOrdenacaoFreq .filtro-custom-option").forEach((botao) => {
+    botao.addEventListener("click", () => {
+      selectOrdenacaoFreq.value = botao.dataset.value || "alfabetica";
+      atualizarLabelOrdenacaoAluno();
+      fecharFiltrosAluno();
+      atualizarFrequenciaAluno();
+    });
+  });
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("#wrapOrdenacaoFreq") || event.target.closest("#wrapMateriaAlunoFreq")) return;
+    fecharFiltrosAluno();
+  });
   selectMateria.addEventListener("change", carregarTurmas);
   selectTurma.addEventListener("change", carregarAlunos);
   selectAluno.addEventListener("change", carregarFrequencia);
