@@ -1,8 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify
 import mysql.connector
 
-from conexao import criar_conexao
-from login import token_obrigatorio, papel_obrigatorio
+from .conexao import criar_conexao
+from .login import token_obrigatorio, papel_obrigatorio
 
 presenca_bp = Blueprint("presenca", __name__)
 

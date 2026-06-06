@@ -82,14 +82,6 @@
   const dataAula        = document.getElementById("dataAula");
   const presencaCardWrap= document.getElementById("presencaCardWrap");
 
-  const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
-  const papelUsuario     = document.getElementById("papelUsuario");
-  const avatarUsuario    = document.getElementById("avatarUsuario");
-  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-  const menuUsuario      = document.getElementById("menuUsuario");
-  const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
-  const btnSair          = document.getElementById("btnSair");
-
   function getToken() { return localStorage.getItem("token"); }
   function limparSessao() {
     localStorage.removeItem("token");
@@ -201,12 +193,6 @@
       })();
       if (usuarioCache) {
         const u = JSON.parse(usuarioCache);
-        if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = u.nome;
-        if (papelUsuario)    papelUsuario.textContent    = formatarPapel(u.papel);
-        if (avatarUsuario)   avatarUsuario.textContent   = u.nome.charAt(0).toUpperCase();
-        const btnGestao = document.getElementById("btnGestaoUsuarios");
-        if (btnGestao && ["coordenador","admin","adm"].includes(String(u.papel).toLowerCase()))
-          btnGestao.style.display = "block";
       }
     } catch(e) { console.warn("Erro cache:", e); }
 
@@ -215,12 +201,6 @@
       if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
       const { usuario } = await r.json();
       localStorage.setItem("usuario", JSON.stringify(usuario));
-      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
-      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
-      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
-      const btnGestao = document.getElementById("btnGestaoUsuarios");
-      if (btnGestao && ["coordenador","admin","adm"].includes(String(usuario.papel).toLowerCase()))
-        btnGestao.style.display = "block";
     } catch { limparSessao(); window.location.href = "/"; }
   }
 
@@ -457,13 +437,6 @@
   selectMateria.addEventListener("change", carregarTurmas);
   selectTurma.addEventListener("change", carregarDatas);
   // O listener do dataAula é atribuído dentro de habilitarInputData()
-
-  if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
-  if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click", () => window.location.href = "/perfil");
-  if (btnSair)          btnSair.addEventListener("click", sair);
-  window.addEventListener("click", e => {
-    if (!e.target.closest(".user-menu") && menuUsuario) menuUsuario.classList.remove("show");
-  });
 
   aplicarFiltrosPesquisaveis();
   carregarUsuarioLogado();

@@ -137,14 +137,6 @@
   const filtrosAdmin = document.getElementById("filtrosAdmin");
   const grupoCurso = document.getElementById("grupoCurso");
 
-  const nomeUsuarioTopo = document.getElementById("nomeUsuarioTopo");
-  const papelUsuario = document.getElementById("papelUsuario");
-  const avatarUsuario = document.getElementById("avatarUsuario");
-  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-  const menuUsuario = document.getElementById("menuUsuario");
-  const btnEditarPerfil = document.getElementById("btnEditarPerfil");
-  const btnSair = document.getElementById("btnSair");
-
   let filtroCursoAtivo = false;
   let frequenciaAlunoDados = null;
   let materiasAlunoFiltro = [];
@@ -682,15 +674,6 @@
 
       const { usuario } = await resposta.json();
 
-      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
-      if (papelUsuario) papelUsuario.textContent = formatarPapel(usuario.papel);
-      if (avatarUsuario) avatarUsuario.textContent = usuario.nome.charAt(0).toUpperCase();
-
-      const btnGestao = document.getElementById("btnGestaoUsuarios");
-      if (btnGestao && isCoordenador(usuario)) {
-        btnGestao.style.display = "block";
-      }
-
       const heading = document.getElementById("pageHeadingTitle");
       const desc = document.getElementById("pageHeadingDesc");
 
@@ -748,18 +731,6 @@
   selectTurma.addEventListener("change", carregarAlunos);
   selectAluno.addEventListener("change", carregarFrequencia);
   btnLimpar.addEventListener("click", limparFiltros);
-
-  if (botaoMenuUsuario) {
-    botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
-  }
-
-  if (btnEditarPerfil) {
-    btnEditarPerfil.addEventListener("click", () => window.location.href = "/perfil");
-  }
-
-  if (btnSair) {
-    btnSair.addEventListener("click", sair);
-  }
 
   atualizarFiltrosPesquisaveis();
   mostrarVazio();

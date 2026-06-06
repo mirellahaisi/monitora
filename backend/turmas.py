@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, render_template, request
 import mysql.connector
 
-from conexao import criar_conexao
-from login import token_obrigatorio, papel_obrigatorio
+from .conexao import criar_conexao
+from .login import token_obrigatorio, papel_obrigatorio
 
 turmas_bp = Blueprint("turmas", __name__)
 

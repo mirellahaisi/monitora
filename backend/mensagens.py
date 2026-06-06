@@ -11,8 +11,8 @@ from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 
-from conexao import criar_conexao
-from gerador_token import validar_token
+from .conexao import criar_conexao
+from .gerador_token import validar_token
 
 mensagens_bp = Blueprint("mensagens", __name__)
 

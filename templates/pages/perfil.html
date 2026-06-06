@@ -93,24 +93,7 @@
     let perfilOriginal       = null;
 
     // Elementos do header/sidebar — injetados pelos includes; guards evitam erros
-    const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
-    const papelUsuario     = document.getElementById("papelUsuario");
-    const avatarUsuario    = document.getElementById("avatarUsuario");
-    const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-    const menuUsuario      = document.getElementById("menuUsuario");
-    const btnSair          = document.getElementById("btnSair");
-    const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
-    const btnGestaoUsuarios= document.getElementById("btnGestaoUsuarios");
-
     // ── Helpers ────────────────────────────────────────────────────────
-    function formatarPapel(papel) {
-      const n = String(papel).toLowerCase();
-      if (n === "admin" || n === "adm" || n === "coordenador") return "Coordenador";
-      if (n === "professor") return "Professor";
-      if (n === "aluno") return "Aluno";
-      return papel;
-    }
-
     function limparSessaoFront() {
       localStorage.removeItem("token");
       localStorage.removeItem("usuario");
@@ -201,17 +184,6 @@
     }
 
     // ── Preenche dados no topo (header component) ──────────────────────
-    function preencherTopo(usuario) {
-      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
-      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
-      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
-
-      const isCoord = ["coordenador","admin","adm"].includes(usuario.papel.toLowerCase());
-      if (isCoord && btnGestaoUsuarios) {
-        btnGestaoUsuarios.style.display = "block";
-      }
-    }
-
     // ── Validações ─────────────────────────────────────────────────────
     function validarCampos() {
       const nome     = nomeInput.value.trim();
@@ -266,8 +238,6 @@
 
         const dados   = await resposta.json();
         const usuario = dados.usuario;
-
-        preencherTopo(usuario);
 
         nomeInput.value           = usuario.nome            || "";
         emailInput.value          = usuario.email           || "";
@@ -360,7 +330,6 @@
         localStorage.setItem("sessaoExpiracao",String(dados.sessao.expiracao));
 
         novaSenhaInput.value = "";
-        preencherTopo(dados.usuario);
         perfilOriginal = obterPerfilAtual();
 
         Swal.fire({
@@ -407,28 +376,6 @@
     }
 
     // ── Eventos do header/menu (com guards) ────────────────────────────
-    if (botaoMenuUsuario) {
-      botaoMenuUsuario.addEventListener("click", function() {
-        menuUsuario.classList.toggle("show");
-      });
-    }
-
-    window.addEventListener("click", function(event) {
-      if (!event.target.closest(".user-menu") && menuUsuario) {
-        menuUsuario.classList.remove("show");
-      }
-    });
-
-    if (btnSair)          btnSair.addEventListener("click", sair);
-    if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click", function() {
-      if (menuUsuario) menuUsuario.classList.remove("show");
-      window.location.href = "/perfil";
-    });
-    if (btnGestaoUsuarios) btnGestaoUsuarios.addEventListener("click", function() {
-      if (menuUsuario) menuUsuario.classList.remove("show");
-      window.location.href = "/gestao-usuarios";
-    });
-
     btnCancelar.addEventListener("click", function() {
       window.location.href = "/inicio";
     });

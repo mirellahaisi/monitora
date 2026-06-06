@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -622,47 +622,6 @@
     document.getElementById("salario").addEventListener("blur", (e) => {
       e.target.value = formatarSalario(e.target.value);
     });
-
-    // Menu usuário
-    const botaoMenu   = document.getElementById("botaoMenuUsuario");
-    const menuUsuario = document.getElementById("menuUsuario");
-    if (botaoMenu) botaoMenu.addEventListener("click", () => menuUsuario.classList.toggle("show"));
-    window.addEventListener("click", e => { if (!e.target.closest(".user-menu")) menuUsuario?.classList.remove("show"); });
-    document.getElementById("btnEditarPerfil")?.addEventListener("click", () => { window.location.href = "/perfil"; });
-    document.getElementById("btnSair")?.addEventListener("click", sair);
-
-    // Inicialização
-    const usuarioSalvo = (function(){
-      try {
-        const t = localStorage.getItem("token");
-        if (t) {
-          const part = t.split(".")[1];
-          const b64  = part.replace(/-/g,"+").replace(/_/g,"/");
-          const pad  = "=".repeat((4 - b64.length % 4) % 4);
-          return JSON.stringify(JSON.parse(atob(b64 + pad)));
-        }
-      } catch(e){}
-      return localStorage.getItem("usuario");
-    })();
-
-    if (usuarioSalvo) {
-      try {
-        const u = JSON.parse(usuarioSalvo);
-        const nomeEl   = document.getElementById("nomeUsuarioTopo");
-        const avatarEl = document.getElementById("avatarUsuario");
-        const papelEl  = document.getElementById("papelUsuario");
-        if (nomeEl)   nomeEl.textContent   = u.nome;
-        if (avatarEl) avatarEl.textContent = u.nome ? u.nome.charAt(0).toUpperCase() : "?";
-        function formatarPapel(papel) {
-          const p = String(papel).toLowerCase();
-          if (["admin","adm","coordenador"].includes(p)) return "Coordenador";
-          if (p === "professor") return "Professor";
-          if (p === "aluno")     return "Aluno";
-          return papel;
-        }
-        if (papelEl) papelEl.textContent = formatarPapel(u.papel);
-      } catch {}
-    }
 
     carregarAba("alunos");
   </script>

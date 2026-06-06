@@ -381,14 +381,6 @@
   // ══════════════════════════════════════════════
   //  UTILS — mantém compatibilidade com o projeto
   // ══════════════════════════════════════════════
-  const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
-  const papelUsuario     = document.getElementById("papelUsuario");
-  const avatarUsuario    = document.getElementById("avatarUsuario");
-  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
-  const menuUsuario      = document.getElementById("menuUsuario");
-  const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
-  const btnSair          = document.getElementById("btnSair");
-
   function getToken()     { return localStorage.getItem("token"); }
   function limparSessao() { ["token","usuario","sessaoExpiracao"].forEach(k=>localStorage.removeItem(k)); }
   function tokenExpirado(){ const e=Number(localStorage.getItem("sessaoExpiracao")); return !e||e<Math.floor(Date.now()/1000); }
@@ -406,34 +398,7 @@
 
   const isProfessor = p => { const s=String(p||"").toLowerCase(); return s==="professor"||Number(p)===2; };
   const isAluno     = p => { const s=String(p||"").toLowerCase(); return s==="aluno"    ||Number(p)===3; };
-  const formatarPapel = p => {
-    const s=String(p||"").toLowerCase();
-    if(["admin","adm","coordenador"].includes(s)) return "Coordenador";
-    if(s==="professor") return "Professor";
-    if(s==="aluno")     return "Aluno";
-    return p;
-  };
   const turnoAtual = () => { const h=new Date().getHours(); return h<12?"Bom dia":h<18?"Boa tarde":"Boa noite"; };
-
-  // Header
-  if (botaoMenuUsuario) {
-    botaoMenuUsuario.addEventListener("click",()=>menuUsuario?.classList.toggle("show"));
-    document.addEventListener("click",e=>{ if(!e.target.closest?.(".user-menu")) menuUsuario?.classList.remove("show"); });
-  }
-  if (btnEditarPerfil) btnEditarPerfil.addEventListener("click",()=>window.location.href="/perfil");
-  if (btnSair) btnSair.addEventListener("click", sair);
-
-  async function sair() {
-    const c = await Swal.fire({
-      icon:"question",title:"Deseja sair?",text:"Sua sessão será encerrada.",
-      showCancelButton:true,confirmButtonText:"Sim, sair",cancelButtonText:"Cancelar",
-      confirmButtonColor:"#0ea5e9"
-    });
-    if (!c.isConfirmed) return;
-    try { if(getToken()) await fetch("/api/logout",{method:"POST",headers:{"Authorization":`Bearer ${getToken()}`}}); } catch(e){}
-    limparSessao();
-    window.location.href = "/";
-  }
 
   // ══════════════════════════════════════════════
   //  HELPERS DE DATA
@@ -448,6 +413,44 @@
   function toLocalStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
   function parseEvDate(s){ if(!s)return null; return s.length===10?new Date(s+"T00:00:00"):new Date(s); }
 
+  function ordenarRecentes(lista) {
+    return (lista||[]).slice().sort((a,b)=>{
+      const da=Date.parse(a.data_publicacao||a.data_inicio||a.criado_em||a.created_at||a.data_criacao||"")||0;
+      const db=Date.parse(b.data_publicacao||b.data_inicio||b.criado_em||b.created_at||b.data_criacao||"")||0;
+      if(db!==da) return db-da;
+      const sa=(Number(a.ano)||0)*10+(Number(a.semestre)||0);
+      const sb=(Number(b.ano)||0)*10+(Number(b.semestre)||0);
+      if(sb!==sa) return sb-sa;
+      return (Number(b.id)||0)-(Number(a.id)||0);
+    });
+  }
+
+  function ordenarCriticos(lista) {
+    return (lista||[]).slice().sort((a,b)=>{
+      const da=Date.parse(a.data_publicacao||a.data_inicio||a.criado_em||a.created_at||"")||0;
+      const db=Date.parse(b.data_publicacao||b.data_inicio||b.criado_em||b.created_at||"")||0;
+      const ca=a.tipo==="nota" ? Number(a.percentual||0)*10 : Number(a.percentual||100);
+      const cb=b.tipo==="nota" ? Number(b.percentual||0)*10 : Number(b.percentual||100);
+      if(ca!==cb) return ca-cb;
+      return db-da;
+    });
+  }
+
+  function selecionarExtremosMedia(lista, campo, melhores, piores) {
+    const ordenados=(lista||[])
+      .filter(item=>item&&item[campo]!==null&&item[campo]!==undefined)
+      .slice()
+      .sort((a,b)=>Number(a[campo])-Number(b[campo]));
+    const vistos=new Set();
+    return [...ordenados.slice(0,piores), ...ordenados.slice(-melhores).reverse()]
+      .filter(item=>{
+        const chave=item.id||item.materia_id||item.nome||item.materia_nome;
+        if(vistos.has(chave)) return false;
+        vistos.add(chave);
+        return true;
+      });
+  }
+
   // ══════════════════════════════════════════════
   //  RENDER: AGENDA SEMANAL
   // ══════════════════════════════════════════════
@@ -456,7 +459,7 @@
     const el=document.getElementById(id); if(!el)return;
     el.innerHTML = dias.map((d,i)=>{
       const dStr=toLocalStr(d), isHoje=dStr===hojeStr;
-      const evs=(eventos||[]).filter(ev=>{ const dt=parseEvDate(ev.data_inicio||ev.data_publicacao||""); return dt&&toLocalStr(dt)===dStr; });
+      const evs=ordenarRecentes((eventos||[]).filter(ev=>{ const dt=parseEvDate(ev.data_inicio||ev.data_publicacao||""); return dt&&toLocalStr(dt)===dStr; })).slice(0,2);
       const evsHtml=evs.length
         ? evs.map(ev=>{ const dt=parseEvDate(ev.data_inicio); const hora=dt?dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""; const cor=ev.cor||"#0ea5e9"; return `<div class="dv-ev" style="border-left-color:${cor}"><div class="dv-ev-t">${ev.titulo}</div>${hora?`<div class="dv-ev-h">${hora}</div>`:""}</div>`; }).join("")
         : `<div class="dv-ag-empty">—</div>`;
@@ -467,12 +470,12 @@
   // ══════════════════════════════════════════════
   //  RENDER: MENSAGENS
   // ══════════════════════════════════════════════
-  function renderMensagens(msgs, id) {
+  function renderMensagens(msgs, id, limite=5) {
     const el=document.getElementById(id); if(!el)return;
     if(!msgs||!msgs.length){ el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem recente.</div>`; return; }
     const bgs=["#dbeafe","#dcfce7","#fef9c3","#fce7f3","#ede9fe"];
     const ics=["#1d4ed8","#166534","#854d0e","#9d174d","#5b21b6"];
-    el.innerHTML=msgs.slice(0,5).map((m,i)=>{
+    el.innerHTML=ordenarRecentes(msgs).slice(0,limite).map((m,i)=>{
       const ci=i%bgs.length;
       const data=m.data_publicacao?new Date(m.data_publicacao).toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}):"";
       const lido=m.lido!==false;
@@ -556,7 +559,7 @@
         notasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-note"></i>Nenhuma nota lançada ainda.</div>`;
         const rp=document.getElementById("alunoNotasRodapeMed");if(rp)rp.textContent="—";
       } else {
-        notasEl.innerHTML=mats.map(m=>{
+        notasEl.innerHTML=mats.slice(0,3).map(m=>{
           const med=m.media!==null&&m.media!==undefined?Number(m.media):null;
           const pct=med!==null?Math.min(100,(med/10)*100):0;
           const cls=med===null?"":pct>=70?"":pct>=50?"warn":"bad";
@@ -570,7 +573,8 @@
         }).join("");
       }
 
-      if(comMedia.length) renderBarChart(comMedia.map(m=>({val:Number(m.media),label:m.nome||m.materia_nome})),"alunoChartBars","alunoChartLbls");
+      const desempenhoAluno=selecionarExtremosMedia(comMedia, "media", 1, 1);
+      if(desempenhoAluno.length) renderBarChart(desempenhoAluno.map(m=>({val:Number(m.media),label:m.nome||m.materia_nome})),"alunoChartBars","alunoChartLbls");
     } catch(e){
       const el=document.getElementById("alunoNotas"); if(el) el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>Erro ao carregar notas.</div>`;
     }
@@ -625,7 +629,7 @@
     try { const ev=await apiFetch("/api/calendario"); renderAgenda(ev.eventos||[],"alunoAgenda"); }
     catch(e){ renderAgenda([],"alunoAgenda"); }
 
-    try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"alunoMensagens"); }
+    try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"alunoMensagens",3); }
     catch(e){ const el=document.getElementById("alunoMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem.</div>`; }
   }
 
@@ -658,7 +662,7 @@
       if(!mats.length){
         matsEl.innerHTML=`<div class="dv-empty"><i class="ph ph-book"></i>Nenhuma matéria atribuída.</div>`;
       } else {
-        matsEl.innerHTML=mats.map(m=>{
+        matsEl.innerHTML=mats.slice(0,3).map(m=>{
           const med=m.media_turma!==undefined&&m.media_turma!==null?Number(m.media_turma):null;
           const pct=med!==null?Math.min(100,(med/10)*100):0;
           const cls=med===null?"":pct>=70?"purple":pct>=50?"warn":"bad";
@@ -695,8 +699,9 @@
       if(!tcm.length){
         desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>Ainda não há médias calculadas.</div>`;
       } else {
+        const turmasDesempenho=selecionarExtremosMedia(tcm, "media_geral", 1, 1);
         desempEl.innerHTML=`<div class="dv-col-chart">${
-          tcm.map(t=>{
+          turmasDesempenho.map(t=>{
             const med=Number(t.media_geral);
             const hPx=Math.max(4,Math.round((med/10)*120));
             const col=med>=7?"#8b5cf6":med>=5?"#f59e0b":"#ef4444";
@@ -720,14 +725,14 @@
       if(!alertas.length){
         el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Nenhum aluno em alerta.</div>`;
       } else {
-        el.innerHTML=alertas.map(a=>{ const pct=Math.round(a.percentual||0),cl=pct<60?"db-red":"db-yellow"; return `<div class="dv-row"><div class="dv-avatar" style="background:${pct<60?"#fee2e2":"#fef9c3"};color:${pct<60?"#991b1b":"#854d0e"}"><i class="ph ph-user"></i></div><div class="dv-info"><div class="dv-name">${a.nome}</div><div class="dv-sub"><span class="dv-tag">${a.turma||""}</span> · ${a.materia||""}</div></div><span class="dv-badge ${cl}">${pct}%</span></div>`; }).join("");
+        el.innerHTML=ordenarCriticos(alertas).slice(0,2).map(a=>{ const pct=Math.round(a.percentual||0),cl=pct<60?"db-red":"db-yellow"; return `<div class="dv-row"><div class="dv-avatar" style="background:${pct<60?"#fee2e2":"#fef9c3"};color:${pct<60?"#991b1b":"#854d0e"}"><i class="ph ph-user"></i></div><div class="dv-info"><div class="dv-name">${a.nome}</div><div class="dv-sub"><span class="dv-tag">${a.turma||""}</span> · ${a.materia||""}</div></div><span class="dv-badge ${cl}">${pct}%</span></div>`; }).join("");
       }
     } catch(e){ const el=document.getElementById("profAlertas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Sem dados.</div>`; }
 
     try { const ev=await apiFetch("/api/calendario"); renderAgenda(ev.eventos||[],"profAgenda"); }
     catch(e){ renderAgenda([],"profAgenda"); }
 
-    try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"profMensagens"); }
+    try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"profMensagens",2); }
     catch(e){ const el=document.getElementById("profMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem.</div>`; }
   }
 
@@ -751,15 +756,11 @@
       // Turmas list — nome truncado, badge preservado
       const turmasEl=document.getElementById("coordTurmas");
       // ordenar: com média primeiro (maior→menor), sem média depois
-      const turmasOrdenadas=turmas.slice().sort((a,b)=>{
-        const va=a.media_geral!==null&&a.media_geral!==undefined?Number(a.media_geral):-Infinity;
-        const vb=b.media_geral!==null&&b.media_geral!==undefined?Number(b.media_geral):-Infinity;
-        return vb-va;
-      });
+      const turmasOrdenadas=ordenarRecentes(turmas);
       if(!turmasOrdenadas.length){
         turmasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-users"></i>Nenhuma turma.</div>`;
       } else {
-        turmasEl.innerHTML=turmasOrdenadas.slice(0,5).map(t=>{
+        turmasEl.innerHTML=turmasOrdenadas.slice(0,2).map(t=>{
           const med=t.media_geral, cl=med===null||med===undefined?"db-gray":Number(med)>=7?"db-green":Number(med)>=5?"db-yellow":"db-red";
           return `<div class="dv-row">
             <div class="dv-avatar" style="background:#ede9fe;color:#5b21b6;font-weight:900">${(t.nome||"T").charAt(0)}</div>
@@ -788,9 +789,10 @@
       if(!tcm2.length){
         desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>Ainda não há médias calculadas.</div>`;
       } else {
+        const turmasDesempenho=selecionarExtremosMedia(tcm2, "media_geral", 2, 2);
         const maxV=10; // always scale to 10 so bars are proportional to grade
         desempEl.innerHTML=`<div class="dv-col-chart">${
-          tcm2.map(t=>{
+          turmasDesempenho.map(t=>{
             const med=Number(t.media_geral);
             const hPct=Math.max(8,Math.round((med/10)*100)); // relative to 10, min 8%
             const col=med>=7?"#f97316":med>=5?"#f59e0b":"#ef4444";
@@ -836,7 +838,7 @@
       if(!alertas.length){
         el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Nenhum alerta no momento.</div>`;
       } else {
-        el.innerHTML=alertas.slice(0,5).map(a=>{
+        el.innerHTML=ordenarCriticos(alertas).slice(0,2).map(a=>{
           if(a.tipo==="nota"){
             return `<div class="dv-row">
               <div class="dv-avatar" style="background:#ede9fe;color:#5b21b6"><i class="ph ph-chart-bar"></i></div>
@@ -880,10 +882,6 @@
       const dados=await apiFetch("/api/usuario-logado");
       const usuario=dados.usuario;
       localStorage.setItem("usuario",JSON.stringify(usuario));
-
-      if(nomeUsuarioTopo) nomeUsuarioTopo.textContent=usuario.nome;
-      if(papelUsuario)    papelUsuario.textContent=formatarPapel(usuario.papel);
-      if(avatarUsuario)   avatarUsuario.textContent=usuario.nome.charAt(0).toUpperCase();
 
       const papel=usuario.papel, papelId=Number(usuario.papel_id);
       if     (isAluno(papel)    ||papelId===3) await carregarAluno(usuario);

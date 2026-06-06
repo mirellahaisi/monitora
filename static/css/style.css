@@ -207,9 +207,9 @@ body {
 
 .sidebar {
   width: 178px;
-  min-height: calc(100vh - 24px);
-  margin: 12px;
-  padding: 24px 12px;
+  min-height: calc(100vh - 48px);
+  margin: 12px 12px 24px;
+  padding: 24px 12px 28px;
   border-radius: 18px;
   background: linear-gradient(180deg, #93d7df, #57dbbd);
   display: flex;
@@ -668,8 +668,8 @@ body {
 /* ── Sidebar (igual ao inicio) ── */
 .sidebar {
   width: 178px;
-  min-height: calc(100vh - 24px);
-  margin: 12px;
+  min-height: calc(100vh - 48px);
+  margin: 12px 12px 24px;
   padding: 24px 12px;
   border-radius: 18px;
   background: linear-gradient(180deg, #93d7df, #57dbbd);
@@ -677,7 +677,7 @@ body {
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
-  height: calc(100vh - 24px);
+  height: calc(100vh - 48px);
   min-height: auto;
   flex-shrink: 0;
 }
@@ -2192,8 +2192,8 @@ body.dark .btn-dark-mode:hover {
 .cal-page .sidebar,
 .gestao-page .sidebar {
   width: 200px !important;
-  min-height: calc(100vh - 24px) !important;
-  margin: 12px !important;
+  min-height: calc(100vh - 48px) !important;
+  margin: 12px 12px 24px !important;
   padding: 24px 14px !important;
   border-radius: 20px !important;
   background: var(--grad) !important;
@@ -2759,11 +2759,11 @@ body.dark .btn-dark-mode:hover {
 /* ══ SIDEBAR ══ */
 .freq-page .sidebar {
   width: 200px !important;
-  height: calc(100vh - 24px) !important;
+  height: calc(100vh - 48px) !important;
   position: sticky !important;
   top: 12px !important;
   overflow-y: auto !important;
-  margin: 12px !important;
+  margin: 12px 12px 24px !important;
   padding: 24px 14px !important;
   border-radius: 20px !important;
   background: var(--grad) !important;
@@ -3996,8 +3996,8 @@ body.dark .btn-dark-mode:hover {
 /* ══ SIDEBAR ══ */
 .msg-page .sidebar {
   width: 200px !important;
-  min-height: calc(100vh - 24px) !important;
-  margin: 12px !important;
+  min-height: calc(100vh - 48px) !important;
+  margin: 12px 12px 24px !important;
   padding: 24px 14px !important;
   border-radius: 20px !important;
   background: var(--grad) !important;
@@ -4277,10 +4277,10 @@ body.dark .btn-dark-mode:hover {
 /* ══ SIDEBAR ══ */
 .notas-page .sidebar {
   width: 200px !important;
-  height: calc(100vh - 24px) !important;
+  height: calc(100vh - 48px) !important;
   position: sticky !important;
   top: 12px !important;
-  margin: 12px 0 12px 12px !important;
+  margin: 12px 0 24px 12px !important;
   padding: 24px 14px !important;
   border-radius: 20px !important;
   background: var(--grad) !important;
@@ -4964,10 +4964,10 @@ body.dark .btn-dark-mode:hover {
        SIDEBAR (idêntico ao notas.html)
     ══════════════════════════════════════ */
     .sidebar {
-      width: 200px; height: calc(100vh - 24px);
+      width: 200px; height: calc(100vh - 48px);
       position: sticky; top: 12px;
-      margin: 12px 0 12px 12px;
-      padding: 24px 14px;
+      margin: 12px 0 24px 12px;
+      padding: 24px 14px 32px;
       border-radius: 20px; background: var(--grad);
       display: flex; flex-direction: column; align-items: center;
       flex-shrink: 0; box-shadow: 0 8px 32px rgba(87,219,189,0.25);
@@ -4991,7 +4991,7 @@ body.dark .btn-dark-mode:hover {
     .sidebar-link.active, .sidebar-link:hover {
       background: rgba(255,255,255,0.92); color: var(--mid);
     }
-    .sidebar-bottom { margin-top: auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+    .sidebar-bottom { margin-top: auto; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; padding-bottom: 4px; }
     .sidebar-laptop svg { width: 80px; opacity: 0.6; }
     .logout-button {
       width: 100%; padding: 10px 14px; border: 0;
@@ -6077,6 +6077,21 @@ body.dark .btn-dark-mode:hover {
 #coordDesempenho,
 #profDesempenho { display:flex; flex:1; align-items:flex-end; justify-content:center; width:100%; min-height:0; margin-top:auto; }
 
+body.dark #alunoNotasRodape {
+  border-top-color: rgba(148, 163, 184, 0.45) !important;
+}
+
+body.dark #alunoNotasRodape span {
+  color: #9fb3c8 !important;
+}
+
+body.dark #alunoNotasRodape #alunoNotasRodapeMed,
+body.dark #alunoNotasRodapeMed,
+body.dark .dv-col-val,
+body.dark .dv-prog-hd strong {
+  color: #eaf2ff !important;
+}
+
 /* ── FREQ POR MATÉRIA (aluno) ─────────────────────── */
 .dv-freq-list { display:flex; flex-direction:column; gap:8px; }
 .dv-freq-item { display:flex; align-items:center; gap:10px; }
@@ -7142,7 +7157,7 @@ body.sidebar-collapsed .sidebar-toggle-icon {
 
 body.sidebar-collapsed .sidebar {
   width: 82px !important;
-  padding: 52px 10px 16px !important;
+  padding: 52px 10px 24px !important;
   align-items: center !important;
 }
 
@@ -7605,8 +7620,9 @@ body.inicio-body:not(.notas-page):not(.freq-page):not(.cal-page):not(.gestao-pag
   }
 
   body.inicio-body > .sidebar {
-    height: calc(100vh - 24px) !important;
-    min-height: calc(100vh - 24px) !important;
+    height: calc(100vh - 48px) !important;
+    min-height: calc(100vh - 48px) !important;
+    margin-bottom: 24px !important;
     overflow-y: auto !important;
   }
 
