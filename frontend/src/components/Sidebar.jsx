@@ -1,5 +1,56 @@
 import { getStoredUser, isCoordinator, isProfessor, isStudent } from "../layoutSession.js";
 
+function getToken() {
+  return window.localStorage.getItem("token");
+}
+
+function clearSession() {
+  window.localStorage.removeItem("token");
+  window.localStorage.removeItem("usuario");
+  window.localStorage.removeItem("sessaoExpiracao");
+}
+
+async function confirmLogout() {
+  if (window.Swal && typeof window.Swal.fire === "function") {
+    const result = await window.Swal.fire({
+      icon: "question",
+      title: "Deseja sair?",
+      text: "Sua sessao sera encerrada.",
+      showCancelButton: true,
+      confirmButtonText: "Sim, sair",
+      cancelButtonText: "Cancelar"
+    });
+
+    return result.isConfirmed;
+  }
+
+  return window.confirm("Deseja sair?");
+}
+
+async function logout(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.nativeEvent?.stopImmediatePropagation?.();
+
+  const confirmed = await confirmLogout();
+  if (!confirmed) return;
+
+  try {
+    const token = getToken();
+    if (token) {
+      await fetch("/api/logout", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+    }
+  } catch (error) {
+    // A falha no endpoint nao deve impedir a limpeza local da sessao.
+  }
+
+  clearSession();
+  window.location.href = "/";
+}
+
 function IconHome() {
   return (
     <svg className="sidebar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -206,7 +257,7 @@ export default function Sidebar({ activePage = "" }) {
           <LaptopArt />
         </div>
 
-        <button className="logout-button" id="btnSair" type="button">
+        <button className="logout-button" id="btnSair" type="button" onClickCapture={logout}>
           <IconLogout />
           Sair
         </button>

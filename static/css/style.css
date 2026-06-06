@@ -3007,7 +3007,7 @@ body.dark .btn-dark-mode:hover {
   box-sizing: border-box;
 }
 .freq-page .notas-filtros.notas-filtros--curso {
-  grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;
+  grid-template-columns: minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto !important;
 }
 .freq-page .filtro-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .freq-page .filtro-group.filtro-group--btn { flex: 0 0 auto; min-width: unset; }
