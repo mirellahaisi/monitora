@@ -714,10 +714,7 @@ def deletar_usuario(usuario_logado, id):
         conexao = criar_conexao()
         cursor = conexao.cursor()
 
-        cursor.execute(
-            "UPDATE usuario SET ativo = 0 WHERE id = %s AND ativo = 1",
-            (id,)
-        )
+        cursor.execute("CALL sp_desativar_usuario(%s)", (id,))
         conexao.commit()
 
         if cursor.rowcount == 0:
