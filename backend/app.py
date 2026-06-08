@@ -18,6 +18,7 @@ from .presenca import presenca_bp
 from .mensagens import mensagens_bp
 from .cursos import cursos_bp
 from .materias import materias_bp
+from .desempenho import desempenho_bp
 
  
 
@@ -51,6 +52,7 @@ app.register_blueprint(calendario_bp)
 app.register_blueprint(mensagens_bp)
 app.register_blueprint(cursos_bp)
 app.register_blueprint(materias_bp)
+app.register_blueprint(desempenho_bp)
 
 
 # ========================

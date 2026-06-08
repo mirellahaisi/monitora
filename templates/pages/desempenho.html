@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Desempenho</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/desempenho.css') }}">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+ 
+</head>
+
+<body class="inicio-body">
+
+{% include 'components/sidebar.html' %}
+<script src="/static/react/assets/main.js"></script>
+
+<main class="inicio-main">
+  {% include 'components/header.html' %}
+
+  <!-- Título padrão (igual às outras páginas) -->
+  <div class="page-title-row">
+    <div class="page-title-icon">
+      <i class="ph ph-chart-line-up"></i>
+    </div>
+    <div class="page-title-text">
+      <h2>Desempenho dos Alunos</h2>
+      <p>Selecione um aluno para visualizar o desempenho</p>
+    </div>
+  </div>
+
+  <!-- Filtro de aluno -->
+  <div class="filtro-card">
+    <label>Selecione o aluno:</label>
+    <select id="selectAluno" onchange="filtrarAluno(this.value)">
+      <option value="">— selecione —</option>
+      {% for a in alunos %}
+        <option value="{{ a.id }}" {% if aluno_id and aluno_id|int == a.id %}selected{% endif %}>
+          {{ a.nome }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  {% if dados %}
+
+  <!-- Dashboard -->
+  <div class="desemp-grid" id="desemp-grid">
+
+    <!-- Card aluno -->
+    <div class="card-aluno">
+      <div class="aluno-avatar">{{ dados.nome[0] }}</div>
+      <div class="aluno-nome">{{ dados.nome }}</div>
+      <div class="aluno-info">Matrícula: {{ dados.matricula }}</div>
+      <div class="aluno-info">Turma: {{ dados.periodo }}</div>
+
+      <div class="aluno-stats">
+        <div class="aluno-stat-row">
+          <span>Total de aulas</span>
+          <strong>{{ dados.total_aulas }}</strong>
+        </div>
+        <div class="aluno-stat-row">
+          <span>✔ Presenças</span>
+          <strong class="stat-green">{{ dados.presencas }} ({{ dados.pct_frequencia }}%)</strong>
+        </div>
+        <div class="aluno-stat-row">
+          <span>✖ Faltas</span>
+          <strong class="stat-red">{{ dados.faltas }} ({{ dados.pct_faltas }}%)</strong>
+        </div>
+      </div>
+
+      <button class="btn-relatorio" onclick="gerarPDF()">
+        <i class="ph ph-file-pdf"></i> Relatório
+      </button>
+    </div>
+
+    <!-- Gráfico -->
+    <div class="card-grafico">
+      <h3>Média de Notas por Matéria</h3>
+      <div class="grafico-container">
+    <canvas id="graficoNotas"></canvas>
+</div>
+
+    <!-- Métricas -->
+    <div class="cards-metricas">
+      <div class="card-metrica">
+        <p>Participação</p>
+        <strong>{{ dados.participacao }}%</strong>
+      </div>
+      <div class="card-metrica">
+        <p>Frequência</p>
+        <strong>{{ dados.pct_frequencia }}%</strong>
+      </div>
+    </div>
+
+  </div><!-- /desemp-grid -->
+
+  <script>
+    const labels  = {{ dados.notas_por_materia | map(attribute='materia') | list | tojson }};
+    const valores = {{ dados.notas_por_materia | map(attribute='media')   | list | tojson }};
+
+    const ctx = document.getElementById('graficoNotas').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Média',
+          data: valores,
+          borderColor: '#4caebe',
+          backgroundColor: 'rgba(76,190,190,0.1)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#4caebe',
+          pointRadius: 5,
+          tension: 0.3,
+          fill: true,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` Média: ${Number(ctx.raw).toFixed(1)}`
+            }
+          }
+        },
+        scales: {
+          y: { min: 0, max: 10, ticks: { stepSize: 2 } }
+        }
+      }
+    });
+  </script>
+
+  {% else %}
+
+  <!-- Estado vazio -->
+  <div class="desemp-vazio">
+    <i class="ph ph-chart-line"></i>
+    <p>Selecione um aluno para visualizar o desempenho.</p>
+  </div>
+
+  {% endif %}
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+  const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
+  const papelUsuario     = document.getElementById("papelUsuario");
+  const avatarUsuario    = document.getElementById("avatarUsuario");
+  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+  const menuUsuario      = document.getElementById("menuUsuario");
+  const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
+  const btnSair          = document.getElementById("btnSair");
+
+  function getToken() { return localStorage.getItem("token"); }
+
+  function limparSessao() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("sessaoExpiracao");
+  }
+
+  function formatarPapel(papel) {
+    const p = String(papel).toLowerCase();
+    if (p === "admin" || p === "adm" || p === "coordenador") return "Coordenador";
+    if (p === "professor") return "Professor";
+    if (p === "aluno") return "Aluno";
+    return papel;
+  }
+
+  async function carregarUsuarioLogado() {
+    try {
+      const resposta = await fetch("/api/usuario-logado", {
+        headers: { "Authorization": `Bearer ${getToken()}` }
+      });
+      if (!resposta.ok) { limparSessao(); window.location.href = "/"; return; }
+      const dados = await resposta.json();
+      const usuario = dados.usuario;
+      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+      const btnGestao = document.getElementById("btnGestaoUsuarios");
+      if (btnGestao && ["coordenador","admin","adm"].includes(usuario.papel.toLowerCase())) {
+        btnGestao.style.display = "block";
+      }
+    } catch { limparSessao(); window.location.href = "/"; }
+  }
+
+  async function sair() {
+    const confirmacao = await Swal.fire({
+      icon: "question", title: "Deseja sair?", text: "Sua sessão será encerrada.",
+      showCancelButton: true, confirmButtonText: "Sim, sair", cancelButtonText: "Cancelar"
+    });
+    if (!confirmacao.isConfirmed) return;
+    limparSessao();
+    window.location.href = "/";
+  }
+
+  function filtrarAluno(id) {
+    if (id) window.location.href = `/desempenho?aluno=${id}`;
+  }
+
+  async function gerarPDF() {
+    const { jsPDF } = window.jspdf;
+    const elemento = document.getElementById("desemp-grid");
+
+    Swal.fire({ title: "Gerando PDF...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    const canvas = await html2canvas(elemento, { scale: 2, useCORS: true, backgroundColor: "#f0f9f9" });
+    const imgData = canvas.toDataURL("image/png");
+
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const pdfWidth  = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+    pdf.setFontSize(16);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("Relatório de Desempenho — Monitora+", pdfWidth / 2, 15, { align: "center" });
+    pdf.addImage(imgData, "PNG", 0, 22, pdfWidth, pdfHeight);
+    pdf.save("relatorio_desempenho.pdf");
+
+    Swal.close();
+  }
+
+  if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
+  if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");
+  if (btnSair)          btnSair.addEventListener("click", sair);
+
+  carregarUsuarioLogado();
+</script>
+
+<script src="/static/js/darkmode.js"></script>
+
+</body>
+</html>
