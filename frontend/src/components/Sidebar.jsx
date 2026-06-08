@@ -271,6 +271,10 @@ export default function Sidebar({ activePage = "" }) {
           {"Frequência"}
         </SidebarLink>
 
+        <SidebarLink activePage={activePage} page="desempenho" href="/desempenho" icon={<IconPulse />}>
+          {"Desempenho"}
+        </SidebarLink>
+
         {coordinator && (
           <>
             <SidebarLink activePage={activePage} page="gestao_usuarios" href="/gestao-usuarios" id="linkGestaoUsuarios" icon={<IconUserPlus />}>
@@ -284,12 +288,13 @@ export default function Sidebar({ activePage = "" }) {
             <SidebarLink activePage={activePage} page="materias" href="/materias" id="linkMaterias" icon={<IconDocument />}>
               {"Matérias"}
             </SidebarLink>
+
+            <SidebarLink activePage={activePage} page="desempenho" href="/desempenho" id="linkDesempenho" icon={<IconPulse />}>
+              {"Desempenho"}
+            </SidebarLink>
+
           </>
         )}
-
-        <SidebarLink activePage={activePage} page="desempenho" href="#" icon={<IconPulse />}>
-          Desempenho
-        </SidebarLink>
       </nav>
 
       <div className="sidebar-bottom">
