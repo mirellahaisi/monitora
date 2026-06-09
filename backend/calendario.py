@@ -250,21 +250,16 @@ def listar_eventos(usuario):
                        AND ut.fk_usuario_id = %s
                 WHERE ec.ativo = 1
                   AND (
-                      (ec.pessoal = TRUE AND ec.fk_criador_id = %s)
-                      OR
-                      (
-                          ec.pessoal = FALSE
-                          AND ec.visibilidade IN ('todos','alunos')
-                          AND ec.fk_turma_id IS NOT NULL
-                          AND ut.fk_usuario_id IS NOT NULL
-                      )
-                      OR
-                      (
-                          ec.pessoal = FALSE
-                          AND ec.visibilidade IN ('todos','alunos')
-                          AND ec.fk_turma_id IS NULL
-                      )
-                  )
+                    (ec.pessoal = TRUE AND ec.fk_criador_id = %s)
+
+                    OR (ec.pessoal = FALSE
+                        AND ec.visibilidade IN ('todos','alunos')
+                        AND (
+                            ec.fk_turma_id IS NULL
+                            OR ut.fk_usuario_id IS NOT NULL
+                        )
+                    )
+                )
                 {filtro_data}
                 ORDER BY ec.data_inicio
             """, [usuario["id"], usuario["id"]] + params_data)
