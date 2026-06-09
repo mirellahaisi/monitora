@@ -1038,6 +1038,8 @@
   </div>
 
   <script>
+    const _t = (text) => window.MonitoraI18n?.t?.(text) ?? text;
+
     // ── Refs ──────────────────────────────────────────────
     const turmasGrid      = document.getElementById("turmasGrid");
     const filtroPeriodo   = document.getElementById("filtroPeriodo");
@@ -1073,6 +1075,7 @@
 
     // ── Auth ──────────────────────────────────────────────
     function getToken() { return localStorage.getItem("token"); }
+    function localeAtual() { return window.MonitoraI18n?.getLocale?.() || "pt-BR"; }
 
     function limparSessao() {
       ["token","usuario","sessaoExpiracao"].forEach(k => localStorage.removeItem(k));
@@ -1133,17 +1136,17 @@
           papelAtual = usuario.papel;
           const ehAluno = isAluno(usuario.papel);
           if (ehAluno) {
-            document.querySelector(".page-heading h2").textContent = "Minha Turma";
-            document.getElementById("subtituloTurmas").textContent = "Sua turma e colegas matriculados";
+            document.querySelector(".page-heading h2").textContent = _t("Minha Turma");
+            document.getElementById("subtituloTurmas").textContent = _t("Sua turma e colegas matriculados");
             secaoTurmas.style.display = "none";
             secaoMinhaTurma.style.display = "block";
             await carregarMinhaTurma(usuario.id);
           } else {
             if (ehCoordenador(usuario.papel)) {
-              document.getElementById("subtituloTurmas").textContent = "Visão geral de todas as turmas ativas";
+              document.getElementById("subtituloTurmas").textContent = _t("Visão geral de todas as turmas ativas");
               btnNovaTurma.style.display = "flex";
             } else {
-              document.getElementById("subtituloTurmas").textContent = "Turmas em que você leciona";
+              document.getElementById("subtituloTurmas").textContent = _t("Turmas em que você leciona");
             }
             await carregarTurmas();
           }
@@ -1169,13 +1172,13 @@
       const colegasDiv = document.getElementById("minhaTurmaColegas");
       const listaDiv   = document.getElementById("colegasLista");
 
-      infoDiv.innerHTML = `<div class="turmas-vazio">Carregando sua turma...</div>`;
+      infoDiv.innerHTML = `<div class="turmas-vazio">${_t("Carregando sua turma...")}</div>`;
       try {
         const res   = await fetch("/api/minha-turma", { headers: { Authorization: `Bearer ${getToken()}` } });
         const dados = await res.json();
 
         if (!res.ok) {
-          infoDiv.innerHTML = `<div class="turmas-vazio">${dados.message || "Erro ao carregar sua turma."}</div>`;
+          infoDiv.innerHTML = `<div class="turmas-vazio">${dados.message || _t("Erro ao carregar sua turma.")}</div>`;
           return;
         }
 
@@ -1205,13 +1208,13 @@
                 </span>` : ""}
                 <span class="turma-meta-item">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                  ${t.total_alunos} aluno(s)
+                  ${t.total_alunos} ${_t("aluno(s)")}
                 </span>
               </div>
             </div>
             <span class="badge-periodo">${t.periodo ? t.periodo + "º per." : "—"}</span>
           </div>
-          ${t.materias ? `<div class="minha-turma-materias"><strong>Matérias</strong>${t.materias}</div>` : ""}
+          ${t.materias ? `<div class="minha-turma-materias"><strong>${_t("Matérias")}</strong>${t.materias}</div>` : ""}
         `;
 
         // Lista de colegas
@@ -1222,13 +1225,13 @@
             <table class="colegas-tabela">
               <thead><tr>
                 <th>#</th>
-                <th>Nome</th>
-                <th>E-mail</th>
+                <th>${_t("Nome")}</th>
+                <th>${_t("E-mail")}</th>
               </tr></thead>
               <tbody>
                 ${alunos.map((a, i) => {
                   const euLabel = String(a.id) === String(usuarioId)
-                    ? `<span class="colega-eu">você</span>` : "";
+                    ? `<span class="colega-eu">${_t("você")}</span>` : "";
                   return `<tr>
                     <td style="color:var(--muted);font-size:0.8rem;width:40px">${i + 1}</td>
                     <td>
@@ -1242,7 +1245,7 @@
             </table>
           `;
         }
-      } catch { infoDiv.innerHTML = `<div class="turmas-vazio">Erro ao carregar sua turma.</div>`; }
+      } catch { infoDiv.innerHTML = `<div class="turmas-vazio">${_t("Erro ao carregar sua turma.")}</div>`; }
     }
 
     // ── Carregar turmas ───────────────────────────────────
@@ -1254,14 +1257,14 @@
         if (!cursosCache.length) await carregarCursos();
         const res = await fetch("/api/turmas", { headers: { Authorization: `Bearer ${getToken()}` } });
         const dados = await res.json();
-        if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar turmas.", "error"); return; }
+        if (!res.ok) { Swal.fire(_t("Erro"), dados.message || _t("Erro ao carregar turmas."), "error"); return; }
         todasTurmas = dados.turmas || [];
         enriquecerTurmasComCurso();
         popularFiltroPeriodo();
         popularFiltroTurno();
         popularFiltroCurso();
         renderizarTurmas();
-      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+      } catch { Swal.fire(_t("Erro"), _t("Falha na conexão com o servidor."), "error"); }
     }
 
     function popularFiltroPeriodo() {
@@ -1315,7 +1318,7 @@
 
       const atual = filtroCurso.value;
       filtroCurso.innerHTML = `<option value="">Todos os cursos</option>`;
-      [...cursoMap.entries()].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR')).forEach(([id, nome]) => {
+      [...cursoMap.entries()].sort((a, b) => a[1].localeCompare(b[1], localeAtual())).forEach(([id, nome]) => {
         filtroCurso.innerHTML += `<option value="${id}">${nome}</option>`;
       });
       if (atual) filtroCurso.value = atual;
@@ -1350,11 +1353,11 @@
         const pA = Number(a.periodo) || 0;
         const pB = Number(b.periodo) || 0;
         if (pA !== pB) return pA - pB;
-        return (a.nome || '').localeCompare(b.nome || '', 'pt-BR');
+        return (a.nome || '').localeCompare(b.nome || '', localeAtual());
       });
 
       if (filtradas.length === 0) {
-        turmasGrid.innerHTML = `<div class="turmas-vazio">Nenhuma turma encontrada com esses filtros.</div>`;
+        turmasGrid.innerHTML = `<div class="turmas-vazio">${_t("Nenhuma turma encontrada com esses filtros.")}</div>`;
         return;
       }
 
@@ -1378,16 +1381,16 @@
             <div class="turma-card-stats">
               <div class="stat-item">
                 <span class="stat-valor">${t.total_alunos}</span>
-                <span class="stat-label">Alunos</span>
+                <span class="stat-label">${_t("Alunos")}</span>
               </div>
               <div class="stat-item">
                 <span class="stat-valor">${t.capacidade || "—"}</span>
-                <span class="stat-label">Capacidade</span>
+                <span class="stat-label">${_t("Capacidade")}</span>
               </div>
             </div>
 
             <div class="turma-card-materias">
-              <strong>Matérias</strong>
+              <strong>${_t("Matérias")}</strong>
               ${materias}
             </div>
 
@@ -1399,10 +1402,10 @@
                 ${turno}
               </span>
               <div style="display:flex;gap:6px">
-                <button class="btn-ver-turma" data-id="${t.id}" data-nome="${t.nome}">Ver detalhes</button>
+                <button class="btn-ver-turma" data-id="${t.id}" data-nome="${t.nome}">${_t("Ver detalhes")}</button>
                 ${ehCoordenador(papelAtual) ? `<button class="btn-gerir-turma" data-id="${t.id}" data-nome="${t.nome}">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
-                  Gerir
+                  ${_t("Gerir")}
                 </button>` : ""}
               </div>
             </div>
@@ -1438,7 +1441,7 @@
       const turma = todasTurmas.find(t => String(t.id) === String(id));
       detalhesTitulo.textContent   = nome;
       detalhesSubtitulo.textContent = turma
-        ? `${turma.turno || ""} · ${turma.periodo ? turma.periodo + "º período" : ""} · ${turma.total_alunos} aluno(s)`
+        ? `${turma.turno || ""} · ${turma.periodo ? turma.periodo + "º período" : ""} · ${turma.total_alunos} ${_t("aluno(s)")}`
         : "";
 
       // Resetar aba
@@ -1453,14 +1456,14 @@
     // ── Modal Gestão (coordenador) ────────────────────────
     async function abrirGestao(id, nome) {
       turmaDetalheId = id;
-      gestaoTitulo.textContent   = `Gerir: ${nome}`;
-      gestaoSubtitulo.textContent = "Alunos matriculados · Matérias e professores";
+      gestaoTitulo.textContent   = `${_t("Gerir")}: ${nome}`;
+      gestaoSubtitulo.textContent = _t("Alunos matriculados · Matérias e professores");
       modalGestao.classList.add("show");
       await carregarModalGestao(id);
     }
 
     async function carregarAba(aba, id) {
-      detalhesBody.innerHTML = `<div class="turmas-vazio">Carregando...</div>`;
+      detalhesBody.innerHTML = `<div class="turmas-vazio">${_t("Carregando...")}</div>`;
 
       if (aba === "gestao") {
         await carregarAbaGestao(id);
@@ -1478,20 +1481,20 @@
 
         if (aba === "alunos") {
           const alunos = dados.alunos || [];
-          if (!alunos.length) { detalhesBody.innerHTML = `<div class="turmas-vazio">Nenhum aluno matriculado.</div>`; return; }
+          if (!alunos.length) { detalhesBody.innerHTML = `<div class="turmas-vazio">${_t("Nenhum aluno matriculado.")}</div>`; return; }
 
           detalhesBody.innerHTML = `
             <table class="modal-table">
               <thead><tr>
-                <th>Aluno(a)</th>
-                <th>E-mail</th>
-                <th style="text-align:center">Média Geral</th>
+                <th>${_t("Aluno(a)")}</th>
+                <th>${_t("E-mail")}</th>
+                <th style="text-align:center">${_t("Média Geral")}</th>
               </tr></thead>
               <tbody>
                 ${alunos.map(a => {
                   const media = a.media_geral !== null && a.media_geral !== undefined ? a.media_geral : null;
                   const classeMedia = media === null ? "media-neutra" : media >= 6 ? "media-aprovada" : "media-baixa";
-                  const mediaLabel  = media !== null ? String(media).replace(".", ",") : "—";
+                  const mediaLabel  = media !== null ? (window.MonitoraI18n?.formatGrade?.(media) || String(media).replace(".", ",")) : "—";
                   return `<tr>
                     <td>${a.nome}</td>
                     <td style="color:var(--muted);font-size:0.82rem">${a.email || "—"}</td>
@@ -1503,26 +1506,26 @@
           `;
         } else {
           const materias = dados.materias || [];
-          if (!materias.length) { detalhesBody.innerHTML = `<div class="turmas-vazio">Nenhuma matéria vinculada.</div>`; return; }
+          if (!materias.length) { detalhesBody.innerHTML = `<div class="turmas-vazio">${_t("Nenhuma matéria vinculada.")}</div>`; return; }
 
           detalhesBody.innerHTML = `
             <table class="modal-table">
               <thead><tr>
-                <th>Matéria</th>
-                <th>Carga horária</th>
-                <th>Professor(es)</th>
+                <th>${_t("Matéria")}</th>
+                <th>${_t("Carga horária")}</th>
+                <th>${_t("Professor(es)")}</th>
               </tr></thead>
               <tbody>
                 ${materias.map(m => `<tr>
                   <td>${m.nome}</td>
                   <td>${m.carga_horaria ? m.carga_horaria + "h" : "—"}</td>
-                  <td style="color:var(--muted);font-size:0.82rem">${m.professores || "Sem professor"}</td>
+                  <td style="color:var(--muted);font-size:0.82rem">${m.professores || _t("Sem professor")}</td>
                 </tr>`).join("")}
               </tbody>
             </table>
           `;
         }
-      } catch { detalhesBody.innerHTML = `<div class="turmas-vazio">Erro ao carregar dados.</div>`; }
+      } catch { detalhesBody.innerHTML = `<div class="turmas-vazio">${_t("Erro ao carregar dados.")}</div>`; }
     }
 
     // ── Gestão (modal dedicado) ───────────────────────────
@@ -1593,7 +1596,7 @@
               style="padding:9px 12px;border-radius:8px;cursor:pointer;font-size:0.86rem;color:var(--text)"
               onmouseover="this.style.background='rgba(147,215,223,0.12)'"
               onmouseout="this.style.background=''">${o.label}</div>`).join("")}
-            ${options.length === 0 ? `<div style="padding:10px 12px;color:var(--muted);font-size:0.82rem">Nenhuma opção disponível</div>` : ""}
+            ${options.length === 0 ? `<div style="padding:10px 12px;color:var(--muted);font-size:0.82rem">${_t("Nenhuma opção disponível")}</div>` : ""}
           </div>
         </div>`;
     }
@@ -1636,7 +1639,7 @@
     }
 
     async function carregarModalGestao(turmaId) {
-      gestaoBody.innerHTML = `<div class="turmas-vazio">Carregando...</div>`;
+      gestaoBody.innerHTML = `<div class="turmas-vazio">${_t("Carregando...")}</div>`;
       await carregarRecursosGestao();
 
       const [resAlunos, resMaterias] = await Promise.all([
@@ -1669,13 +1672,13 @@
         .filter(u => (u.papel === 'aluno' || String(u.papel) === '1')
                   && !alunoIds.has(u.id)
                   && !u.tem_turma)
-        .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+        .sort((a, b) => a.nome.localeCompare(b.nome, localeAtual()));
 
-      const profesDisp   = todosUsuarios.filter(u => u.papel === "professor").sort((a,b) => a.nome.localeCompare(b.nome, "pt-BR"));
-      const materiasDisp = todasMaterias.filter(m => !materiaIds.has(m.id)).sort((a,b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      const profesDisp   = todosUsuarios.filter(u => u.papel === "professor").sort((a,b) => a.nome.localeCompare(b.nome, localeAtual()));
+      const materiasDisp = todasMaterias.filter(m => !materiaIds.has(m.id)).sort((a,b) => a.nome.localeCompare(b.nome, localeAtual()));
 
       // Alunos já matriculados também em ordem alfabética
-      const alunosOrdenados = [...alunosData].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      const alunosOrdenados = [...alunosData].sort((a, b) => a.nome.localeCompare(b.nome, localeAtual()));
 
       // Busca info da turma para botões editar/excluir
       const turmaInfo = todasTurmas.find(t => String(t.id) === String(turmaId));
@@ -1685,7 +1688,7 @@
         <div style="display:flex;gap:10px;margin-bottom:18px;justify-content:flex-end">
           <button class="btn-ver-turma" id="btnEditarTurma" style="display:flex;align-items:center;gap:6px">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Editar turma
+            ${_t("Editar turma")}
           </button>
           <button style="height:32px;padding:0 14px;border:1.5px solid rgba(231,76,60,0.3);border-radius:8px;
                          background:transparent;color:#e74c3c;font:inherit;font-size:0.8rem;font-weight:700;
@@ -1694,7 +1697,7 @@
                   onmouseover="this.style.background='#e74c3c';this.style.color='white'"
                   onmouseout="this.style.background='transparent';this.style.color='#e74c3c'">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-            Excluir turma
+            ${_t("Excluir turma")}
           </button>
         </div>
 
@@ -1707,7 +1710,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
               </div>
               <div>
-                <div class="gestao-panel-title">Alunos matriculados</div>
+                <div class="gestao-panel-title">${_t("Alunos matriculados")}</div>
               </div>
             </div>
             <div class="gestao-panel-body">
@@ -1716,7 +1719,7 @@
                   "Pesquisar aluno...")}
               <button class="btn-gestao-add" id="btnAlunoAdd" style="width:100%;justify-content:center">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Matricular aluno
+                ${_t("Matricular aluno")}
               </button>
               <!-- Busca dentro dos matriculados -->
               <input type="text" id="filtroAlunosMatriculados" placeholder="Filtrar matriculados..."
@@ -1726,7 +1729,7 @@
                 oninput="filtrarAlunosLista(this.value)">
               <div class="gestao-lista" id="gestaoAlunosLista">
                 ${alunosOrdenados.length === 0
-                  ? `<div class="gestao-vazio">Nenhum aluno matriculado.</div>`
+                  ? `<div class="gestao-vazio">${_t("Nenhum aluno matriculado.")}</div>`
                   : alunosOrdenados.map(a => `
                     <div class="gestao-item" data-nome="${a.nome.toLowerCase()}">
                       <div class="gestao-item-info">
@@ -1748,7 +1751,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
               </div>
               <div>
-                <div class="gestao-panel-title">Matérias e professores</div>
+                <div class="gestao-panel-title">${_t("Matérias e professores")}</div>
               </div>
             </div>
             <div class="gestao-panel-body">
@@ -1757,11 +1760,11 @@
                   "Pesquisar matéria...")}
               <button class="btn-gestao-add" id="btnMateriaAdd" style="width:100%;justify-content:center">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:14px;height:14px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                Vincular matéria
+                ${_t("Vincular matéria")}
               </button>
               <div id="gestaoMateriasLista" style="display:flex;flex-direction:column;gap:8px">
                 ${materiasData.length === 0
-                  ? `<div class="gestao-vazio">Nenhuma matéria vinculada.</div>`
+                  ? `<div class="gestao-vazio">${_t("Nenhuma matéria vinculada.")}</div>`
                   : materiasData.map(m => {
                       const profsAtuais = (m.professores
                         ? m.professores.split(", ").map(n => n.trim()).filter(Boolean)
@@ -1794,11 +1797,11 @@
                               style="width:100%;justify-content:center;display:flex;align-items:center;
                                      gap:5px;margin-top:6px">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:13px;height:13px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                              Atribuir professor
+                              ${_t("Atribuir professor")}
                             </button>
                             <div class="gestao-prof-lista" id="profLista-${m.id}" style="margin-top:8px">
                               ${profsAtuais.length === 0
-                                ? `<div class="gestao-vazio">Sem professor atribuído.</div>`
+                                ? `<div class="gestao-vazio">${_t("Sem professor atribuído.")}</div>`
                                 : profsAtuais.map(prof => {
                                     return `<div class="gestao-prof-item">
                                       <span>${prof.nome}</span>
@@ -1841,9 +1844,9 @@
         const turma = todasTurmas.find(t => String(t.id) === String(turmaId));
         const conf = await Swal.fire({
           icon: "warning",
-          title: "Excluir turma?",
-          html: `A turma <strong>${turma ? turma.nome : ""}</strong> será desativada. Esta ação não pode ser desfeita.`,
-          showCancelButton: true, confirmButtonText: "Sim, excluir", cancelButtonText: "Cancelar",
+          title: _t("Excluir turma?"),
+          html: `${_t("A turma")} <strong>${turma ? turma.nome : ""}</strong> ${_t("será desativada. Esta ação não pode ser desfeita.")}`,
+          showCancelButton: true, confirmButtonText: _t("Sim, excluir"), cancelButtonText: _t("Cancelar"),
           confirmButtonColor: "#e74c3c"
         });
         if (!conf.isConfirmed) return;
@@ -1852,11 +1855,11 @@
         });
         if (res.ok) {
           modalGestao.classList.remove("show");
-          Swal.fire({ icon:"success", title:"Turma excluída!", timer:1500, showConfirmButton:false });
+          Swal.fire({ icon:"success", title:_t("Turma excluída!"), timer:1500, showConfirmButton:false });
           await carregarTurmas();
         } else {
           const d = await res.json();
-          Swal.fire("Erro", d.message || "Erro ao excluir turma.", "error");
+          Swal.fire(_t("Erro"), d.message || _t("Erro ao excluir turma."), "error");
         }
       });
 
@@ -1866,7 +1869,7 @@
         const wrap = document.getElementById("selAlunoWrap");
         const input = wrap?.querySelector(".search-select-input");
         const alunoId = input?.dataset?.value;
-        if (!alunoId) { Swal.fire("Atenção", "Pesquise e selecione um aluno da lista.", "warning"); return; }
+        if (!alunoId) { Swal.fire(_t("Atenção"), _t("Pesquise e selecione um aluno da lista."), "warning"); return; }
 
         const btn = document.getElementById("btnAlunoAdd");
         btn.disabled = true;
@@ -1877,12 +1880,12 @@
             body: JSON.stringify({ usuario_id: alunoId }),
           });
           const dados = await res.json();
-          if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao matricular.", "error"); return; }
-          Swal.fire({ icon:"success", title:"Matriculado!", timer:1400, showConfirmButton:false });
+          if (!res.ok) { Swal.fire(_t("Erro"), dados.message || _t("Erro ao matricular."), "error"); return; }
+          Swal.fire({ icon:"success", title:_t("Matriculado!"), timer:1400, showConfirmButton:false });
           todosUsuarios = [];
           await carregarModalGestao(turmaId);
           await carregarTurmas();
-        } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        } catch { Swal.fire(_t("Erro"), _t("Falha na conexão."), "error"); }
         finally { btn.disabled = false; }
       });
 
@@ -1891,7 +1894,7 @@
         const wrap = document.getElementById("selMateriaWrap");
         const input = wrap?.querySelector(".search-select-input");
         const materiaId = input?.dataset?.value;
-        if (!materiaId) { Swal.fire("Atenção", "Pesquise e selecione uma matéria da lista.", "warning"); return; }
+        if (!materiaId) { Swal.fire(_t("Atenção"), _t("Pesquise e selecione uma matéria da lista."), "warning"); return; }
 
         const btn = document.getElementById("btnMateriaAdd");
         btn.disabled = true;
@@ -1902,13 +1905,13 @@
             body: JSON.stringify({ materia_id: materiaId }),
           });
           const dados = await res.json();
-          if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao vincular.", "error"); return; }
+          if (!res.ok) { Swal.fire(_t("Erro"), dados.message || _t("Erro ao vincular."), "error"); return; }
           // Limpa o campo após vincular
           if (input) { input.value = ""; input.dataset.value = ""; }
-          Swal.fire({ icon:"success", title:"Matéria vinculada!", text:"Atribua um professor abaixo se necessário.", timer:1800, showConfirmButton:false });
+          Swal.fire({ icon:"success", title:_t("Matéria vinculada!"), text:_t("Atribua um professor abaixo se necessário."), timer:1800, showConfirmButton:false });
           await carregarModalGestao(turmaId);
           await carregarTurmas();
-        } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        } catch { Swal.fire(_t("Erro"), _t("Falha na conexão."), "error"); }
         finally { btn.disabled = false; }
       });
 
@@ -1924,7 +1927,7 @@
         const mId  = btn.dataset.materiaId;
         const wrap = document.getElementById(`selProfWrap-${mId}`);
         const profId = wrap?.querySelector(".search-select-input")?.dataset?.value;
-        if (!profId) { Swal.fire("Atenção", "Pesquise e selecione um professor da lista.", "warning"); return; }
+        if (!profId) { Swal.fire(_t("Atenção"), _t("Pesquise e selecione um professor da lista."), "warning"); return; }
 
         btn.disabled = true;
         try {
@@ -1934,10 +1937,10 @@
             body: JSON.stringify({ professor_id: profId }),
           });
           const dados = await res.json();
-          if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao atribuir.", "error"); return; }
-          Swal.fire({ icon:"success", title:"Professor atribuído!", timer:1400, showConfirmButton:false });
+          if (!res.ok) { Swal.fire(_t("Erro"), dados.message || _t("Erro ao atribuir."), "error"); return; }
+          Swal.fire({ icon:"success", title:_t("Professor atribuído!"), timer:1400, showConfirmButton:false });
           await carregarModalGestao(turmaId);
-        } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        } catch { Swal.fire(_t("Erro"), _t("Falha na conexão."), "error"); }
         finally { btn.disabled = false; }
       }, { signal: sig });
 
@@ -1949,9 +1952,9 @@
         if (acao === "remove-aluno") {
           const aId = btn.dataset.id;
           const conf = await Swal.fire({
-            icon:"warning", title:"Remover aluno?",
-            text:"O aluno será desmatriculado desta turma.",
-            showCancelButton:true, confirmButtonText:"Remover", cancelButtonText:"Cancelar",
+            icon:"warning", title:_t("Remover aluno?"),
+            text:_t("O aluno será desmatriculado desta turma."),
+            showCancelButton:true, confirmButtonText:_t("Remover"), cancelButtonText:_t("Cancelar"),
             confirmButtonColor:"#e74c3c"
           });
           if (!conf.isConfirmed) return;
@@ -1959,7 +1962,7 @@
             method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
           });
           if (res.ok) {
-            Swal.fire({ icon:"success", title:"Aluno removido!", timer:1200, showConfirmButton:false });
+            Swal.fire({ icon:"success", title:_t("Aluno removido!"), timer:1200, showConfirmButton:false });
             todosUsuarios = [];
             await carregarModalGestao(turmaId);
             await carregarTurmas();
@@ -1969,9 +1972,9 @@
         if (acao === "remove-materia") {
           const mId = btn.dataset.id;
           const conf = await Swal.fire({
-            icon:"warning", title:"Desvincular matéria?",
-            text:"A matéria será removida desta turma.",
-            showCancelButton:true, confirmButtonText:"Remover", cancelButtonText:"Cancelar",
+            icon:"warning", title:_t("Desvincular matéria?"),
+            text:_t("A matéria será removida desta turma."),
+            showCancelButton:true, confirmButtonText:_t("Remover"), cancelButtonText:_t("Cancelar"),
             confirmButtonColor:"#e74c3c"
           });
           if (!conf.isConfirmed) return;
@@ -1979,7 +1982,7 @@
             method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
           });
           if (res.ok) {
-            Swal.fire({ icon:"success", title:"Matéria removida!", timer:1200, showConfirmButton:false });
+            Swal.fire({ icon:"success", title:_t("Matéria removida!"), timer:1200, showConfirmButton:false });
             await carregarModalGestao(turmaId);
             await carregarTurmas();
           }
@@ -1992,7 +1995,7 @@
             method: "DELETE", headers: { Authorization: `Bearer ${getToken()}` }
           });
           if (res.ok) {
-            Swal.fire({ icon:"success", title:"Professor removido!", timer:1200, showConfirmButton:false });
+            Swal.fire({ icon:"success", title:_t("Professor removido!"), timer:1200, showConfirmButton:false });
             await carregarModalGestao(turmaId);
           }
         }
@@ -2094,13 +2097,13 @@
       const capRaw    = document.getElementById("editInputCapacidade").value.trim();
 
       const erros = [];
-      if (!cursoId)  erros.push("Selecione um curso.");
-      if (!periodo)  erros.push("Selecione o período.");
-      if (!capRaw)   erros.push("Informe a capacidade.");
+      if (!cursoId)  erros.push(_t("Selecione um curso."));
+      if (!periodo)  erros.push(_t("Selecione o período."));
+      if (!capRaw)   erros.push(_t("Informe a capacidade."));
       else if (isNaN(capRaw) || +capRaw < 1 || +capRaw > 100)
-        erros.push("Capacidade deve ser entre 1 e 100.");
+        erros.push(_t("Capacidade deve ser entre 1 e 100."));
 
-      if (erros.length) { Swal.fire("Atenção", erros.join("<br>"), "warning"); return; }
+      if (erros.length) { Swal.fire(_t("Atenção"), erros.join("<br>"), "warning"); return; }
 
       const payload = {
         curso_id:   Number(cursoId),
@@ -2117,18 +2120,18 @@
           body: JSON.stringify(payload),
         });
         const dados = await res.json();
-        if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao editar turma.", "error"); return; }
+        if (!res.ok) { Swal.fire(_t("Erro"), dados.message || _t("Erro ao editar turma."), "error"); return; }
 
         if (dados.message && dados.message.includes("Nenhuma")) {
           // Nada foi alterado: avisa mas mantém o modal aberto
-          Swal.fire({ icon:"info", title:"Sem alterações", text:"Nenhuma informação foi modificada.", timer:2000, showConfirmButton:false });
+          Swal.fire({ icon:"info", title:_t("Sem alterações"), text:_t("Nenhuma informação foi modificada."), timer:2000, showConfirmButton:false });
         } else {
           // Alteração real: fecha modal e recarrega
           document.getElementById("modalEditarTurma").classList.remove("show");
-          Swal.fire({ icon:"success", title:"Turma atualizada!", html:`<strong>${dados.nome}</strong>`, timer:2000, showConfirmButton:false });
+          Swal.fire({ icon:"success", title:_t("Turma atualizada!"), html:`<strong>${dados.nome}</strong>`, timer:2000, showConfirmButton:false });
           await carregarTurmas();
         }
-      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+      } catch { Swal.fire(_t("Erro"), _t("Falha na conexão com o servidor."), "error"); }
     });
 
     // ── Aba Gestão (mantida por compatibilidade, redireciona para o modal) ──
@@ -2306,14 +2309,14 @@
 
       // ── Validação no front ────────────────────────────────────────────────
       const erros = [];
-      if (!cursoId)  erros.push("Selecione um curso.");
-      if (!periodo)  erros.push("Selecione o período.");
-      if (!capRaw)   erros.push("Informe a capacidade.");
+      if (!cursoId)  erros.push(_t("Selecione um curso."));
+      if (!periodo)  erros.push(_t("Selecione o período."));
+      if (!capRaw)   erros.push(_t("Informe a capacidade."));
       else if (isNaN(capRaw) || +capRaw < 1 || +capRaw > 100)
-        erros.push("Capacidade deve ser entre 1 e 100.");
+        erros.push(_t("Capacidade deve ser entre 1 e 100."));
 
       if (erros.length) {
-        Swal.fire("Atenção", erros.join("<br>"), "warning"); return;
+        Swal.fire(_t("Atenção"), erros.join("<br>"), "warning"); return;
       }
 
       const letra = calcularProximaLetra(cursoId, periodo, ano, semestre, turno);
@@ -2335,12 +2338,12 @@
           body: JSON.stringify(payload),
         });
         const dados = await res.json();
-        if (!res.ok) { Swal.fire("Erro", dados.message || "Erro ao criar turma.", "error"); return; }
+        if (!res.ok) { Swal.fire(_t("Erro"), dados.message || _t("Erro ao criar turma."), "error"); return; }
 
         modalNovaTurma.classList.remove("show");
         Swal.fire({
           icon: "success",
-          title: "Turma criada!",
+          title: _t("Turma criada!"),
           html: `<strong>${dados.nome}</strong><br><small style="color:#888">${dados.codigo}</small>`,
         });
         // Limpa formulário
@@ -2349,7 +2352,7 @@
         document.getElementById("inputCapacidade").value = "";
         document.getElementById("previewTurma").style.display = "none";
         await carregarTurmas();
-      } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
+      } catch { Swal.fire(_t("Erro"), _t("Falha na conexão com o servidor."), "error"); }
     });
 
     // ── Filtros custom ────────────────────────────────────
@@ -2412,7 +2415,7 @@
           cursoMap.set(String(t.fk_curso_id), t.curso_nome);
       });
       drop.innerHTML = `<div class="filtro-custom-option selected" data-value="">Todos os cursos</div>`;
-      [...cursoMap.entries()].sort((a, b) => a[1].localeCompare(b[1], 'pt-BR')).forEach(([id, nome]) => {
+      [...cursoMap.entries()].sort((a, b) => a[1].localeCompare(b[1], localeAtual())).forEach(([id, nome]) => {
         drop.innerHTML += `<div class="filtro-custom-option" data-value="${id}">${nome}</div>`;
       });
     }

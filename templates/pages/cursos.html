@@ -438,6 +438,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
+    const t = (text) => window.MonitoraI18n?.t?.(text) ?? text;
+
     // ── Utilitários ──
     function normalizarAtivo(v) {
       if (v === null || v === undefined) return false;
@@ -464,7 +466,7 @@
         const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
         const papel = payload.papel || payload.papel_id || payload.fk_papel_id;
         if (!isPapelCoordenador(papel)) {
-          Swal.fire({ icon: "error", title: "Acesso negado", text: "Esta área é exclusiva para coordenadores.", confirmButtonColor: "#4caebe" })
+          Swal.fire({ icon: "error", title: t("Acesso negado"), text: t("Esta área é exclusiva para coordenadores."), confirmButtonColor: "#4caebe" })
             .then(() => window.location.href = "/inicio");
         }
       } catch { window.location.href = "/login"; }
@@ -495,20 +497,20 @@
       try {
         const r = await fetch("/api/cursos", { headers: authHeader() });
         const dados = await r.json();
-        if (!r.ok) { mostrarErroTabela(dados.message || "Erro ao carregar cursos."); return; }
+        if (!r.ok) { mostrarErroTabela(dados.message || t("Erro ao carregar cursos.")); return; }
         cursos = (dados.cursos || []).map(c => ({ ...c, ativo: normalizarAtivo(c.ativo) }));
         renderizarTabela();
       } catch {
-        mostrarErroTabela("Falha de conexão ao carregar cursos.");
+        mostrarErroTabela(t("Falha de conexão ao carregar cursos."));
       }
     }
 
     function filtrarCursos() {
       if (!termoBusca) return cursos;
-      const t = termoBusca.toLowerCase();
+      const termoBuscaNorm = termoBusca.toLowerCase();
       return cursos.filter(c =>
-        c.nome.toLowerCase().includes(t) ||
-        c.codigo_prefixo.toLowerCase().includes(t)
+        c.nome.toLowerCase().includes(termoBuscaNorm) ||
+        c.codigo_prefixo.toLowerCase().includes(termoBuscaNorm)
       );
     }
 
@@ -519,7 +521,7 @@
           <tr><td colspan="5">
             <div class="cursos-vazio">
               <i class="ph ph-book-open"></i>
-              <p>${termoBusca ? "Nenhum curso encontrado para a busca." : "Nenhum curso cadastrado ainda."}</p>
+              <p>${termoBusca ? t("Nenhum curso encontrado para a busca.") : t("Nenhum curso cadastrado ainda.")}</p>
             </div>
           </td></tr>`;
         rodapeCursos.textContent = "";
@@ -531,7 +533,7 @@
           <td><strong>${escHtml(c.nome)}</strong></td>
           <td><span class="prefixo-badge">${escHtml(c.codigo_prefixo)}</span></td>
           <td class="col-ativo">
-            <span class="${c.ativo ? "badge-ativo" : "badge-inativo"}">${c.ativo ? "Ativo" : "Inativo"}</span>
+            <span class="${c.ativo ? "badge-ativo" : "badge-inativo"}">${c.ativo ? t("Ativo") : t("Inativo")}</span>
           </td>
           <td class="col-acoes">
             <button class="btn-acao btn-editar" title="Editar" onclick="abrirEditar(${c.id})">
@@ -542,7 +544,9 @@
             </button>
           </td>
         </tr>`).join("");
-      rodapeCursos.textContent = `${lista.length} curso${lista.length !== 1 ? "s" : ""} encontrado${lista.length !== 1 ? "s" : ""}`;
+      rodapeCursos.textContent = lista.length === 1
+        ? `1 ${t("curso encontrado")}`
+        : `${lista.length} ${t("cursos encontrados")}`;
     }
 
     function mostrarErroTabela(msg) {
@@ -565,14 +569,14 @@
     function abrirModal(modo, curso = null) {
       limparErros();
       if (modo === "novo") {
-        modalTitulo.textContent = "Novo Curso";
+        modalTitulo.textContent = t("Novo Curso");
         cursoIdInput.value = "";
         inputNome.value = "";
         inputPrefixo.value = "";
         selectAtivo.value = "1";
         dadosOriginaisEdicao = null;
       } else {
-        modalTitulo.textContent = "Editar Curso";
+        modalTitulo.textContent = t("Editar Curso");
         cursoIdInput.value = curso.id;
         inputNome.value = curso.nome;
         inputPrefixo.value = curso.codigo_prefixo;
@@ -617,15 +621,15 @@
       if (!nome || nome.length < 3) {
         marcarErro(inputNome, "erroNome");
         document.getElementById("erroNome").textContent = nome
-          ? "O nome deve ter pelo menos 3 caracteres."
-          : "Informe o nome do curso.";
+          ? t("O nome deve ter pelo menos 3 caracteres.")
+          : t("Informe o nome do curso.");
         valido = false;
       }
       if (!prefixo || prefixo.length < 2) {
         marcarErro(inputPrefixo, "erroPrefixo");
         document.getElementById("erroPrefixo").textContent = prefixo
-          ? "O prefixo deve ter pelo menos 2 caracteres."
-          : "Informe o prefixo do curso.";
+          ? t("O prefixo deve ter pelo menos 2 caracteres.")
+          : t("Informe o prefixo do curso.");
         valido = false;
       }
       return valido;
@@ -651,8 +655,8 @@
         if (semMudanca) {
           Swal.fire({
             icon: "info",
-            title: "Nenhuma alteração",
-            text: "Nenhum dado foi alterado.",
+            title: t("Nenhuma alteração"),
+            text: t("Nenhum dado foi alterado."),
             confirmButtonColor: "#4caebe",
             timer: 2000, timerProgressBar: true, showConfirmButton: false
           });
@@ -661,7 +665,7 @@
       }
 
       btnSalvar.disabled = true;
-      btnSalvar.textContent = "Salvando...";
+      btnSalvar.textContent = t("Salvando...");
 
       try {
         const url    = id ? `/api/cursos/${id}` : "/api/cursos";
@@ -670,7 +674,7 @@
         const dados = await r.json();
 
         if (!r.ok) {
-          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Erro ao salvar.", confirmButtonColor: "#4caebe" });
+          Swal.fire({ icon: "error", title: t("Erro"), text: dados.message || t("Erro ao salvar."), confirmButtonColor: "#4caebe" });
           return;
         }
 
@@ -678,16 +682,16 @@
         await carregarCursos();
         Swal.fire({
           icon: "success",
-          title: id ? "Curso atualizado!" : "Curso cadastrado!",
-          text: dados.message || "Operação realizada com sucesso.",
+          title: id ? t("Curso atualizado!") : t("Curso cadastrado!"),
+          text: dados.message || t("Operação realizada com sucesso."),
           confirmButtonColor: "#4caebe",
           timer: 2200, timerProgressBar: true, showConfirmButton: false
         });
       } catch {
-        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão. Tente novamente.", confirmButtonColor: "#4caebe" });
+        Swal.fire({ icon: "error", title: t("Erro"), text: t("Falha de conexão. Tente novamente."), confirmButtonColor: "#4caebe" });
       } finally {
         btnSalvar.disabled = false;
-        btnSalvar.textContent = "Salvar";
+        btnSalvar.textContent = t("Salvar");
       }
     }
 
@@ -695,26 +699,26 @@
     async function confirmarExcluir(id, nome) {
       const result = await Swal.fire({
         icon: "warning",
-        title: "Excluir curso?",
-        html: `O curso <strong>${escHtml(nome)}</strong> será removido permanentemente.`,
+        title: t("Excluir curso?"),
+        html: `${t("O curso")} <strong>${escHtml(nome)}</strong> ${t("será removido permanentemente.")}`,
         showCancelButton: true,
         confirmButtonColor: "#ef4444",
         cancelButtonColor: "#6b7c8d",
-        confirmButtonText: "Sim, excluir",
-        cancelButtonText: "Cancelar"
+        confirmButtonText: t("Sim, excluir"),
+        cancelButtonText: t("Cancelar")
       });
       if (!result.isConfirmed) return;
       try {
         const r = await fetch(`/api/cursos/${id}`, { method: "DELETE", headers: authHeader() });
         const dados = await r.json();
         if (!r.ok) {
-          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Não foi possível excluir.", confirmButtonColor: "#4caebe" });
+          Swal.fire({ icon: "error", title: t("Erro"), text: dados.message || t("Não foi possível excluir."), confirmButtonColor: "#4caebe" });
           return;
         }
         await carregarCursos();
-        Swal.fire({ icon: "success", title: "Excluído!", text: dados.message || "Curso removido.", confirmButtonColor: "#4caebe", timer: 2000, timerProgressBar: true, showConfirmButton: false });
+        Swal.fire({ icon: "success", title: t("Excluído!"), text: dados.message || t("Curso removido."), confirmButtonColor: "#4caebe", timer: 2000, timerProgressBar: true, showConfirmButton: false });
       } catch {
-        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão.", confirmButtonColor: "#4caebe" });
+        Swal.fire({ icon: "error", title: t("Erro"), text: t("Falha de conexão."), confirmButtonColor: "#4caebe" });
       }
     }
 
