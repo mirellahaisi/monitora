@@ -76,6 +76,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/static/js/searchable-select.js"></script>
 <script>
+  const t = texto => window.MonitoraI18n?.t?.(texto) || texto;
   const selectCurso     = document.getElementById("selectCurso");
   const selectMateria   = document.getElementById("selectMateria");
   const selectTurma     = document.getElementById("selectTurma");
@@ -115,13 +116,13 @@
     presencaCardWrap.innerHTML = `
       <div class="freq-empty">
         <i class="ph ph-magnifying-glass" style="font-size:3.5rem; opacity:0.3;"></i>
-        <p>${msg || "Selecione curso, matéria, turma e data para carregar os alunos."}</p>
+        <p>${msg || t("Selecione curso, matéria, turma e data para carregar os alunos.")}</p>
       </div>`;
   }
 
   function renderTabela(alunos) {
     const alunosOrdenados = [...alunos].sort((a, b) =>
-      String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", { sensitivity: "base" })
+      String(a.nome || "").localeCompare(String(b.nome || ""), window.MonitoraI18n?.getLocale?.() || "pt-BR", { sensitivity: "base" })
     );
     presencaCardWrap.innerHTML = `
       <div class="presenca-card" style="
@@ -135,9 +136,9 @@
         <table style="width:100%;border-collapse:collapse;">
           <thead style="background:linear-gradient(90deg,rgba(147,215,223,0.15),rgba(87,219,189,0.1));">
             <tr>
-              <th style="height:48px;padding:0 20px;color:var(--mid);font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;text-align:left;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1.5px solid rgba(147,215,223,0.25);">Aluno(a)</th>
-              <th style="height:48px;padding:0 20px;color:var(--mid);font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1.5px solid rgba(147,215,223,0.25);">Presente</th>
-              <th style="height:48px;padding:0 20px;color:var(--mid);font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1.5px solid rgba(147,215,223,0.25);">Ausente</th>
+              <th style="height:48px;padding:0 20px;color:var(--mid);font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;text-align:left;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1.5px solid rgba(147,215,223,0.25);">${t("Aluno(a)")}</th>
+              <th style="height:48px;padding:0 20px;color:var(--mid);font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1.5px solid rgba(147,215,223,0.25);">${t("Presente")}</th>
+              <th style="height:48px;padding:0 20px;color:var(--mid);font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;text-align:center;letter-spacing:0.04em;text-transform:uppercase;border-bottom:1.5px solid rgba(147,215,223,0.25);">${t("Ausente")}</th>
             </tr>
           </thead>
           <tbody id="tabelaPresenca">
@@ -164,12 +165,12 @@
       </div>
       <textarea
         id="justificativa"
-        placeholder="Observações: professor, utilize este campo para justificar uma falta específica"
+        placeholder="${t("Observações: professor, utilize este campo para justificar uma falta específica")}"
         style="width:100%;min-height:105px;border:1.5px solid rgba(147,215,223,0.4);border-radius:14px;padding:14px 16px;background:#fff;color:var(--mid);font:inherit;resize:vertical;outline:none;box-shadow:0 2px 12px rgba(76,190,190,0.06);margin-top:18px;"
       >${alunosOrdenados[0]?.justificativa || ""}</textarea>
       <div style="display:flex;justify-content:flex-end;margin-top:16px;">
         <button id="btnSalvarPresenca" type="button" style="height:46px;padding:0 28px;border:none;border-radius:10px;background:var(--grad);color:white;font:inherit;font-size:0.92rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(87,219,189,0.3);transition:opacity 0.2s,transform 0.15s;">
-          Salvar chamada
+          ${t("Salvar chamada")}
         </button>
       </div>`;
 
@@ -346,7 +347,7 @@
     presencaCardWrap.innerHTML = `
       <div class="freq-empty">
         <i class="ph ph-spinner" style="font-size:2.5rem; opacity:0.4;"></i>
-        <p>Carregando alunos...</p>
+        <p>${t("Carregando alunos...")}</p>
       </div>`;
 
     try {
@@ -357,7 +358,7 @@
       const dados = await r.json();
       if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar alunos.", "error"); mostrarVazio(); return; }
       if (!dados.alunos || dados.alunos.length === 0) {
-        mostrarVazio("Nenhum aluno encontrado para essa turma.");
+        mostrarVazio(t("Nenhum aluno encontrado para essa turma."));
         return;
       }
       renderTabela(dados.alunos);
@@ -369,9 +370,9 @@
     const turmaId   = document.getElementById("selectTurma").value;
     const data      = document.getElementById("dataAula").value;
 
-    if (!materiaId) { Swal.fire("Atenção", "Selecione a matéria.", "warning"); return; }
-    if (!turmaId)   { Swal.fire("Atenção", "Selecione a turma.", "warning"); return; }
-    if (!data)      { Swal.fire("Atenção", "Selecione a data da aula.", "warning"); return; }
+    if (!materiaId) { Swal.fire(t("Atenção"), t("Selecione a matéria."), "warning"); return; }
+    if (!turmaId)   { Swal.fire(t("Atenção"), t("Selecione a turma."), "warning"); return; }
+    if (!data)      { Swal.fire(t("Atenção"), t("Selecione a data da aula."), "warning"); return; }
 
     const linhas = document.querySelectorAll("#tabelaPresenca tr[data-aluno-id]");
     const alunos = [];
@@ -388,11 +389,11 @@
     }
 
     if (alunos.length === 0 && semMarca.length === 0) {
-      Swal.fire("Atenção", "Nenhum aluno carregado para salvar.", "warning"); return;
+      Swal.fire(t("Atenção"), t("Nenhum aluno carregado para salvar."), "warning"); return;
     }
     if (semMarca.length > 0) {
-      Swal.fire("Chamada incompleta",
-        `Marque presença ou ausência para todos os alunos antes de salvar.<br><br>Faltando:<br><b>${semMarca.join("<br>")}</b>`,
+      Swal.fire(t("Chamada incompleta"),
+        `${t("Marque presença ou ausência para todos os alunos antes de salvar.")}<br><br>${t("Faltando:")}<br><b>${semMarca.join("<br>")}</b>`,
         "warning");
       return;
     }
@@ -413,7 +414,7 @@
       });
       const dados = await r.json();
       if (!r.ok) { Swal.fire("Erro", dados.message || "Erro ao salvar presença.", "error"); return; }
-      await Swal.fire("Sucesso", "Chamada salva com sucesso.", "success");
+      await Swal.fire(t("Sucesso"), t("Chamada salva com sucesso."), "success");
       selectMateria.value = "";
       selectTurma.innerHTML = `<option value="">Selecione a turma</option>`;
       selectTurma.disabled = true;
@@ -426,8 +427,8 @@
 
   async function sair() {
     const c = await Swal.fire({
-      icon:"question", title:"Deseja sair?", text:"Sua sessão será encerrada.",
-      showCancelButton:true, confirmButtonText:"Sim, sair", cancelButtonText:"Cancelar"
+      icon:"question", title:t("Deseja sair?"), text:t("Sua sessão será encerrada."),
+      showCancelButton:true, confirmButtonText:t("Sim, sair"), cancelButtonText:t("Cancelar")
     });
     if (!c.isConfirmed) return;
     limparSessao(); window.location.href = "/";

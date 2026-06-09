@@ -410,6 +410,8 @@
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
+    const t = (text) => window.MonitoraI18n?.t?.(text) ?? text;
+
     function getToken() { return localStorage.getItem("token"); }
     function authHeader() { return { "Authorization": `Bearer ${getToken()}`, "Content-Type": "application/json" }; }
 
@@ -436,7 +438,7 @@
         const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
         const papel = payload.papel || payload.papel_id || payload.fk_papel_id;
         if (!isPapelCoordenador(papel)) {
-          Swal.fire({ icon: "error", title: "Acesso negado", text: "Esta área é exclusiva para coordenadores.", confirmButtonColor: "#4caebe" })
+          Swal.fire({ icon: "error", title: t("Acesso negado"), text: t("Esta área é exclusiva para coordenadores."), confirmButtonColor: "#4caebe" })
             .then(() => window.location.href = "/inicio");
         }
       } catch { window.location.href = "/login"; }
@@ -469,20 +471,20 @@
       try {
         const r = await fetch("/api/materias", { headers: authHeader() });
         const dados = await r.json();
-        if (!r.ok) { mostrarErroTabela(dados.message || "Erro ao carregar matérias."); return; }
+        if (!r.ok) { mostrarErroTabela(dados.message || t("Erro ao carregar matérias.")); return; }
         materias = (dados.materias || []).map(m => ({ ...m, ativo: normalizarAtivo(m.ativo) }));
         renderizarTabela();
       } catch {
-        mostrarErroTabela("Falha de conexão ao carregar matérias.");
+        mostrarErroTabela(t("Falha de conexão ao carregar matérias."));
       }
     }
 
     function filtrar() {
       if (!termoBusca) return materias;
-      const t = termoBusca.toLowerCase();
+      const termoBuscaNorm = termoBusca.toLowerCase();
       return materias.filter(m =>
-        m.nome.toLowerCase().includes(t) ||
-        (m.codigo || "").toLowerCase().includes(t)
+        m.nome.toLowerCase().includes(termoBuscaNorm) ||
+        (m.codigo || "").toLowerCase().includes(termoBuscaNorm)
       );
     }
 
@@ -493,7 +495,7 @@
           <tr><td colspan="7">
             <div class="materias-vazio">
               <i class="ph ph-books"></i>
-              <p>${termoBusca ? "Nenhuma matéria encontrada para a busca." : "Nenhuma matéria cadastrada ainda."}</p>
+              <p>${termoBusca ? t("Nenhuma matéria encontrada para a busca.") : t("Nenhuma matéria cadastrada ainda.")}</p>
             </div>
           </td></tr>`;
         rodapeMaterias.textContent = "";
@@ -514,11 +516,11 @@
           </td>
           <td>
             <span class="desc-cell" title="${escHtml(m.descricao || "")}">
-              ${m.descricao ? escHtml(m.descricao) : '<span style="color:var(--muted);font-size:.8rem">Sem descrição</span>'}
+              ${m.descricao ? escHtml(m.descricao) : `<span style="color:var(--muted);font-size:.8rem">${t("Sem descrição")}</span>`}
             </span>
           </td>
           <td class="col-ativo">
-            <span class="${m.ativo ? "badge-ativo" : "badge-inativo"}">${m.ativo ? "Ativa" : "Inativa"}</span>
+            <span class="${m.ativo ? "badge-ativo" : "badge-inativo"}">${m.ativo ? t("Ativa") : t("Inativa")}</span>
           </td>
           <td class="col-acoes">
             <button class="btn-acao btn-editar" title="Editar" onclick="abrirEditar(${m.id})">
@@ -529,7 +531,9 @@
             </button>
           </td>
         </tr>`).join("");
-      rodapeMaterias.textContent = `${lista.length} matéria${lista.length !== 1 ? "s" : ""} encontrada${lista.length !== 1 ? "s" : ""}`;
+      rodapeMaterias.textContent = lista.length === 1
+        ? `1 ${t("matéria encontrada")}`
+        : `${lista.length} ${t("matérias encontradas")}`;
     }
 
     function mostrarErroTabela(msg) {
@@ -552,7 +556,7 @@
     function abrirModal(modo, materia = null) {
       limparErros();
       if (modo === "novo") {
-        modalTitulo.textContent = "Nova Matéria";
+        modalTitulo.textContent = t("Nova Matéria");
         materiaIdInput.value = "";
         inputNome.value = "";
         inputCodigo.value = "";
@@ -561,7 +565,7 @@
         selectAtivo.value = "1";
         dadosOriginaisEdicao = null;
       } else {
-        modalTitulo.textContent = "Editar Matéria";
+        modalTitulo.textContent = t("Editar Matéria");
         materiaIdInput.value = materia.id;
         inputNome.value = materia.nome;
         inputCodigo.value = materia.codigo || "";
@@ -609,15 +613,15 @@
       const ch = inputCargaHor.value.trim();
 
       if (!nome || nome.length < 3) {
-        marcarErro(inputNome, "erroNome", nome ? "O nome deve ter pelo menos 3 caracteres." : "Informe o nome da matéria.");
+        marcarErro(inputNome, "erroNome", nome ? t("O nome deve ter pelo menos 3 caracteres.") : t("Informe o nome da matéria."));
         valido = false;
       }
       if (!codigo || codigo.length < 2) {
-        marcarErro(inputCodigo, "erroCodigo", codigo ? "O código deve ter pelo menos 2 caracteres." : "Informe o código da matéria.");
+        marcarErro(inputCodigo, "erroCodigo", codigo ? t("O código deve ter pelo menos 2 caracteres.") : t("Informe o código da matéria."));
         valido = false;
       }
       if (!ch || isNaN(Number(ch)) || Number(ch) < 1) {
-        marcarErro(inputCargaHor, "erroCargaHoraria", ch ? "Informe uma carga horária válida (mín. 1h)." : "Informe a carga horária.");
+        marcarErro(inputCargaHor, "erroCargaHoraria", ch ? t("Informe uma carga horária válida (mín. 1h).") : t("Informe a carga horária."));
         valido = false;
       }
       return valido;
@@ -647,8 +651,8 @@
         if (semMudanca) {
           Swal.fire({
             icon: "info",
-            title: "Nenhuma alteração",
-            text: "Nenhum dado foi alterado.",
+            title: t("Nenhuma alteração"),
+            text: t("Nenhum dado foi alterado."),
             confirmButtonColor: "#4caebe",
             timer: 2000, timerProgressBar: true, showConfirmButton: false
           });
@@ -657,7 +661,7 @@
       }
 
       btnSalvar.disabled = true;
-      btnSalvar.textContent = "Salvando...";
+      btnSalvar.textContent = t("Salvando...");
 
       try {
         const url    = id ? `/api/materias/${id}` : "/api/materias";
@@ -666,7 +670,7 @@
         const dados = await r.json();
 
         if (!r.ok) {
-          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Erro ao salvar.", confirmButtonColor: "#4caebe" });
+          Swal.fire({ icon: "error", title: t("Erro"), text: dados.message || t("Erro ao salvar."), confirmButtonColor: "#4caebe" });
           return;
         }
 
@@ -674,16 +678,16 @@
         await carregarMaterias();
         Swal.fire({
           icon: "success",
-          title: id ? "Matéria atualizada!" : "Matéria cadastrada!",
-          text: dados.message || "Operação realizada com sucesso.",
+          title: id ? t("Matéria atualizada!") : t("Matéria cadastrada!"),
+          text: dados.message || t("Operação realizada com sucesso."),
           confirmButtonColor: "#4caebe",
           timer: 2200, timerProgressBar: true, showConfirmButton: false
         });
       } catch {
-        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão. Tente novamente.", confirmButtonColor: "#4caebe" });
+        Swal.fire({ icon: "error", title: t("Erro"), text: t("Falha de conexão. Tente novamente."), confirmButtonColor: "#4caebe" });
       } finally {
         btnSalvar.disabled = false;
-        btnSalvar.textContent = "Salvar";
+        btnSalvar.textContent = t("Salvar");
       }
     }
 
@@ -691,26 +695,26 @@
     async function confirmarExcluir(id, nome) {
       const result = await Swal.fire({
         icon: "warning",
-        title: "Excluir matéria?",
-        html: `A matéria <strong>${escHtml(nome)}</strong> será removida permanentemente.`,
+        title: t("Excluir matéria?"),
+        html: `${t("A matéria")} <strong>${escHtml(nome)}</strong> ${t("será removida permanentemente.")}`,
         showCancelButton: true,
         confirmButtonColor: "#ef4444",
         cancelButtonColor: "#6b7c8d",
-        confirmButtonText: "Sim, excluir",
-        cancelButtonText: "Cancelar"
+        confirmButtonText: t("Sim, excluir"),
+        cancelButtonText: t("Cancelar")
       });
       if (!result.isConfirmed) return;
       try {
         const r = await fetch(`/api/materias/${id}`, { method: "DELETE", headers: authHeader() });
         const dados = await r.json();
         if (!r.ok) {
-          Swal.fire({ icon: "error", title: "Erro", text: dados.message || "Não foi possível excluir.", confirmButtonColor: "#4caebe" });
+          Swal.fire({ icon: "error", title: t("Erro"), text: dados.message || t("Não foi possível excluir."), confirmButtonColor: "#4caebe" });
           return;
         }
         await carregarMaterias();
-        Swal.fire({ icon: "success", title: "Excluída!", text: dados.message || "Matéria removida.", confirmButtonColor: "#4caebe", timer: 2000, timerProgressBar: true, showConfirmButton: false });
+        Swal.fire({ icon: "success", title: t("Excluída!"), text: dados.message || t("Matéria removida."), confirmButtonColor: "#4caebe", timer: 2000, timerProgressBar: true, showConfirmButton: false });
       } catch {
-        Swal.fire({ icon: "error", title: "Erro", text: "Falha de conexão.", confirmButtonColor: "#4caebe" });
+        Swal.fire({ icon: "error", title: t("Erro"), text: t("Falha de conexão."), confirmButtonColor: "#4caebe" });
       }
     }
 

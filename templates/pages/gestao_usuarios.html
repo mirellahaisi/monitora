@@ -7,7 +7,11 @@
   <title>Monitora+ | Gestão de Usuários</title>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 </head>
 
 <body class="inicio-body gestao-page">
@@ -135,6 +139,7 @@
   <script src="/static/js/componentes.js"></script>
 
   <script>
+    const t = (text) => window.MonitoraI18n?.t?.(text) ?? text;
     let modoEdicao = false;
     let abaAtual = "alunos";
     let dadosAba = {};
@@ -148,8 +153,8 @@
     const CONFIG_ABAS = {
       alunos: {
         endpoint: "/api/usuarios/alunos",
-        colunas: ["Nome", "CPF", "Turma", "Ações"],
-        labelNovo: "Novo aluno",
+        get colunas() { return [t("Nome"), t("CPF"), t("Turma"), t("Ações")]; },
+        get labelNovo() { return t("Novo aluno"); },
         renderLinha: (u) => `
           <td>
             <div class="cell-nome">
@@ -162,8 +167,8 @@
       },
       coordenacao: {
         endpoint: "/api/usuarios/coordenacao",
-        colunas: ["Nome", "E-mail", "Telefone", "Ações"],
-        labelNovo: "Novo coordenador",
+        get colunas() { return [t("Nome"), t("E-mail"), t("Telefone"), t("Ações")]; },
+        get labelNovo() { return t("Novo coordenador"); },
         renderLinha: (u) => `
           <td>
             <div class="cell-nome">
@@ -176,8 +181,8 @@
       },
       professores: {
         endpoint: "/api/usuarios/professores",
-        colunas: ["Nome", "CPF", "Especialidade", "Ações"],
-        labelNovo: "Novo professor",
+        get colunas() { return [t("Nome"), t("CPF"), t("Especialidade"), t("Ações")]; },
+        get labelNovo() { return t("Novo professor"); },
         renderLinha: (u) => `
           <td>
             <div class="cell-nome">
@@ -201,21 +206,21 @@
       document.getElementById("tabelaCorpo").innerHTML =
         `<tr class="estado-linha"><td colspan="${n}">
           <i class="ph ph-circle-notch estado-icon"></i>
-          Carregando...
+          ${t("Carregando...")}
         </td></tr>`;
     }
-    function mostrarVazio(n, msg = "Nenhum registro encontrado.") {
+    function mostrarVazio(n, msg) {
       document.getElementById("tabelaCorpo").innerHTML =
         `<tr class="estado-linha"><td colspan="${n}">
           <i class="ph ph-users estado-icon"></i>
-          ${msg}
+          ${msg ?? t("Nenhum registro encontrado.")}
         </td></tr>`;
     }
-    function mostrarErro(n, msg = "Erro ao carregar dados.") {
+    function mostrarErro(n, msg) {
       document.getElementById("tabelaCorpo").innerHTML =
         `<tr class="estado-linha"><td colspan="${n}" style="color:#e55353">
           <i class="ph ph-warning-circle estado-icon"></i>
-          ${msg}
+          ${msg ?? t("Erro ao carregar dados.")}
         </td></tr>`;
     }
     function atualizarCabecalho(colunas) {
@@ -277,16 +282,26 @@
       return Number(numero.toFixed(2));
     }
     function normalizarTextoSalario(valor) {
-      const texto = String(valor || "").replace(/[^\d,.-]/g, "").replace(/\./g, ",");
-      const partes = texto.split(",");
+      const separador = window.MonitoraI18n?.getLanguage?.() === "en" ? "." : ",";
+      const outroSeparador = separador === "." ? "," : ".";
+      const texto = String(valor || "")
+        .replace(/[^\d,.-]/g, "")
+        .replaceAll(outroSeparador, separador);
+      const partes = texto.split(separador);
       const inteiro = (partes.shift() || "").replace(/\D/g, "");
       const decimal = partes.join("").replace(/\D/g, "").slice(0, 2);
       if (!inteiro && !decimal) return "";
-      return decimal || texto.includes(",") ? `${inteiro || "0"},${decimal}` : inteiro;
+      return decimal || texto.includes(separador) ? `${inteiro || "0"}${separador}${decimal}` : inteiro;
     }
     function formatarSalario(valor) {
       const numero = parseSalario(valor);
-      return numero == null ? "" : numero.toFixed(2).replace(".", ",");
+      return numero == null ? "" : (window.MonitoraI18n?.normalizeDecimalInput?.(numero) || numero.toFixed(2).replace(".", ","));
+    }
+    function formatarMoeda(valor) {
+      return window.MonitoraI18n?.formatMoney?.(valor) || `R$ ${Number(valor).toFixed(2).replace(".", ",")}`;
+    }
+    function formatarDataLocal(valor) {
+      return window.MonitoraI18n?.formatDate?.(valor) || valor;
     }
     function tipoUsuarioDaAba(aba) {
       if (aba === "professores") return "professor";
@@ -349,42 +364,42 @@
       const salarioNumero = parseSalario(dados.salario);
 
       if (String(dados.nome || "").trim().length < 3) {
-        Swal.fire("Atenção", "O nome deve ter no mínimo 3 caracteres.", "warning");
+        Swal.fire(t("Atenção"), t("O nome deve ter no mínimo 3 caracteres."), "warning");
         return false;
       }
       if (!cpfValido(dados.cpf)) {
-        Swal.fire("Atenção", "Informe um CPF válido.", "warning");
+        Swal.fire(t("Atenção"), t("Informe um CPF válido."), "warning");
         return false;
       }
       if (!emailValido(dados.email)) {
-        Swal.fire("Atenção", "Informe um e-mail válido.", "warning");
+        Swal.fire(t("Atenção"), t("Informe um e-mail válido."), "warning");
         return false;
       }
       if (!telefoneValido(dados.telefone)) {
-        Swal.fire("Atenção", "Informe um telefone válido com DDD.", "warning");
+        Swal.fire(t("Atenção"), t("Informe um telefone válido com DDD."), "warning");
         return false;
       }
       if (!dados.data_nascimento) {
-        Swal.fire("Atenção", "Informe a data de nascimento.", "warning");
+        Swal.fire(t("Atenção"), t("Informe a data de nascimento."), "warning");
         return false;
       }
       if (!idadeValidaParaPapel(dados.data_nascimento, tipo)) {
         Swal.fire(
-          "Atenção",
+          t("Atenção"),
           tipo === "aluno"
-            ? "Alunos devem ter mais de 12 anos."
-            : "Professores e coordenadores devem ter mais de 18 anos.",
+            ? t("Alunos devem ter mais de 12 anos.")
+            : t("Professores e coordenadores devem ter mais de 18 anos."),
           "warning"
         );
         return false;
       }
       if (ehCampoProfissional(tipo)) {
         if (String(dados.especialidade || "").trim().length < 3) {
-          Swal.fire("Atenção", "A especialidade deve ter no mínimo 3 caracteres.", "warning");
+          Swal.fire(t("Atenção"), t("A especialidade deve ter no mínimo 3 caracteres."), "warning");
           return false;
         }
         if (salarioNumero == null) {
-          Swal.fire("Atenção", "Informe um salário válido no formato 0,00.", "warning");
+          Swal.fire(t("Atenção"), t("Informe um salário válido no formato 0,00."), "warning");
           return false;
         }
       }
@@ -400,8 +415,8 @@
       papelModalAtual = tipoUsuarioDaAba(abaAtual);
       estadoOriginalModal = null;
       limparFormulario();
-      const labels = { alunos: "Novo aluno", professores: "Novo professor", coordenacao: "Novo coordenador" };
-      document.getElementById("tituloModal").textContent = labels[abaAtual] || "Novo usuário";
+      const labels = { alunos: t("Novo aluno"), professores: t("Novo professor"), coordenacao: t("Novo coordenador") };
+      document.getElementById("tituloModal").textContent = labels[abaAtual] || t("Novo usuário");
       aplicarVisibilidadeCamposProfissionais(papelModalAtual);
       document.getElementById("modalUsuario").style.display = "flex";
     }
@@ -410,8 +425,9 @@
       document.getElementById("modalUsuario").style.display = "none";
     }
     function limparFormulario() {
-      ["usuarioId","nome","cpf","email","telefone","dataNascimento","especialidade","salario"]
+      ["usuarioId","nome","cpf","email","telefone","especialidade","salario"]
         .forEach(id => { document.getElementById(id).value = ""; });
+      (window.MonitoraI18n?.setDate || ((el, v) => { el.value = v || ""; }))(document.getElementById("dataNascimento"), null);
     }
 
     function renderTabela(usuarios, config) {
@@ -420,7 +436,7 @@
       const filtrados = busca
         ? usuarios.filter(u => Object.values(u).some(v => String(v).toLowerCase().includes(busca)))
         : usuarios;
-      if (filtrados.length === 0) { mostrarVazio(config.colunas.length, "Nenhum resultado para a busca."); return; }
+      if (filtrados.length === 0) { mostrarVazio(config.colunas.length, t("Nenhum resultado para a busca.")); return; }
 
       document.getElementById("tabelaCorpo").innerHTML = filtrados.map(u => `
         <tr>
@@ -447,11 +463,11 @@
       try {
         const resp = await fetch(config.endpoint, { headers: { "Authorization": `Bearer ${token}` } });
         if (resp.status === 401 || resp.status === 403) { limparSessao(); window.location.href = "/"; return; }
-        if (!resp.ok) { mostrarErro(config.colunas.length, "Erro ao buscar dados."); return; }
+        if (!resp.ok) { mostrarErro(config.colunas.length, t("Erro ao buscar dados.")); return; }
         const dados = await resp.json();
         dadosAba[tab] = dados.usuarios || [];
         renderTabela(dadosAba[tab], config);
-      } catch { mostrarErro(config.colunas.length, "Falha na conexão com o servidor."); }
+      } catch { mostrarErro(config.colunas.length, t("Falha na conexão com o servidor.")); }
     }
 
     async function salvarUsuario() {
@@ -461,7 +477,7 @@
 
       const dadosNormalizados = normalizarDadosUsuario(dados, papelModalAtual);
       if (modoEdicao && estadoOriginalModal && JSON.stringify(dadosNormalizados) === JSON.stringify(estadoOriginalModal)) {
-        Swal.fire("Atenção", "Nenhuma informação foi alterada.", "info");
+        Swal.fire(t("Atenção"), t("Nenhuma informação foi alterada."), "info");
         return;
       }
 
@@ -472,7 +488,7 @@
         telefone: formatarTelefone(dadosNormalizados.telefone),
         especialidade: dadosNormalizados.especialidade,
         data_nascimento: dadosNormalizados.data_nascimento,
-        salario: dadosNormalizados.salario ? dadosNormalizados.salario.replace(".", ",") : null
+        salario: dadosNormalizados.salario || null
       };
       const endpoints = { alunos: "/api/usuarios/alunos", professores: "/api/usuarios/professores", coordenacao: "/api/usuarios/coordenacao" };
       const id     = document.getElementById("usuarioId").value;
@@ -485,30 +501,30 @@
           body: JSON.stringify(payload)
         });
         const res = await resp.json();
-        if (!resp.ok) { Swal.fire("Erro", res.message || "Falha ao salvar", "error"); return; }
+        if (!resp.ok) { Swal.fire(t("Erro"), res.message || t("Falha ao salvar"), "error"); return; }
         if (res.alterado === false) {
-          Swal.fire("Atenção", res.message || "Nenhuma informação foi alterada.", "info");
+          Swal.fire(t("Atenção"), res.message || t("Nenhuma informação foi alterada."), "info");
           return;
         }
         const senhaInicial = res.senha_inicial || (!modoEdicao ? senhaInicialPorData(dadosNormalizados.data_nascimento) : "");
         Swal.fire({
           icon: "success",
-          title: "Sucesso",
+          title: t("Sucesso"),
           html: senhaInicial
-            ? `${res.message}<br><br><strong>${modoEdicao ? "Nova senha:" : "Senha inicial:"}</strong> ${senhaInicial}`
+            ? `${res.message}<br><br><strong>${modoEdicao ? t("Nova senha:") : t("Senha inicial:")}</strong> ${senhaInicial}`
             : res.message
         });
         fecharModal();
         estadoOriginalModal = null;
         dadosAba[abaAtual] = null;
         carregarAba(abaAtual);
-      } catch { Swal.fire("Erro", "Falha na conexão", "error"); }
+      } catch { Swal.fire(t("Erro"), t("Falha na conexão"), "error"); }
     }
 
     async function sair() {
       const c = await Swal.fire({
-        icon: "question", title: "Deseja sair?", text: "Sua sessão será encerrada.",
-        showCancelButton: true, confirmButtonText: "Sim, sair", cancelButtonText: "Cancelar"
+        icon: "question", title: t("Deseja sair?"), text: t("Sua sessão será encerrada."),
+        showCancelButton: true, confirmButtonText: t("Sim, sair"), cancelButtonText: t("Cancelar")
       });
       if (!c.isConfirmed) return;
       try { if (getToken()) await fetch("/api/logout", { method: "POST", headers: { "Authorization": `Bearer ${getToken()}` } }); } catch {}
@@ -533,17 +549,17 @@
           Swal.fire({
             title: u.nome,
             html: `<table style="width:100%;text-align:left;font-size:0.9rem;border-collapse:collapse">
-              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">CPF</td><td style="padding:7px 10px">${u.cpf ? formatarCpf(u.cpf) : "—"}</td></tr>
-              <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">E-mail</td><td style="padding:7px 10px">${u.email || "—"}</td></tr>
-              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Telefone</td><td style="padding:7px 10px">${u.telefone ? formatarTelefone(u.telefone) : "—"}</td></tr>
-              <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Nascimento</td><td style="padding:7px 10px">${u.data_nascimento || "—"}</td></tr>
+              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">${t("CPF")}</td><td style="padding:7px 10px">${u.cpf ? formatarCpf(u.cpf) : "—"}</td></tr>
+              <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">${t("E-mail")}</td><td style="padding:7px 10px">${u.email || "—"}</td></tr>
+              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">${t("Telefone")}</td><td style="padding:7px 10px">${u.telefone ? formatarTelefone(u.telefone) : "—"}</td></tr>
+              <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">${t("Nascimento")}</td><td style="padding:7px 10px">${u.data_nascimento ? formatarDataLocal(u.data_nascimento) : "—"}</td></tr>
               ${!ehAluno ? `
-              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Especialidade</td><td style="padding:7px 10px">${u.especialidade || "—"}</td></tr>
-              <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">Salário</td><td style="padding:7px 10px">${u.salario != null ? "R$ " + Number(u.salario).toFixed(2) : "—"}</td></tr>` : ""}
+              <tr><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">${t("Especialidade")}</td><td style="padding:7px 10px">${u.especialidade || "—"}</td></tr>
+              <tr style="background:rgba(147,215,223,0.05)"><td style="padding:7px 10px;color:#7a96a8;font-weight:600;font-size:0.8rem;text-transform:uppercase;letter-spacing:.04em">${t("Salário")}</td><td style="padding:7px 10px">${u.salario != null ? formatarMoeda(u.salario) : "—"}</td></tr>` : ""}
             </table>`,
-            confirmButtonText: "Fechar"
+            confirmButtonText: t("Fechar")
           });
-        } catch { Swal.fire("Erro", "Falha ao carregar dados do usuário.", "error"); }
+        } catch { Swal.fire(t("Erro"), t("Falha ao carregar dados do usuário."), "error"); }
       }
 
       if (e.target.closest(".acao-edit")) {
@@ -559,10 +575,10 @@
           document.getElementById("cpf").value            = formatarCpf(u.cpf || "");
           document.getElementById("email").value          = u.email || "";
           document.getElementById("telefone").value       = formatarTelefone(u.telefone || "");
-          document.getElementById("dataNascimento").value = u.data_nascimento || "";
+          (window.MonitoraI18n?.setDate || ((el, v) => { el.value = v || ""; }))(document.getElementById("dataNascimento"), u.data_nascimento || null);
           document.getElementById("especialidade").value  = u.especialidade || "";
           document.getElementById("salario").value        = formatarSalario(u.salario);
-          document.getElementById("tituloModal").textContent = "Editar usuário";
+          document.getElementById("tituloModal").textContent = t("Editar usuário");
           aplicarVisibilidadeCamposProfissionais(papelModalAtual);
           estadoOriginalModal = normalizarDadosUsuario({
             nome: u.nome || "",
@@ -571,27 +587,27 @@
             telefone: u.telefone || "",
             especialidade: u.especialidade || "",
             data_nascimento: u.data_nascimento || null,
-            salario: u.salario != null ? Number(u.salario).toFixed(2).replace(".", ",") : null
+            salario: u.salario != null ? Number(u.salario).toFixed(2) : null
           }, papelModalAtual);
           document.getElementById("modalUsuario").style.display = "flex";
-        } catch { Swal.fire("Erro", "Falha ao carregar dados do usuário.", "error"); }
+        } catch { Swal.fire(t("Erro"), t("Falha ao carregar dados do usuário."), "error"); }
       }
 
       if (e.target.closest(".acao-del")) {
         const id = e.target.closest("button").dataset.id;
         const c = await Swal.fire({
-          title: "Excluir usuário?", text: "Essa ação não poderá ser desfeita.",
-          icon: "warning", showCancelButton: true, confirmButtonText: "Sim, excluir"
+          title: t("Excluir usuário?"), text: t("Essa ação não poderá ser desfeita."),
+          icon: "warning", showCancelButton: true, confirmButtonText: t("Sim, excluir"), cancelButtonText: t("Cancelar")
         });
         if (!c.isConfirmed) return;
         try {
           const resp = await fetch(`/api/usuarios/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${getToken()}` } });
           const res = await resp.json();
-          if (!resp.ok) { Swal.fire("Erro", res.message, "error"); return; }
-          Swal.fire("Sucesso", res.message, "success");
+          if (!resp.ok) { Swal.fire(t("Erro"), res.message, "error"); return; }
+          Swal.fire(t("Sucesso"), res.message, "success");
           dadosAba[abaAtual] = null;
           carregarAba(abaAtual);
-        } catch { Swal.fire("Erro", "Falha na conexão", "error"); }
+        } catch { Swal.fire(t("Erro"), t("Falha na conexão"), "error"); }
       }
     });
 

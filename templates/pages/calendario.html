@@ -6,7 +6,11 @@
   <title>Monitora+ | Calendário</title>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 </head>
 
 <body class="inicio-body cal-page">
@@ -264,9 +268,9 @@
 
     function formatarPapel(papel) {
       const p = String(papel).toLowerCase();
-      if (["admin","adm","coordenador"].includes(p)) return "Coordenador";
-      if (p === "professor") return "Professor";
-      return "Aluno";
+      if (["admin","adm","coordenador"].includes(p)) return t("Coordenador");
+      if (p === "professor") return t("Professor");
+      return t("Aluno");
     }
 
     // ══════════════════════════════════════
@@ -299,6 +303,19 @@
       "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
       "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
     ];
+
+    function t(texto) {
+      return window.MonitoraI18n?.t(texto) || texto;
+    }
+
+    function capitalizar(texto) {
+      const valor = String(texto || "");
+      return valor ? valor.charAt(0).toLocaleUpperCase(window.MonitoraI18n?.getLocale?.() || "pt-BR") + valor.slice(1) : "";
+    }
+
+    function nomeMes(idx, formato = "long") {
+      return capitalizar(window.MonitoraI18n?.monthName?.(idx, formato) || MESES_PT[idx]);
+    }
 
     // ══════════════════════════════════════
     // CARREGAR USUÁRIO LOGADO
@@ -363,7 +380,7 @@
         const d = await r.json();
         eventosCache = d.eventos || [];
         renderizarCalendario();
-      } catch { Swal.fire("Erro", "Falha ao carregar eventos.", "error"); }
+      } catch { Swal.fire(t("Erro"), t("Falha ao carregar eventos."), "error"); }
     }
 
     // ══════════════════════════════════════
@@ -372,7 +389,7 @@
     function renderizarCalendario() {
       const mesLabelEl = document.getElementById("mesLabel");
       // preserva o caret span e atualiza apenas o texto
-      mesLabelEl.childNodes[0].textContent = `${MESES_PT[mesAtual]} ${anoAtual}`;
+      mesLabelEl.childNodes[0].textContent = `${nomeMes(mesAtual)} ${anoAtual}`;
 
       const calBody = document.getElementById("calBody");
       calBody.innerHTML = "";
@@ -446,7 +463,8 @@
         const evsDia = mapaEventos[dataStr] || [];
         for (const ev of evsDia.slice(0, 3)) {
           const tag = document.createElement("span");
-          const ehPassado = new Date(ev.data_inicio) < agora;
+          const dataEvento = obterDataEvento(ev.data_inicio);
+          const ehPassado = dataEvento ? dataEvento < agora : false;
           tag.className = "event-tag"
             + (ev.pessoal ? " pessoal" : "")
             + (ehPassado  ? " passado"  : "");
@@ -461,8 +479,8 @@
                        : "";
 
           tag.textContent = prefix + ev.titulo;
-          tag.title = (ehCriador && isProfCoord && ev.pessoal) ? `${ev.titulo} · Visível só para mim`
-                    : ehCriador ? `${ev.titulo} · Criado por mim`
+          tag.title = (ehCriador && isProfCoord && ev.pessoal) ? `${ev.titulo} · ${t("Visível só para mim")}`
+                    : ehCriador ? `${ev.titulo} · ${t("Criado por mim")}`
                     : ev.titulo;
 
           tag.addEventListener("click", (e) => { e.stopPropagation(); abrirDetalhe(ev); });
@@ -471,7 +489,7 @@
         if (evsDia.length > 3) {
           const mais = document.createElement("span");
           mais.style.cssText = "font-size:0.7rem;color:var(--muted);padding-left:4px;";
-          mais.textContent = `+${evsDia.length - 3} mais`;
+          mais.textContent = `+${evsDia.length - 3} ${t("mais")}`;
           cell.appendChild(mais);
         }
 
@@ -556,26 +574,26 @@
       grupoPessoal.classList.remove("hidden");
 
       // Preenche select de turma (prof e coord)
-      const globalOpt = isCoord ? `<option value="">Global (todas as turmas)</option>` : `<option value="">Selecione a turma...</option>`;
+      const globalOpt = isCoord ? `<option value="">${t("Global (todas as turmas)")}</option>` : `<option value="">${t("Selecione a turma...")}</option>`;
       selTurma.innerHTML = globalOpt;
-      turmasOpcoes.forEach(t => {
-        selTurma.innerHTML += `<option value="${t.id}">${t.nome}${t.periodo ? ` – P${t.periodo}` : ""}</option>`;
+      turmasOpcoes.forEach(turma => {
+        selTurma.innerHTML += `<option value="${turma.id}">${turma.nome}${turma.periodo ? ` – P${turma.periodo}` : ""}</option>`;
       });
 
       // Matéria começa limpa; só professor usa, preenchida ao mudar turma
-      selMateria.innerHTML = `<option value="">Selecione primeiro a turma</option>`;
+      selMateria.innerHTML = `<option value="">${t("Selecione primeiro a turma")}</option>`;
 
       // Quando professor muda turma → recarrega matérias
       selTurma.onchange = async () => {
         const turmaId = selTurma.value;
         if (isProf && turmaId) {
           await carregarMateriasDaTurma(turmaId);
-          selMateria.innerHTML = `<option value="">Selecione a matéria...</option>`;
+          selMateria.innerHTML = `<option value="">${t("Selecione a matéria...")}</option>`;
           materiasOpcoes.forEach(m => {
             selMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
           });
         } else {
-          selMateria.innerHTML = `<option value="">Selecione primeiro a turma</option>`;
+          selMateria.innerHTML = `<option value="">${t("Selecione primeiro a turma")}</option>`;
         }
       };
 
@@ -588,11 +606,12 @@
 
     function abrirModalCriar(dataStr = "") {
       eventoEmEdicao = null;
-      document.getElementById("modalEventoTitulo").textContent = "Novo evento";
+      document.getElementById("modalEventoTitulo").textContent = t("Novo evento");
       document.getElementById("inputTitulo").value    = "";
       document.getElementById("inputDescricao").value = "";
-      document.getElementById("inputDataInicio").value = dataStr ? `${dataStr}T08:00` : "";
-      document.getElementById("inputDataFim").value    = dataStr ? `${dataStr}T09:00` : "";
+      const _setDate = window.MonitoraI18n?.setDate || ((el, v) => { el.value = v || ""; });
+      _setDate(document.getElementById("inputDataInicio"), dataStr ? `${dataStr}T08:00` : null);
+      _setDate(document.getElementById("inputDataFim"),    dataStr ? `${dataStr}T09:00` : null);
       document.getElementById("selectTipo").value      = "evento";
       document.getElementById("selectTurma").value     = "";
       document.getElementById("selectMateria").value   = "";
@@ -606,11 +625,12 @@
 
     function abrirModalEditar(ev) {
       eventoEmEdicao = ev;
-      document.getElementById("modalEventoTitulo").textContent = "Editar evento";
+      document.getElementById("modalEventoTitulo").textContent = t("Editar evento");
       document.getElementById("inputTitulo").value    = ev.titulo || "";
       document.getElementById("inputDescricao").value = ev.descricao || "";
-      document.getElementById("inputDataInicio").value = (ev.data_inicio || "").slice(0,16);
-      document.getElementById("inputDataFim").value    = (ev.data_fim    || "").slice(0,16);
+      const _setDateE = window.MonitoraI18n?.setDate || ((el, v) => { el.value = v || ""; });
+      _setDateE(document.getElementById("inputDataInicio"), (ev.data_inicio || "").slice(0,16) || null);
+      _setDateE(document.getElementById("inputDataFim"),    (ev.data_fim    || "").slice(0,16) || null);
       document.getElementById("selectTipo").value      = ev.tipo || "evento";
       corSelecionada = ev.cor || CORES[0];
 
@@ -626,7 +646,7 @@
         if (papelUsuario === "professor" && ev.fk_turma_id) {
           carregarMateriasDaTurma(ev.fk_turma_id).then(() => {
             const selMateria = document.getElementById("selectMateria");
-            selMateria.innerHTML = `<option value="">Selecione a matéria...</option>`;
+            selMateria.innerHTML = `<option value="">${t("Selecione a matéria...")}</option>`;
             materiasOpcoes.forEach(m => {
               selMateria.innerHTML += `<option value="${m.id}">${m.nome}</option>`;
             });
@@ -740,36 +760,36 @@
 
     function validarDadosEvento(payload) {
       if (!payload.titulo || !payload.data_inicio) {
-        return "Preencha título e data de início.";
+        return t("Preencha título e data de início.");
       }
 
       if (payload.titulo.length < 3) {
-        return "O título deve ter no mínimo 3 caracteres.";
+        return t("O título deve ter no mínimo 3 caracteres.");
       }
 
       const inicio = obterDataEvento(payload.data_inicio);
       if (!inicio) {
-        return "Informe uma data e hora de início válida.";
+        return t("Informe uma data e hora de início válida.");
       }
 
       const agora = obterAgoraNoMinuto();
       if (inicio < agora) {
-        return "A data e hora de início não podem estar no passado.";
+        return t("A data e hora de início não podem estar no passado.");
       }
 
       if (payload.data_fim) {
         const fim = obterDataEvento(payload.data_fim);
         if (!fim) {
-          return "Informe uma data e hora de fim válida.";
+          return t("Informe uma data e hora de fim válida.");
         }
 
         if (fim < agora) {
-          return "A data e hora de fim não podem estar no passado.";
+          return t("A data e hora de fim não podem estar no passado.");
         }
 
         const minimoFim = new Date(inicio.getTime() + (60 * 60 * 1000));
         if (fim < minimoFim) {
-          return "A data e hora de fim deve ter pelo menos 1 hora de diferença do início.";
+          return t("A data e hora de fim deve ter pelo menos 1 hora de diferença do início.");
         }
       }
 
@@ -781,7 +801,7 @@
       const dataInicio = document.getElementById("inputDataInicio").value;
 
       if (!titulo || !dataInicio) {
-        Swal.fire("Atenção", "Preencha título e data de início.", "warning"); return;
+        Swal.fire(t("Atenção"), t("Preencha título e data de início."), "warning"); return;
       }
 
       const isPessoal = papelUsuario === "aluno"
@@ -804,7 +824,7 @@
 
         // Professor: turma obrigatória
         if (papelUsuario === "professor" && !turmaVal) {
-          Swal.fire("Atenção", "Selecione uma turma para o evento.", "warning"); return;
+          Swal.fire(t("Atenção"), t("Selecione uma turma para o evento."), "warning"); return;
         }
 
         payload.fk_turma_id = turmaVal;
@@ -813,7 +833,7 @@
         if (papelUsuario === "professor") {
           const materiaVal = document.getElementById("selectMateria").value || null;
           if (!materiaVal) {
-            Swal.fire("Atenção", "Selecione uma matéria para o evento.", "warning"); return;
+            Swal.fire(t("Atenção"), t("Selecione uma matéria para o evento."), "warning"); return;
           }
           payload.fk_materia_id = materiaVal;
         }
@@ -833,23 +853,23 @@
 
       const mensagemValidacao = validarDadosEvento(payload);
       if (mensagemValidacao) {
-        Swal.fire("Atenção", mensagemValidacao, "warning");
+        Swal.fire(t("Atenção"), mensagemValidacao, "warning");
         return;
       }
 
       if (eventoEmEdicao && !eventoFoiAlterado(payload)) {
-        Swal.fire("Atenção", "Nenhum dado foi atualizado.", "info");
+        Swal.fire(t("Atenção"), t("Nenhum dado foi atualizado."), "info");
         return;
       }
 
       if (eventoEmEdicao) {
         const confirmacao = await Swal.fire({
           icon: "question",
-          title: "Salvar alterações?",
-          text: "Deseja realmente editar este evento?",
+          title: t("Salvar alterações?"),
+          text: t("Deseja realmente editar este evento?"),
           showCancelButton: true,
-          confirmButtonText: "Sim, editar",
-          cancelButtonText: "Cancelar"
+          confirmButtonText: t("Sim, editar"),
+          cancelButtonText: t("Cancelar")
         });
         if (!confirmacao.isConfirmed) return;
       }
@@ -865,19 +885,19 @@
           body: JSON.stringify(payload)
         });
         const d = await r.json();
-        if (!r.ok) { Swal.fire("Erro", d.message || "Erro ao salvar evento.", "error"); return; }
+        if (!r.ok) { Swal.fire(t("Erro"), d.message || t("Erro ao salvar evento."), "error"); return; }
 
         fecharModalEvento();
         await carregarEventos();
-        Swal.fire({ icon: "success", title: eventoEmEdicao ? "Evento atualizado!" : "Evento criado!", timer: 1800, showConfirmButton: false });
-      } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        Swal.fire({ icon: "success", title: eventoEmEdicao ? t("Evento atualizado!") : t("Evento criado!"), timer: 1800, showConfirmButton: false });
+      } catch { Swal.fire(t("Erro"), t("Falha na conexão."), "error"); }
     }
 
     async function deletarEvento(id) {
       const conf = await Swal.fire({
-        icon: "warning", title: "Excluir evento?",
-        text: "Esta ação não pode ser desfeita.",
-        showCancelButton: true, confirmButtonText: "Excluir", cancelButtonText: "Cancelar",
+        icon: "warning", title: t("Excluir evento?"),
+        text: t("Esta ação não pode ser desfeita."),
+        showCancelButton: true, confirmButtonText: t("Excluir"), cancelButtonText: t("Cancelar"),
         confirmButtonColor: "#c0392b"
       });
       if (!conf.isConfirmed) return;
@@ -888,13 +908,13 @@
           headers: { Authorization: `Bearer ${getToken()}` }
         });
         const d = await r.json();
-        if (!r.ok) { Swal.fire("Erro", d.message || "Erro ao excluir.", "error"); return; }
+        if (!r.ok) { Swal.fire(t("Erro"), d.message || t("Erro ao excluir."), "error"); return; }
 
         fecharModalEvento();
         document.getElementById("modalDetalhe").classList.remove("open");
         await carregarEventos();
-        Swal.fire({ icon: "success", title: "Evento removido!", timer: 1600, showConfirmButton: false });
-      } catch { Swal.fire("Erro", "Falha na conexão.", "error"); }
+        Swal.fire({ icon: "success", title: t("Evento removido!"), timer: 1600, showConfirmButton: false });
+      } catch { Swal.fire(t("Erro"), t("Falha na conexão."), "error"); }
     }
 
     // ══════════════════════════════════════
@@ -904,24 +924,24 @@
       document.getElementById("detalheTitulo").textContent = ev.titulo || "—";
 
       const tipoEl = document.getElementById("detalheTipo");
-      tipoEl.textContent   = TIPO_LABELS[ev.tipo] || ev.tipo || "Evento";
+      tipoEl.textContent   = t(TIPO_LABELS[ev.tipo] || ev.tipo || "Evento");
       tipoEl.style.background = ev.cor || "#4caebe";
 
       const fmtData = (iso) => {
         if (!iso) return "—";
         const d = new Date(iso);
-        return d.toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+        return window.MonitoraI18n?.formatDateTime?.(iso) || d.toLocaleString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
       };
       const dataFim = ev.data_fim ? ` → ${fmtData(ev.data_fim)}` : "";
       document.getElementById("detalheData").textContent    = fmtData(ev.data_inicio) + dataFim;
-      document.getElementById("detalheMateria").textContent = ev.materia_nome || "Geral";
+      document.getElementById("detalheMateria").textContent = ev.materia_nome || t("Geral");
       document.getElementById("detalheDescricao").textContent = ev.descricao  || "—";
       document.getElementById("detalheCriador").textContent  = ev.criador_papel_label || ev.criador_nome || "—";
 
       // Visibilidade (só exibe para coordenadores)
       const visGroup = document.getElementById("detalheVisibilidadeGroup");
       if (["admin","adm","coordenador"].includes(papelUsuario) && !ev.pessoal) {
-        const visLabels = { todos: "Todos", alunos: "Apenas alunos", professores: "Apenas professores" };
+        const visLabels = { todos: t("Todos"), alunos: t("Apenas alunos"), professores: t("Apenas professores") };
         document.getElementById("detalheVisibilidade").textContent = visLabels[ev.visibilidade] || ev.visibilidade || "Todos";
         visGroup.style.display = "";
       } else {
@@ -929,7 +949,7 @@
       }
 
       // Turma: se pessoal, mostra badge
-      document.getElementById("detalheTurma").textContent = ev.pessoal ? "👤 Evento pessoal" : (ev.turma_nome || "Geral");
+      document.getElementById("detalheTurma").textContent = ev.pessoal ? `👤 ${t("Evento pessoal")}` : (ev.turma_nome || t("Geral"));
 
       // Botões de editar/deletar somente para o próprio criador
       const ehDono = ev.fk_criador_id === idUsuarioLogado;
@@ -963,10 +983,10 @@
       document.getElementById("pickerAnoLabel").textContent = pickerAno;
       const container = document.getElementById("pickerMeses");
       container.innerHTML = "";
-      MESES_PT.forEach((nome, idx) => {
+      MESES_PT.forEach((_, idx) => {
         const btn = document.createElement("button");
         btn.className = "picker-month-btn" + (idx === mesAtual && pickerAno === anoAtual ? " active" : "");
-        btn.textContent = nome.slice(0, 3);
+        btn.textContent = nomeMes(idx, "short").slice(0, 3);
         btn.addEventListener("click", () => {
           mesAtual = idx;
           anoAtual = pickerAno;
@@ -1026,6 +1046,13 @@
     });
     document.getElementById("modalDetalhe").addEventListener("click", (e) => {
       if (e.target === e.currentTarget) document.getElementById("modalDetalhe").classList.remove("open");
+    });
+
+    document.addEventListener("monitora:languagechange", () => {
+      renderizarCalendario();
+      if (document.getElementById("monthPickerDropdown").classList.contains("open")) {
+        renderizarPicker();
+      }
     });
 
     // ══════════════════════════════════════
