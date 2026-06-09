@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitora+ | Desempenho</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/desempenho.css') }}">
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="inicio-body">
+
+{% include 'components/sidebar.html' %}
+<script src="/static/react/assets/main.js"></script>
+
+<main class="inicio-main">
+  {% include 'components/header.html' %}
+
+  <div class="page-title-row">
+    <div class="page-title-icon">
+      <i class="ph ph-chart-line-up"></i>
+    </div>
+    <div class="page-title-text">
+      <h2>Desempenho</h2>
+      <p>Visualize o desempenho de alunos ou exporte o relatório de uma turma</p>
+    </div>
+  </div>
+
+  <!-- Abas -->
+  <div class="desemp-tabs">
+    <button class="desemp-tab active" id="tabAluno" onclick="mudarAba('aluno')">
+      <i class="ph ph-user"></i> Desempenho do Aluno
+    </button>
+    <button class="desemp-tab" id="tabTurma" onclick="mudarAba('turma')">
+      <i class="ph ph-users-three"></i> Relatório da Turma
+    </button>
+  </div>
+
+  <!-- ─── Filtro: Aluno ─────────────────────────────────────── -->
+  <div class="filtro-card" id="filtro-aluno">
+    <label>Selecione o aluno:</label>
+    <select id="selectAluno" onchange="filtrarAluno(this.value)">
+      <option value="">— selecione —</option>
+      {% for a in alunos %}
+        <option value="{{ a.id }}" {% if aluno_id and aluno_id|int == a.id %}selected{% endif %}>
+          {{ a.nome }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- ─── Filtro: Turma ─────────────────────────────────────── -->
+  <div class="filtro-card" id="filtro-turma" style="display:none; flex-wrap:wrap; gap:16px;">
+    <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:220px;">
+      <label>Turma:</label>
+      <select id="selectTurmaRel" onchange="carregarMateriasPorTurma(this.value)" style="flex:1;">
+        <option value="">— selecione —</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex:1;min-width:220px;">
+      <label>Matéria:</label>
+      <select id="selectMateriaRel" style="flex:1;">
+        <option value="">— selecione a turma primeiro —</option>
+      </select>
+    </div>
+    <button class="btn-relatorio" style="width:auto;padding:0 24px;margin-top:0;" onclick="gerarRelatorioTurma()">
+      <i class="ph ph-file-pdf"></i> Exportar PDF
+    </button>
+  </div>
+
+  <!-- ─── Dashboard do Aluno ───────────────────────────────── -->
+  {% if dados %}
+  <div id="painel-aluno">
+  <div class="desemp-grid" id="desemp-grid">
+
+    <div class="card-aluno">
+      <div class="aluno-avatar">{{ dados.nome[0] }}</div>
+      <div class="aluno-nome">{{ dados.nome }}</div>
+      <div class="aluno-info">Matrícula: {{ dados.matricula }}</div>
+      <div class="aluno-info">Turma: {{ dados.periodo }}</div>
+
+      <div class="aluno-stats">
+        <div class="aluno-stat-row">
+          <span>Total de aulas</span>
+          <strong>{{ dados.total_aulas }}</strong>
+        </div>
+        <div class="aluno-stat-row">
+          <span>✔ Presenças</span>
+          <strong class="stat-green">{{ dados.presencas }} ({{ dados.pct_frequencia }}%)</strong>
+        </div>
+        <div class="aluno-stat-row">
+          <span>✖ Faltas</span>
+          <strong class="stat-red">{{ dados.faltas }} ({{ dados.pct_faltas }}%)</strong>
+        </div>
+        <div class="aluno-stat-row">
+          <span>Média geral</span>
+          <strong>{{ dados.media_geral }}</strong>
+        </div>
+      </div>
+
+      <button class="btn-relatorio" onclick="gerarPDFAluno()">
+        <i class="ph ph-file-pdf"></i> Exportar Relatório
+      </button>
+    </div>
+
+    <div class="card-grafico">
+      <h3>Média de Notas por Matéria</h3>
+      <div class="grafico-container">
+        <canvas id="graficoNotas"></canvas>
+      </div>
+    </div>
+
+    <div class="cards-metricas">
+      <div class="card-metrica">
+        <p>Participação</p>
+        <strong>{{ dados.participacao }}%</strong>
+      </div>
+      <div class="card-metrica">
+        <p>Frequência</p>
+        <strong>{{ dados.pct_frequencia }}%</strong>
+      </div>
+    </div>
+
+  </div>
+  </div><!-- /painel-aluno -->
+
+  <script>
+    const labelsAluno  = {{ dados.notas_por_materia | map(attribute='materia') | list | tojson }};
+    const valoresAluno = {{ dados.notas_por_materia | map(attribute='media')   | list | tojson }};
+
+    function isDark() { return document.body.classList.contains('dark'); }
+
+    function chartColors() {
+      return isDark()
+        ? { border: '#7de8d0', bg: 'rgba(125,232,208,0.12)', grid: 'rgba(125,232,208,0.1)', tick: '#8faebe' }
+        : { border: '#4caebe', bg: 'rgba(76,190,190,0.12)',  grid: 'rgba(76,190,190,0.15)', tick: '#7a96a8' };
+    }
+
+    const ctxAluno = document.getElementById('graficoNotas').getContext('2d');
+    let graficoAluno = null;
+
+    function criarGraficoAluno() {
+      if (graficoAluno) graficoAluno.destroy();
+      const c = chartColors();
+      graficoAluno = new Chart(ctxAluno, {
+        type: 'bar',
+        data: {
+          labels: labelsAluno,
+          datasets: [{
+            label: 'Média',
+            data: valoresAluno,
+            backgroundColor: c.bg,
+            borderColor: c.border,
+            borderWidth: 2,
+            borderRadius: 8,
+            hoverBackgroundColor: c.border,
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: ctx => ` Média: ${Number(ctx.raw).toFixed(1)}` } }
+          },
+          scales: {
+            y: { min: 0, max: 10, ticks: { stepSize: 2, color: c.tick }, grid: { color: c.grid } },
+            x: { ticks: { color: c.tick }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    criarGraficoAluno();
+
+    const observerTema = new MutationObserver(() => criarGraficoAluno());
+    observerTema.observe(document.body, { attributeFilter: ['class'] });
+  </script>
+
+  {% else %}
+  <div class="desemp-vazio" id="painel-aluno">
+    <i class="ph ph-chart-line"></i>
+    <p>Selecione um aluno para visualizar o desempenho.</p>
+  </div>
+  {% endif %}
+
+</main>
+
+<!-- Canvas ocultos para gráficos do relatório de turma -->
+<div style="position:fixed;left:-9999px;top:0;background:white;">
+  <canvas id="chartPizzaHidden" width="320" height="320"></canvas>
+  <canvas id="chartBarraHidden" width="420" height="260"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+  /* ── Usuário logado ── */
+  const nomeUsuarioTopo  = document.getElementById("nomeUsuarioTopo");
+  const papelUsuario     = document.getElementById("papelUsuario");
+  const avatarUsuario    = document.getElementById("avatarUsuario");
+  const botaoMenuUsuario = document.getElementById("botaoMenuUsuario");
+  const menuUsuario      = document.getElementById("menuUsuario");
+  const btnEditarPerfil  = document.getElementById("btnEditarPerfil");
+  const btnSair          = document.getElementById("btnSair");
+
+  function getToken() { return localStorage.getItem("token"); }
+
+  function limparSessao() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("sessaoExpiracao");
+  }
+
+  function formatarPapel(papel) {
+    const p = String(papel).toLowerCase();
+    if (p === "admin" || p === "adm" || p === "coordenador") return "Coordenador";
+    if (p === "professor") return "Professor";
+    if (p === "aluno") return "Aluno";
+    return papel;
+  }
+
+  async function carregarUsuarioLogado() {
+    try {
+      const r = await fetch("/api/usuario-logado", { headers: { "Authorization": `Bearer ${getToken()}` } });
+      if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
+      const { usuario } = await r.json();
+
+      const papel = String(usuario.papel).toLowerCase();
+      if (papel === "aluno") { window.location.href = "/inicio"; return; }
+
+      if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
+      if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
+      if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
+      const btnGestao = document.getElementById("btnGestaoUsuarios");
+      if (btnGestao && ["coordenador","admin","adm"].includes(papel))
+        btnGestao.style.display = "block";
+    } catch { limparSessao(); window.location.href = "/"; }
+  }
+
+  async function sair() {
+    const c = await Swal.fire({
+      icon: "question", title: "Deseja sair?", text: "Sua sessão será encerrada.",
+      showCancelButton: true, confirmButtonText: "Sim, sair", cancelButtonText: "Cancelar"
+    });
+    if (!c.isConfirmed) return;
+    limparSessao();
+    window.location.href = "/";
+  }
+
+  if (botaoMenuUsuario) botaoMenuUsuario.addEventListener("click", () => menuUsuario.classList.toggle("show"));
+  if (btnEditarPerfil)  btnEditarPerfil.addEventListener("click",  () => window.location.href = "/perfil");
+  if (btnSair)          btnSair.addEventListener("click", sair);
+
+  carregarUsuarioLogado();
+
+  /* ── Abas ── */
+  function mudarAba(aba) {
+    document.getElementById("tabAluno").classList.toggle("active", aba === "aluno");
+    document.getElementById("tabTurma").classList.toggle("active", aba === "turma");
+    document.getElementById("filtro-aluno").style.display = aba === "aluno" ? "flex" : "none";
+    document.getElementById("filtro-turma").style.display = aba === "turma" ? "flex" : "none";
+    const painelAluno = document.getElementById("painel-aluno");
+    if (painelAluno) painelAluno.style.display = aba === "aluno" ? "" : "none";
+  }
+
+  /* ── Aluno ── */
+  function filtrarAluno(id) {
+    if (id) window.location.href = `/desempenho?aluno=${id}`;
+  }
+
+  /* ── Turma: carrega selects ── */
+  async function carregarTurmas() {
+    const sel = document.getElementById("selectTurmaRel");
+    try {
+      const r = await fetch("/api/desempenho/turmas");
+      const turmas = await r.json();
+      turmas.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = `${t.curso_nome} — ${t.nome} (${t.periodo}º per.)`;
+        sel.appendChild(opt);
+      });
+    } catch (e) { console.error("Erro ao carregar turmas", e); }
+  }
+
+  async function carregarMateriasPorTurma(turmaId) {
+    const sel = document.getElementById("selectMateriaRel");
+    sel.innerHTML = '<option value="">— carregando... —</option>';
+    if (!turmaId) { sel.innerHTML = '<option value="">— selecione a turma primeiro —</option>'; return; }
+    try {
+      const r = await fetch(`/api/desempenho/materias?turma_id=${turmaId}`);
+      const materias = await r.json();
+      sel.innerHTML = '<option value="">— selecione —</option>';
+      materias.forEach(m => {
+        const opt = document.createElement("option");
+        opt.value = m.id;
+        opt.textContent = m.nome;
+        sel.appendChild(opt);
+      });
+    } catch (e) { sel.innerHTML = '<option value="">Erro ao carregar</option>'; }
+  }
+
+  carregarTurmas();
+
+  /* ── Gráficos ocultos para o PDF da turma ── */
+  let pizzaChart = null;
+  let barraChart = null;
+
+  function desenharPizza(aprovados, reprovados) {
+    if (pizzaChart) pizzaChart.destroy();
+    const ctx = document.getElementById('chartPizzaHidden').getContext('2d');
+    pizzaChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Aprovados', 'Reprovados'],
+        datasets: [{ data: [aprovados, reprovados], backgroundColor: ['#57dbbd', '#f87171'], borderWidth: 0 }]
+      },
+      options: {
+        responsive: false,
+        animation: { duration: 0 },
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 13 }, color: '#173c4a' } }
+        }
+      }
+    });
+  }
+
+  function desenharBarra(dist) {
+    if (barraChart) barraChart.destroy();
+    const ctx = document.getElementById('chartBarraHidden').getContext('2d');
+    barraChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['0 – 5', '6 – 7', '8 – 10'],
+        datasets: [{
+          data: [dist['0_5'], dist['6_7'], dist['8_10']],
+          backgroundColor: ['#f87171', '#fb923c', '#57dbbd'],
+          borderRadius: 6,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: false,
+        animation: { duration: 0 },
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1, color: '#7a96a8' }, grid: { color: 'rgba(0,0,0,0.06)' } },
+          x: { ticks: { color: '#7a96a8' }, grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  /* ── PDF da turma ── */
+  async function gerarRelatorioTurma() {
+    const turmaId   = document.getElementById('selectTurmaRel').value;
+    const materiaId = document.getElementById('selectMateriaRel').value;
+    if (!turmaId || !materiaId) {
+      Swal.fire({ icon: "warning", title: "Atenção", text: "Selecione turma e matéria antes de exportar." });
+      return;
+    }
+
+    Swal.fire({ title: "Gerando relatório...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    let data;
+    try {
+      const r = await fetch(`/api/desempenho/relatorio-turma?turma_id=${turmaId}&materia_id=${materiaId}`);
+      data = await r.json();
+      if (data.erro) throw new Error(data.erro);
+    } catch (e) {
+      Swal.fire({ icon: "error", title: "Erro", text: "Não foi possível carregar os dados." });
+      return;
+    }
+
+    // Desenha os gráficos ocultos
+    desenharPizza(data.aprovados, data.reprovados);
+    desenharBarra(data.distribuicao);
+
+    // Aguarda o render dos charts
+    await new Promise(r => setTimeout(r, 300));
+
+    const pizzaImg = document.getElementById('chartPizzaHidden').toDataURL('image/png');
+    const barraImg = document.getElementById('chartBarraHidden').toDataURL('image/png');
+
+    buildTurmaPDF(data, pizzaImg, barraImg);
+    Swal.close();
+  }
+
+  function buildTurmaPDF(data, pizzaImg, barraImg) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+    const L = 14, R = W - 14;
+
+    /* ── Cabeçalho ── */
+    pdf.setFillColor(255, 255, 255);
+    pdf.rect(0, 0, W, 22, 'F');
+    // Linha colorida no topo
+    pdf.setFillColor(87, 219, 189);
+    pdf.rect(0, 0, W, 3, 'F');
+
+    // Logo textual
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(14);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("Monitora+", L, 15);
+
+    // Título centralizado
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("Relatório de desempenho", W / 2, 15, { align: "center" });
+
+    // Linha separadora
+    pdf.setDrawColor(220, 240, 242);
+    pdf.setLineWidth(0.5);
+    pdf.line(0, 22, W, 22);
+
+    /* ── Bloco de informações ── */
+    let y = 32;
+    pdf.setFontSize(10);
+
+    function infoField(label, value, x, yy) {
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(23, 60, 74);
+      pdf.text(label + "  ", x, yy);
+      const lw = pdf.getTextWidth(label + "  ");
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(90, 110, 130);
+      pdf.text(value, x + lw, yy);
+    }
+
+    infoField("Turma:", data.turma_nome, L, y);
+    infoField("Matéria:", data.materia_nome, W / 2, y);
+    y += 7;
+    infoField("Período:", data.periodo, L, y);
+    infoField("Professor:", data.professor, W / 2, y);
+    y += 10;
+
+    /* ── Cards de stats ── */
+    const cw = (W - L * 2 - 8) / 3;
+
+    // Média geral (teal)
+    pdf.setFillColor(87, 219, 189);
+    pdf.roundedRect(L, y, cw, 22, 4, 4, 'F');
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("Média geral da turma", L + cw / 2, y + 6, { align: "center" });
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.text(String(data.media_geral), L + cw / 2, y + 17, { align: "center" });
+
+    // Aprovados (verde)
+    const x2 = L + cw + 4;
+    pdf.setFillColor(34, 197, 94);
+    pdf.roundedRect(x2, y, cw, 22, 4, 4, 'F');
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("Aprovados", x2 + cw / 2, y + 6, { align: "center" });
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.text(`${data.aprovados} aluno${data.aprovados !== 1 ? 's' : ''}`, x2 + cw / 2, y + 17, { align: "center" });
+
+    // Reprovados (vermelho)
+    const x3 = L + cw * 2 + 8;
+    pdf.setFillColor(239, 68, 68);
+    pdf.roundedRect(x3, y, cw, 22, 4, 4, 'F');
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("Reprovados:", x3 + cw / 2, y + 6, { align: "center" });
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.text(`${data.reprovados} aluno${data.reprovados !== 1 ? 's' : ''}`, x3 + cw / 2, y + 17, { align: "center" });
+
+    y += 30;
+
+    /* ── Gráficos lado a lado ── */
+    const gw = (W - L * 2 - 6) / 2;
+    const gh = 58;
+
+    // Título pizza
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("Alunos Aprovados x Reprovados", L + gw / 2, y + 5, { align: "center" });
+    pdf.setFillColor(248, 250, 252);
+    pdf.roundedRect(L, y + 7, gw, gh, 3, 3, 'F');
+    pdf.addImage(pizzaImg, 'PNG', L + 2, y + 9, gw - 4, gh - 4);
+
+    // Título barra
+    const gx2 = L + gw + 6;
+    pdf.text("Distribuição de médias", gx2 + gw / 2, y + 5, { align: "center" });
+    pdf.setFillColor(248, 250, 252);
+    pdf.roundedRect(gx2, y + 7, gw, gh, 3, 3, 'F');
+    pdf.addImage(barraImg, 'PNG', gx2 + 2, y + 9, gw - 4, gh - 4);
+
+    y += gh + 16;
+
+    /* ── Tabela de alunos ── */
+    const cols = { nome: L, n1: 110, n2: 135, media: 162 };
+    const rowH = 9;
+
+    // Cabeçalho da tabela
+    pdf.setFillColor(23, 60, 74);
+    pdf.rect(L, y, R - L, rowH, 'F');
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("Aluno(a)", cols.nome + 2, y + 6);
+    pdf.text("Nota 1", cols.n1, y + 6, { align: "center" });
+    pdf.text("Nota 2", cols.n2, y + 6, { align: "center" });
+    pdf.text("Média",  cols.media + 14, y + 6, { align: "center" });
+    y += rowH;
+
+    // Linhas dos alunos
+    pdf.setFontSize(9);
+    data.alunos.forEach((aluno, i) => {
+      if (y + rowH > H - 18) {
+        rodapeTurma(pdf, W, H, data);
+        pdf.addPage();
+        y = 20;
+      }
+
+      // Fundo alternado
+      if (i % 2 === 0) {
+        pdf.setFillColor(248, 250, 252);
+        pdf.rect(L, y, R - L, rowH, 'F');
+      }
+
+      // Borda sutil
+      pdf.setDrawColor(220, 235, 240);
+      pdf.setLineWidth(0.3);
+      pdf.line(L, y + rowH, R, y + rowH);
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(52, 68, 92);
+      pdf.text(aluno.nome, cols.nome + 2, y + 6);
+
+      const n1 = aluno.nota1 !== null ? String(aluno.nota1) : "—";
+      const n2 = aluno.nota2 !== null ? String(aluno.nota2) : "—";
+      pdf.setTextColor(90, 110, 130);
+      pdf.text(n1, cols.n1, y + 6, { align: "center" });
+      pdf.text(n2, cols.n2, y + 6, { align: "center" });
+
+      // Média com fundo colorido
+      if (aluno.media !== null) {
+        const cor = aluno.aprovado ? [87, 219, 189] : [239, 68, 68];
+        pdf.setFillColor(...cor);
+        pdf.roundedRect(cols.media + 2, y + 1, 24, rowH - 2, 2, 2, 'F');
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(255, 255, 255);
+        pdf.text(String(aluno.media), cols.media + 14, y + 6, { align: "center" });
+      } else {
+        pdf.setTextColor(150, 165, 175);
+        pdf.setFont("helvetica", "normal");
+        pdf.text("—", cols.media + 14, y + 6, { align: "center" });
+      }
+
+      y += rowH;
+    });
+
+    rodapeTurma(pdf, W, H, data);
+
+    const nomeArq = `relatorio_turma_${data.turma_nome.replace(/\s+/g,'_')}_${data.materia_nome.replace(/\s+/g,'_')}.pdf`;
+    pdf.save(nomeArq);
+  }
+
+  function rodapeTurma(pdf, W, H) {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(150, 160, 170);
+    const hoje = new Date().toLocaleDateString("pt-BR", { day:"2-digit", month:"2-digit", year:"numeric" });
+    pdf.text(`Relatório gerado dia: ${hoje}`, 14, H - 8);
+    pdf.text("Monitora+", W - 14, H - 8, { align: "right" });
+  }
+
+  /* ── PDF do Aluno ── */
+  async function gerarPDFAluno() {
+    {% if dados %}
+    const { jsPDF } = window.jspdf;
+
+    Swal.fire({ title: "Gerando relatório...", allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    const graficoImg = document.getElementById('graficoNotas').toDataURL('image/png');
+
+    const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const W = pdf.internal.pageSize.getWidth();
+    const H = pdf.internal.pageSize.getHeight();
+
+    function rodape() {
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 160, 170);
+      pdf.text("Gerado automaticamente pelo sistema Monitora+", W / 2, H - 8, { align: "center" });
+    }
+
+    function separador(y) {
+      pdf.setDrawColor(147, 215, 223);
+      pdf.setLineWidth(0.5);
+      pdf.line(14, y, W - 14, y);
+      return y + 10;
+    }
+
+    // Cabeçalho
+    pdf.setFillColor(23, 60, 74);
+    pdf.rect(0, 0, W, 28, 'F');
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(16);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("Monitora+  |  Relatório de Desempenho", W / 2, 12, { align: "center" });
+    pdf.setFontSize(9);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(new Date().toLocaleDateString("pt-BR", { day:"2-digit", month:"long", year:"numeric" }), W / 2, 20, { align: "center" });
+
+    let y = 38;
+
+    // Dados do aluno
+    pdf.setFillColor(240, 249, 249);
+    pdf.roundedRect(14, y, W - 28, 36, 4, 4, 'F');
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(13);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("{{ dados.nome }}", 20, y + 10);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(10);
+    pdf.setTextColor(90, 110, 130);
+    pdf.text("Matrícula: {{ dados.matricula }}", 20, y + 20);
+    pdf.text("Turma: {{ dados.periodo }}", 20, y + 28);
+    y += 46;
+
+    // Frequência
+    y = separador(y);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("Frequência", 14, y);
+    y += 8;
+
+    const freqData = [
+      ["Total de aulas", "{{ dados.total_aulas }}"],
+      ["Presenças",      "{{ dados.presencas }} ({{ dados.pct_frequencia }}%)"],
+      ["Faltas",         "{{ dados.faltas }} ({{ dados.pct_faltas }}%)"],
+      ["Participação",   "{{ dados.participacao }}%"],
+      ["Frequência",     "{{ dados.pct_frequencia }}%"],
+    ];
+
+    pdf.setFontSize(10);
+    freqData.forEach(([label, val]) => {
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(90, 110, 130);
+      pdf.text(label, 20, y);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(23, 60, 74);
+      pdf.text(val, W - 20, y, { align: "right" });
+      y += 8;
+    });
+
+    // Notas por matéria
+    y = separador(y + 4);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("Notas por Matéria", 14, y);
+    y += 8;
+
+    const notas = {{ dados.notas_por_materia | tojson }};
+    pdf.setFontSize(10);
+    notas.forEach(n => {
+      const media = parseFloat(n.media).toFixed(1);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(90, 110, 130);
+      pdf.text(n.materia, 20, y);
+      const cor = media >= 7 ? [34, 197, 94] : media >= 5 ? [245, 158, 11] : [239, 68, 68];
+      pdf.setTextColor(...cor);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(media, W - 20, y, { align: "right" });
+      y += 8;
+      if (y > H - 30) { rodape(); pdf.addPage(); y = 20; }
+    });
+
+    // Média geral
+    y = separador(y + 4);
+    pdf.setFillColor(23, 60, 74);
+    pdf.roundedRect(14, y, W - 28, 18, 4, 4, 'F');
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(255, 255, 255);
+    pdf.text("Média Geral", 20, y + 11);
+    pdf.text("{{ dados.media_geral }}", W - 20, y + 11, { align: "right" });
+    y += 28;
+
+    // Gráfico
+    const altGrafico = 80;
+    if (y + altGrafico + 20 > H - 20) { rodape(); pdf.addPage(); y = 20; }
+    y = separador(y);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.setTextColor(23, 60, 74);
+    pdf.text("Gráfico — Média por Matéria", 14, y);
+    y += 6;
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(14, y, W - 28, altGrafico, 4, 4, 'F');
+    pdf.addImage(graficoImg, 'PNG', 16, y + 2, W - 32, altGrafico - 4);
+    y += altGrafico + 6;
+
+    rodape();
+    pdf.save("relatorio_desempenho_{{ dados.nome | replace(' ', '_') }}.pdf");
+    Swal.close();
+    {% endif %}
+  }
+</script>
+
+<script src="/static/js/darkmode.js"></script>
+
+</body>
+</html>

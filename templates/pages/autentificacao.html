@@ -256,8 +256,6 @@
                 <input id="swal-email" class="swal2-input" type="email" placeholder="seu@email.com" value="${emailPreenchido.replace(/"/g, "&quot;")}" style="margin:0;width:100%;">
               </label>
               <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
-                ${t("Senha atual")}
-                <input id="swal-senha-atual" class="swal2-input" type="password" placeholder="${t('Digite sua senha atual')}" style="margin:0;width:100%;">
               </label>
               <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
                 ${t("Nova senha")}
@@ -270,23 +268,25 @@
           confirmButtonText: t("Alterar senha"),
           cancelButtonText: t("Cancelar"),
           preConfirm: () => {
-            const email = document.getElementById("swal-email").value.trim();
-            const senhaAtual = document.getElementById("swal-senha-atual").value.trim();
-            const novaSenha = document.getElementById("swal-nova-senha").value.trim();
+        const email = document.getElementById("swal-email").value.trim();
+        const novaSenha = document.getElementById("swal-nova-senha").value.trim();
 
-            if (!email || !senhaAtual || !novaSenha) {
-              Swal.showValidationMessage(t("Preencha e-mail, senha atual e nova senha."));
-              return false;
-            }
+        if (!email || !novaSenha) {
+          Swal.showValidationMessage(t("Preencha e-mail e nova senha."));
+          return false;
+        }
 
-            if (novaSenha.length < 6) {
-              Swal.showValidationMessage(t("A nova senha deve ter pelo menos 6 caracteres."));
-              return false;
-            }
+        if (novaSenha.length < 6) {
+          Swal.showValidationMessage(t("A nova senha deve ter pelo menos 6 caracteres."));
+          return false;
+        }
 
-            return { email, senha_atual: senhaAtual, nova_senha: novaSenha };
-          }
-        });
+        return {
+          email,
+          nova_senha: novaSenha
+        };
+      }
+      });
 
         if (!isConfirmed || !dadosModal) return;
 

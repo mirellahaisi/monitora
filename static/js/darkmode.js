@@ -85,6 +85,22 @@
       background: rgba(125, 232, 208, 0.18) !important;
     }
 
+    body.dark .desemp-tab:not(.active) {
+      background: #172433 !important;
+      color: var(--mid) !important;
+      border-color: rgba(125, 232, 208, 0.2) !important;
+    }
+
+    body.dark .desemp-tab:not(.active):hover {
+      border-color: var(--accent) !important;
+      color: var(--accent) !important;
+    }
+
+    body.dark .card-aluno,
+    body.dark .card-grafico,
+    body.dark .card-metrica,
+    body.dark .filtro-card,
+    body.dark .desemp-vazio,
     body.dark .login-card,
     body.dark .user-menu-button,
     body.dark .user-dropdown,
@@ -418,8 +434,21 @@
     body.dark .aluno-materia-nome,
     body.dark .nota-bloco-valor,
     body.dark .coord-card-titulo,
-    body.dark .coord-aluno-nome {
+    body.dark .coord-aluno-nome,
+    body.dark .aluno-nome,
+    body.dark .card-grafico h3 {
       color: var(--dark) !important;
+    }
+
+    body.dark .aluno-stat-row {
+      border-color: rgba(125, 232, 208, 0.15) !important;
+    }
+
+    body.dark .aluno-stat-row span,
+    body.dark .aluno-info,
+    body.dark .card-metrica p,
+    body.dark .filtro-card label {
+      color: var(--muted) !important;
     }
 
     body.dark .feature-desc,

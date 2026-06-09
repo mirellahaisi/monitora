@@ -1052,7 +1052,7 @@ def desativar_turma(usuario, turma_id):
         conexao = criar_conexao()
         cursor = conexao.cursor()
 
-        cursor.execute("UPDATE turma SET ativo = 0 WHERE id = %s AND ativo = 1", (turma_id,))
+        cursor.execute("CALL sp_desativar_turma(%s)", (turma_id,))
         conexao.commit()
 
         if cursor.rowcount == 0:

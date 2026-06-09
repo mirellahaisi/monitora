@@ -18,6 +18,7 @@ from .presenca import presenca_bp
 from .mensagens import mensagens_bp
 from .cursos import cursos_bp
 from .materias import materias_bp
+from .desempenho import desempenho_bp
 
  
 
@@ -51,6 +52,7 @@ app.register_blueprint(calendario_bp)
 app.register_blueprint(mensagens_bp)
 app.register_blueprint(cursos_bp)
 app.register_blueprint(materias_bp)
+app.register_blueprint(desempenho_bp)
 
 
 # ========================
@@ -61,7 +63,7 @@ def get_db_connection():
         host=os.getenv("DB_HOST", "localhost"),
         port=int(os.getenv("DB_PORT", "3306")),
         user=os.getenv("DB_USER", "root"),
-        password=os.getenv("DB_PASSWORD", "Mimiteteu123@"),
+        password=os.getenv("DB_PASSWORD", ""),
         database=os.getenv("DB_NAME", "monitora"),
     )
 
@@ -158,49 +160,6 @@ def login_legado():
 @app.get("/mensagens")
 def serve_mensagens():
     return render_template("pages/mensagens.html", active_page="mensagens")
-
-
-@app.get("/api/usuario-logado")
-def usuario_logado():
-    auth = request.headers.get("Authorization", "")
-    if not auth.startswith("Bearer "):
-        return jsonify({"message": "Não autorizado."}), 401
-    payload = decode_jwt_payload(auth.split(" ", 1)[1])
-    if not payload or payload.get("exp", 0) < int(time.time()):
-        return jsonify({"message": "Token inválido ou expirado."}), 401
-
-    usuario_id = payload.get("id")
-    if not usuario_id:
-        return jsonify({"message": "Token sem ID."}), 401
-
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute(
-        "SELECT id, nome, email, fk_papel_id FROM usuario WHERE id = %s AND ativo = 1",
-        (usuario_id,)
-    )
-    user = cursor.fetchone()
-
-    if not user:
-        cursor.close()
-        connection.close()
-        return jsonify({"message": "Usuário não encontrado."}), 404
-
-    cursor.execute("SELECT descricao FROM papel WHERE id = %s", (user["fk_papel_id"],))
-    papel_row = cursor.fetchone()
-    cursor.close()
-    connection.close()
-
-    return jsonify({
-        "usuario": {
-            "id":    user["id"],
-            "nome":  user["nome"],
-            "email": user["email"],
-            "papel": papel_row["descricao"] if papel_row else payload.get("papel", ""),
-            "papel_id": user.get("fk_papel_id") or payload.get("papel_id"),
-        }
-    })
-
 
 # ========================
 # RUN
