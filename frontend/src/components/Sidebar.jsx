@@ -271,9 +271,11 @@ export default function Sidebar({ activePage = "" }) {
           {"Frequência"}
         </SidebarLink>
 
-        <SidebarLink activePage={activePage} page="desempenho" href="/desempenho" icon={<IconPulse />}>
-          {"Desempenho"}
-        </SidebarLink>
+        {(professor || coordinator) && (
+          <SidebarLink activePage={activePage} page="desempenho" href="/desempenho" icon={<IconPulse />}>
+            {"Desempenho"}
+          </SidebarLink>
+        )}
 
         {coordinator && (
           <>

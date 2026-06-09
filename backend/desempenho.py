@@ -1,7 +1,10 @@
 from flask import Blueprint, render_template, request, jsonify
 from .conexao import criar_conexao
+from .login import token_obrigatorio, papel_obrigatorio
 
 desempenho_bp = Blueprint("desempenho", __name__)
+
+PAPEIS_PERMITIDOS = ("professor", "coordenador", "admin", "adm")
 
 @desempenho_bp.route("/desempenho")
 def desempenho():
@@ -99,16 +102,34 @@ def desempenho():
 
 
 @desempenho_bp.route("/api/desempenho/turmas")
-def api_desempenho_turmas():
+@token_obrigatorio
+@papel_obrigatorio(*PAPEIS_PERMITIDOS)
+def api_desempenho_turmas(usuario):
+    papel = str(usuario.get("papel", "")).lower()
+    usuario_id = usuario.get("id")
+
     conexao = criar_conexao()
     cursor = conexao.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT t.id, t.nome, t.periodo, c.nome AS curso_nome
-        FROM turma t
-        INNER JOIN curso c ON c.id = t.fk_curso_id
-        WHERE t.ativo = 1
-        ORDER BY c.nome, t.periodo, t.nome
-    """)
+
+    if papel == "professor":
+        # Apenas turmas em que o professor dá aulas
+        cursor.execute("""
+            SELECT DISTINCT t.id, t.nome, t.periodo, c.nome AS curso_nome
+            FROM turma t
+            INNER JOIN curso c ON c.id = t.fk_curso_id
+            INNER JOIN professor_turma_materia ptm ON ptm.fk_turma_id = t.id
+            WHERE ptm.fk_usuario_id = %s AND t.ativo = 1
+            ORDER BY c.nome, t.periodo, t.nome
+        """, (usuario_id,))
+    else:
+        cursor.execute("""
+            SELECT t.id, t.nome, t.periodo, c.nome AS curso_nome
+            FROM turma t
+            INNER JOIN curso c ON c.id = t.fk_curso_id
+            WHERE t.ativo = 1
+            ORDER BY c.nome, t.periodo, t.nome
+        """)
+
     turmas = cursor.fetchall()
     cursor.close()
     conexao.close()
@@ -116,19 +137,37 @@ def api_desempenho_turmas():
 
 
 @desempenho_bp.route("/api/desempenho/materias")
-def api_desempenho_materias():
+@token_obrigatorio
+@papel_obrigatorio(*PAPEIS_PERMITIDOS)
+def api_desempenho_materias(usuario):
     turma_id = request.args.get("turma_id")
     if not turma_id:
         return jsonify([])
+
+    papel = str(usuario.get("papel", "")).lower()
+    usuario_id = usuario.get("id")
+
     conexao = criar_conexao()
     cursor = conexao.cursor(dictionary=True)
-    cursor.execute("""
-        SELECT m.id, m.nome
-        FROM materia m
-        INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
-        WHERE mt.fk_turma_id = %s AND m.ativo = 1
-        ORDER BY m.nome
-    """, (turma_id,))
+
+    if papel == "professor":
+        # Apenas matérias que o professor leciona nessa turma
+        cursor.execute("""
+            SELECT DISTINCT m.id, m.nome
+            FROM materia m
+            INNER JOIN professor_turma_materia ptm ON ptm.fk_materia_id = m.id
+            WHERE ptm.fk_turma_id = %s AND ptm.fk_usuario_id = %s AND m.ativo = 1
+            ORDER BY m.nome
+        """, (turma_id, usuario_id))
+    else:
+        cursor.execute("""
+            SELECT m.id, m.nome
+            FROM materia m
+            INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
+            WHERE mt.fk_turma_id = %s AND m.ativo = 1
+            ORDER BY m.nome
+        """, (turma_id,))
+
     materias = cursor.fetchall()
     cursor.close()
     conexao.close()
@@ -136,7 +175,9 @@ def api_desempenho_materias():
 
 
 @desempenho_bp.route("/api/desempenho/relatorio-turma")
-def api_relatorio_turma():
+@token_obrigatorio
+@papel_obrigatorio(*PAPEIS_PERMITIDOS)
+def api_relatorio_turma(usuario):
     turma_id  = request.args.get("turma_id")
     materia_id = request.args.get("materia_id")
     if not turma_id or not materia_id:
