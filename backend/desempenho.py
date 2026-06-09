@@ -129,7 +129,6 @@ def api_desempenho_turmas(usuario):
             WHERE t.ativo = 1
             ORDER BY c.nome, t.periodo, t.nome
         """)
-
     turmas = cursor.fetchall()
     cursor.close()
     conexao.close()
@@ -167,7 +166,6 @@ def api_desempenho_materias(usuario):
             WHERE mt.fk_turma_id = %s AND m.ativo = 1
             ORDER BY m.nome
         """, (turma_id,))
-
     materias = cursor.fetchall()
     cursor.close()
     conexao.close()

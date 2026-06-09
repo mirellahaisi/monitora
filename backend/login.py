@@ -1,4 +1,5 @@
 from datetime import date, datetime
+import email
 from functools import wraps
 import re
 
@@ -241,10 +242,9 @@ def esqueci_senha():
     dados = request.get_json(silent=True) or {}
 
     email = str(dados.get("email", "")).strip().lower()
-    senha_atual = str(dados.get("senha_atual", "")).strip()
     nova_senha = str(dados.get("nova_senha", "")).strip()
 
-    if not email or not senha_atual or not nova_senha:
+    if not email or not nova_senha:
         return jsonify({
             "message": "Informe e-mail, senha atual e nova senha."
         }), 400
@@ -283,11 +283,6 @@ def esqueci_senha():
             return jsonify({
                 "message": "E-mail ou senha invalidos."
             }), 401
-
-        if not verificar_senha(senha_atual, usuario.get("senha")):
-            return jsonify({
-                "message": "A senha atual nao confere."
-            }), 403
 
         if verificar_senha(nova_senha, usuario.get("senha")):
             return jsonify({
