@@ -288,11 +288,6 @@ export default function Sidebar({ activePage = "" }) {
             <SidebarLink activePage={activePage} page="materias" href="/materias" id="linkMaterias" icon={<IconDocument />}>
               {"Matérias"}
             </SidebarLink>
-
-            <SidebarLink activePage={activePage} page="desempenho" href="/desempenho" id="linkDesempenho" icon={<IconPulse />}>
-              {"Desempenho"}
-            </SidebarLink>
-
           </>
         )}
       </nav>
