@@ -180,19 +180,21 @@
 
   </main>
 
+  <script src="/static/js/i18n.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script>
     const form = document.querySelector("#login-form");
     const passwordInput = document.querySelector("#password");
     const togglePasswordButton = document.querySelector("[data-toggle-password]");
     const btnEsqueciSenha = document.querySelector("#btnEsqueciSenha");
+    const t = (text) => window.MonitoraI18n?.t?.(text) ?? text;
 
     if (togglePasswordButton && passwordInput) {
       togglePasswordButton.addEventListener("click", () => {
         const estaOculta = passwordInput.type === "password";
         passwordInput.type = estaOculta ? "text" : "password";
         togglePasswordButton.setAttribute("aria-pressed", String(estaOculta));
-        togglePasswordButton.setAttribute("aria-label", estaOculta ? "Ocultar senha" : "Mostrar senha");
+        togglePasswordButton.setAttribute("aria-label", estaOculta ? t("Ocultar senha") : t("Mostrar senha"));
       });
     }
 
@@ -203,7 +205,7 @@
       const senha = form.senha.value.trim();
 
       if (!email || !senha) {
-        Swal.fire({ icon: "warning", title: "Campos obrigatórios", text: "Informe seu e-mail e sua senha." });
+        Swal.fire({ icon: "warning", title: t("Campos obrigatórios"), text: t("Informe seu e-mail e sua senha.") });
         return;
       }
 
@@ -217,7 +219,7 @@
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-          Swal.fire({ icon: "error", title: "Erro no login", text: dados.message || "E-mail ou senha inválidos." });
+          Swal.fire({ icon: "error", title: t("Erro no login"), text: dados.message || t("E-mail ou senha inválidos.") });
           return;
         }
 
@@ -227,8 +229,8 @@
 
         Swal.fire({
           icon: "success",
-          title: "Login realizado!",
-          text: `Bem-vindo(a), ${dados.usuario.nome}!`,
+          title: t("Login realizado!"),
+          text: `${t("Bem-vindo(a),")} ${dados.usuario.nome}!`,
           timer: 1500,
           showConfirmButton: false
         });
@@ -237,7 +239,7 @@
 
       } catch (erro) {
         console.error("Erro:", erro);
-        Swal.fire({ icon: "error", title: "Erro inesperado", text: "Não foi possível conectar ao servidor." });
+        Swal.fire({ icon: "error", title: t("Erro inesperado"), text: t("Não foi possível conectar ao servidor.") });
       }
     });
 
@@ -246,36 +248,36 @@
         const emailPreenchido = form.email.value.trim();
 
         const { value: dadosModal, isConfirmed } = await Swal.fire({
-          title: "Alterar senha",
+          title: t("Alterar senha"),
           html: `
             <div style="display:flex;flex-direction:column;gap:12px;text-align:left;margin-top:10px;">
               <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
-                E-mail
+                ${t("E-mail")}
                 <input id="swal-email" class="swal2-input" type="email" placeholder="seu@email.com" value="${emailPreenchido.replace(/"/g, "&quot;")}" style="margin:0;width:100%;">
               </label>
               <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
               </label>
               <label style="display:flex;flex-direction:column;gap:6px;font-size:0.84rem;font-weight:600;color:#6b7c8d;">
-                Nova senha
-                <input id="swal-nova-senha" class="swal2-input" type="password" placeholder="Digite a nova senha" style="margin:0;width:100%;">
+                ${t("Nova senha")}
+                <input id="swal-nova-senha" class="swal2-input" type="password" placeholder="${t('Digite a nova senha')}" style="margin:0;width:100%;">
               </label>
             </div>
           `,
           focusConfirm: false,
           showCancelButton: true,
-          confirmButtonText: "Alterar senha",
-          cancelButtonText: "Cancelar",
+          confirmButtonText: t("Alterar senha"),
+          cancelButtonText: t("Cancelar"),
           preConfirm: () => {
         const email = document.getElementById("swal-email").value.trim();
         const novaSenha = document.getElementById("swal-nova-senha").value.trim();
 
         if (!email || !novaSenha) {
-          Swal.showValidationMessage("Preencha e-mail e nova senha.");
+          Swal.showValidationMessage(t("Preencha e-mail e nova senha."));
           return false;
         }
 
         if (novaSenha.length < 6) {
-          Swal.showValidationMessage("A nova senha deve ter pelo menos 6 caracteres.");
+          Swal.showValidationMessage(t("A nova senha deve ter pelo menos 6 caracteres."));
           return false;
         }
 
@@ -300,8 +302,8 @@
           if (!resposta.ok) {
             Swal.fire({
               icon: "error",
-              title: "Nao foi possivel alterar",
-              text: dados.message || "Verifique os dados informados."
+              title: t("Não foi possível alterar"),
+              text: dados.message || t("Verifique os dados informados.")
             });
             return;
           }
@@ -311,15 +313,15 @@
 
           Swal.fire({
             icon: "success",
-            title: "Senha alterada",
-            text: dados.message || "Sua senha foi atualizada com sucesso."
+            title: t("Senha alterada"),
+            text: dados.message || t("Sua senha foi atualizada com sucesso.")
           });
         } catch (erro) {
           console.error("Erro ao alterar senha:", erro);
           Swal.fire({
             icon: "error",
-            title: "Erro inesperado",
-            text: "Nao foi possivel conectar ao servidor."
+            title: t("Erro inesperado"),
+            text: t("Não foi possível conectar ao servidor.")
           });
         }
       });

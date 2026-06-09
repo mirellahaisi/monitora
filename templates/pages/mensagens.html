@@ -404,6 +404,9 @@
 
 <script src="/static/js/searchable-select.js"></script>
 <script>
+  // ─── i18n ─────────────────────────────────────────
+  const t = texto => window.MonitoraI18n?.t?.(texto) ?? texto;
+
   // ─── Sessão ───────────────────────────────────────
   const getToken     = () => localStorage.getItem("token") || sessionStorage.getItem("token");
   const limparSessao = () => { localStorage.clear(); sessionStorage.clear(); };
@@ -418,15 +421,15 @@
 
   function formatarPapel(p) {
     const s = String(p).toLowerCase();
-    if (["admin","adm","coordenador"].includes(s)) return "Coordenador";
-    if (s === "professor") return "Professor";
-    if (s === "aluno") return "Aluno";
+    if (["admin","adm","coordenador"].includes(s)) return t("Coordenador");
+    if (s === "professor") return t("Professor");
+    if (s === "aluno") return t("Aluno");
     return p;
   }
   function formatarData(str) {
     if (!str) return "";
     const d = new Date(str.replace(" ","T"));
-    return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+    return window.MonitoraI18n?.formatDateTime?.(d) || d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
   }
   function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
   function esc(s) { return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -436,7 +439,7 @@
       <p>${msg}</p></div>`;
   }
   function labelDestino(p) {
-    const m = { aluno:"Alunos", professor:"Professores", coordenador:"Coordenador", todos:"Todos" };
+    const m = { aluno:t("Alunos"), professor:t("Professores"), coordenador:t("Coordenador"), todos:t("Todos") };
     return m[p] || p;
   }
   function show(id) { document.getElementById(id).classList.remove("hidden"); }
@@ -548,17 +551,17 @@
 
   // ─── Mensagens recebidas ─────────────────────────────
   async function carregarRecebidos() {
-    listaRecebidos.innerHTML = `<div class="mensagens-vazio"><div class="spinner"></div><p style="margin-top:14px">Carregando...</p></div>`;
+    listaRecebidos.innerHTML = `<div class="mensagens-vazio"><div class="spinner"></div><p style="margin-top:14px">${t("Carregando...")}</p></div>`;
     try {
       const r = await fetch("/api/mensagens/recebidos", { headers: authHeader() });
       const d = await r.json();
-      if (!r.ok) { listaRecebidos.innerHTML = vazio("Erro ao carregar mensagens."); return; }
-      if (!d.mensagens.length) { listaRecebidos.innerHTML = vazio("Nenhuma mensagem recebida."); return; }
+      if (!r.ok) { listaRecebidos.innerHTML = vazio(t("Erro ao carregar mensagens.")); return; }
+      if (!d.mensagens.length) { listaRecebidos.innerHTML = vazio(t("Nenhuma mensagem recebida.")); return; }
       listaRecebidos.innerHTML = d.mensagens.map(a => cardRecebido(a)).join("");
       document.querySelectorAll("#listaRecebidos .mensagem-card[data-id]").forEach(card => {
         card.addEventListener("click", () => abrirModal(card.dataset.id, "recebido"));
       });
-    } catch { listaRecebidos.innerHTML = vazio("Falha na conexão."); }
+    } catch { listaRecebidos.innerHTML = vazio(t("Falha na conexão.")); }
   }
 
   function cardRecebido(a) {
@@ -581,17 +584,17 @@
 
   // ─── Mensagens enviadas ──────────────────────────────
   async function carregarEnviados() {
-    listaEnviados.innerHTML = `<div class="mensagens-vazio"><div class="spinner"></div><p style="margin-top:14px">Carregando...</p></div>`;
+    listaEnviados.innerHTML = `<div class="mensagens-vazio"><div class="spinner"></div><p style="margin-top:14px">${t("Carregando...")}</p></div>`;
     try {
       const r = await fetch("/api/mensagens/enviados", { headers: authHeader() });
       const d = await r.json();
-      if (!r.ok) { listaEnviados.innerHTML = vazio("Erro ao carregar mensagens."); return; }
-      if (!d.mensagens.length) { listaEnviados.innerHTML = vazio("Nenhuma mensagem enviada."); return; }
+      if (!r.ok) { listaEnviados.innerHTML = vazio(t("Erro ao carregar mensagens.")); return; }
+      if (!d.mensagens.length) { listaEnviados.innerHTML = vazio(t("Nenhuma mensagem enviada.")); return; }
       listaEnviados.innerHTML = d.mensagens.map(a => cardEnviado(a)).join("");
       document.querySelectorAll("#listaEnviados .mensagem-card[data-id]").forEach(card => {
         card.addEventListener("click", () => abrirModal(card.dataset.id, "enviado"));
       });
-    } catch { listaEnviados.innerHTML = vazio("Falha na conexão."); }
+    } catch { listaEnviados.innerHTML = vazio(t("Falha na conexão.")); }
   }
 
   function deveExibirNomeDestino(a) {
@@ -623,7 +626,7 @@
         <div class="mensagem-descricao">${esc(a.descricao)}</div>
         <div class="mensagem-meta">
           ${chips}
-          <span class="mensagem-leitura">· <span class="lidos">${lidos}</span>/${total} leram</span>
+          <span class="mensagem-leitura">· <span class="lidos">${lidos}</span>/${total} ${t("leram")}</span>
         </div>
       </div>`;
   }
@@ -700,7 +703,7 @@
       const d = await r.json();
       const opts = d.length
         ? d.map(c => `<option value="${c.id}">${esc(c.nome)}</option>`).join("")
-        : `<option value="">Nenhum coordenador encontrado</option>`;
+        : `<option value="">${t("Nenhum coordenador encontrado")}</option>`;
       selectCoordenadorAluno.innerHTML = `<option value="">Selecione o coordenador</option>` + opts;
       selectCoordenadorProf.innerHTML  = `<option value="">Selecione o coordenador</option>` + opts;
     } catch {}
@@ -816,13 +819,13 @@
         usuarioDestinoId  = selectProfessor.value  || null;
         materiaId         = selectMateriaAluno.value || null;
         papelDestino      = "professor";
-        if (!turmaId)          { Swal.fire("Atenção","Selecione a turma.","warning"); return null; }
-        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o professor.","warning"); return null; }
-        if (!materiaId)        { Swal.fire("Atenção","Selecione a matéria.","warning"); return null; }
+        if (!turmaId)          { Swal.fire(t("Atenção"),t("Selecione a turma."),"warning"); return null; }
+        if (!usuarioDestinoId) { Swal.fire(t("Atenção"),t("Selecione o professor."),"warning"); return null; }
+        if (!materiaId)        { Swal.fire(t("Atenção"),t("Selecione a matéria."),"warning"); return null; }
       } else if (dest === "coordenador") {
         usuarioDestinoId = selectCoordenadorAluno.value || null;
         papelDestino     = "coordenador";
-        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o coordenador.","warning"); return null; }
+        if (!usuarioDestinoId) { Swal.fire(t("Atenção"),t("Selecione o coordenador."),"warning"); return null; }
       }
 
     } else if (papelUsuario === "professor") {
@@ -830,24 +833,24 @@
         turmaId      = selectTurmaProfessor.value        || null;
         materiaId    = selectMateriaProfessor.value      || null;
         papelDestino = "aluno";
-        if (!turmaId)   { Swal.fire("Atenção","Selecione a turma.","warning"); return null; }
-        if (!materiaId) { Swal.fire("Atenção","Selecione a matéria.","warning"); return null; }
+        if (!turmaId)   { Swal.fire(t("Atenção"),t("Selecione a turma."),"warning"); return null; }
+        if (!materiaId) { Swal.fire(t("Atenção"),t("Selecione a matéria."),"warning"); return null; }
       } else if (dest === "coordenador") {
         usuarioDestinoId = selectCoordenadorProf.value || null;
         papelDestino     = "coordenador";
-        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o coordenador.","warning"); return null; }
+        if (!usuarioDestinoId) { Swal.fire(t("Atenção"),t("Selecione o coordenador."),"warning"); return null; }
       }
 
     } else { // coordenador
       if (dest === "turma") {
         turmaId      = selectTurmaCoordenador.value || null;
         papelDestino = "todos";
-        if (!turmaId)   { Swal.fire("Atenção","Selecione a turma.","warning"); return null; }
-        if (!materiaId) { Swal.fire("Atenção","Selecione a matéria.","warning"); return null; }
+        if (!turmaId)   { Swal.fire(t("Atenção"),t("Selecione a turma."),"warning"); return null; }
+        if (!materiaId) { Swal.fire(t("Atenção"),t("Selecione a matéria."),"warning"); return null; }
       } else if (dest === "professor") {
         usuarioDestinoId = selectProfessorCoordenador.value || null;
         papelDestino     = "professor";
-        if (!usuarioDestinoId) { Swal.fire("Atenção","Selecione o professor.","warning"); return null; }
+        if (!usuarioDestinoId) { Swal.fire(t("Atenção"),t("Selecione o professor."),"warning"); return null; }
       } else if (dest === "todos") {
         papelDestino = "todos";
       }
@@ -862,27 +865,27 @@
     const descricao = textMensagem.value.trim();
     const destino   = selectDestino.value;
 
-    if (!titulo)    { Swal.fire("Atenção","Preencha o título.","warning"); return; }
-    if (!descricao) { Swal.fire("Atenção","Escreva a mensagem.","warning"); return; }
-    if (titulo.length <= 3)    { Swal.fire("Atenção","O título deve ter mais de 3 caracteres.","warning"); return; }
-    if (descricao.length <= 3) { Swal.fire("Atenção","A mensagem deve ter mais de 3 caracteres.","warning"); return; }
-    if (!destino)   { Swal.fire("Atenção","Selecione para quem enviar.","warning"); return; }
+    if (!titulo)    { Swal.fire(t("Atenção"),t("Preencha o título."),"warning"); return; }
+    if (!descricao) { Swal.fire(t("Atenção"),t("Escreva a mensagem."),"warning"); return; }
+    if (titulo.length <= 3)    { Swal.fire(t("Atenção"),t("O título deve ter mais de 3 caracteres."),"warning"); return; }
+    if (descricao.length <= 3) { Swal.fire(t("Atenção"),t("A mensagem deve ter mais de 3 caracteres."),"warning"); return; }
+    if (!destino)   { Swal.fire(t("Atenção"),t("Selecione para quem enviar."),"warning"); return; }
 
     const dados = coletarDadosEnvio();
     if (!dados) return;
 
     const confirmacao = await Swal.fire({
       icon: "question",
-      title: "Deseja enviar a mensagem?",
-      text: "Confira os dados antes de confirmar o envio.",
+      title: t("Deseja enviar a mensagem?"),
+      text: t("Confira os dados antes de confirmar o envio."),
       showCancelButton: true,
-      confirmButtonText: "Sim, enviar",
-      cancelButtonText: "Cancelar"
+      confirmButtonText: t("Sim, enviar"),
+      cancelButtonText: t("Cancelar")
     });
     if (!confirmacao.isConfirmed) return;
 
     btnEnviar.disabled = true;
-    btnEnviar.innerHTML = `<div class="spinner" style="border-top-color:#173c4a"></div> Enviando...`;
+    btnEnviar.innerHTML = `<div class="spinner" style="border-top-color:#173c4a"></div> ${t("Enviando...")}`;
 
     try {
       const r = await fetch("/api/mensagens", {
@@ -898,17 +901,17 @@
         })
       });
       const d = await r.json();
-      if (!r.ok) { Swal.fire("Erro", d.message || "Erro ao enviar.", "error"); return; }
-      Swal.fire("Enviado!", d.message, "success");
+      if (!r.ok) { Swal.fire(t("Erro"), d.message || t("Erro ao enviar."), "error"); return; }
+      Swal.fire(t("Enviado!"), d.message, "success");
       // Limpar form
       inputTitulo.value = ""; textMensagem.value = ""; selectDestino.value = "";
       selectDestino.dispatchEvent(new Event("change", { bubbles: true }));
       ocultarTodosGrupos();
       carregarNaoLidos();
-    } catch { Swal.fire("Erro","Falha na conexão.","error"); }
+    } catch { Swal.fire(t("Erro"),t("Falha na conexão."),"error"); }
     finally {
       btnEnviar.disabled = false;
-      btnEnviar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar mensagem`;
+      btnEnviar.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="17" height="17"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> ${t("Enviar mensagem")}`;
     }
   });
 
