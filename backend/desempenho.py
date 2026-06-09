@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, request, make_response
+from flask import Blueprint, render_template, request, jsonify
 from .conexao import criar_conexao
-import io
 
 desempenho_bp = Blueprint("desempenho", __name__)
 
@@ -97,3 +96,148 @@ def desempenho():
         aluno_id=aluno_id,
         active_page="desempenho"
     )
+
+
+@desempenho_bp.route("/api/desempenho/turmas")
+def api_desempenho_turmas():
+    conexao = criar_conexao()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT t.id, t.nome, t.periodo, c.nome AS curso_nome
+        FROM turma t
+        INNER JOIN curso c ON c.id = t.fk_curso_id
+        WHERE t.ativo = 1
+        ORDER BY c.nome, t.periodo, t.nome
+    """)
+    turmas = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+    return jsonify(turmas)
+
+
+@desempenho_bp.route("/api/desempenho/materias")
+def api_desempenho_materias():
+    turma_id = request.args.get("turma_id")
+    if not turma_id:
+        return jsonify([])
+    conexao = criar_conexao()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT m.id, m.nome
+        FROM materia m
+        INNER JOIN materias_turma mt ON mt.fk_materia_id = m.id
+        WHERE mt.fk_turma_id = %s AND m.ativo = 1
+        ORDER BY m.nome
+    """, (turma_id,))
+    materias = cursor.fetchall()
+    cursor.close()
+    conexao.close()
+    return jsonify(materias)
+
+
+@desempenho_bp.route("/api/desempenho/relatorio-turma")
+def api_relatorio_turma():
+    turma_id  = request.args.get("turma_id")
+    materia_id = request.args.get("materia_id")
+    if not turma_id or not materia_id:
+        return jsonify({"erro": "turma_id e materia_id são obrigatórios"}), 400
+
+    conexao = criar_conexao()
+    cursor = conexao.cursor(dictionary=True)
+
+    # Dados da turma e curso
+    cursor.execute("""
+        SELECT t.nome AS turma_nome, t.periodo, c.nome AS curso_nome
+        FROM turma t
+        INNER JOIN curso c ON c.id = t.fk_curso_id
+        WHERE t.id = %s
+    """, (turma_id,))
+    turma = cursor.fetchone()
+
+    # Nome da matéria
+    cursor.execute("SELECT nome FROM materia WHERE id = %s", (materia_id,))
+    materia = cursor.fetchone()
+
+    # Professor responsável pela matéria nessa turma
+    cursor.execute("""
+        SELECT u.nome
+        FROM professor_turma_materia ptm
+        INNER JOIN usuario u ON u.id = ptm.fk_usuario_id
+        WHERE ptm.fk_turma_id = %s AND ptm.fk_materia_id = %s
+        LIMIT 1
+    """, (turma_id, materia_id))
+    prof_row = cursor.fetchone()
+    professor = prof_row["nome"] if prof_row else "—"
+
+    # Notas dos alunos da turma nessa matéria
+    cursor.execute("""
+        SELECT
+            u.id,
+            u.nome,
+            MAX(CASE WHEN LOWER(n.observacao) LIKE '%1%' THEN n.valor END) AS nota1,
+            MAX(CASE WHEN LOWER(n.observacao) LIKE '%2%' THEN n.valor END) AS nota2,
+            AVG(n.valor) AS media
+        FROM usuario u
+        INNER JOIN usuario_turma ut ON ut.fk_usuario_id = u.id
+        INNER JOIN papel p ON p.id = u.fk_papel_id
+        LEFT JOIN nota n ON n.fk_usuario_id = u.id AND n.fk_materia_id = %s
+        WHERE ut.fk_turma_id = %s
+          AND u.ativo = 1
+          AND LOWER(p.descricao) = 'aluno'
+        GROUP BY u.id, u.nome
+        ORDER BY u.nome
+    """, (materia_id, turma_id))
+    alunos_raw = cursor.fetchall()
+
+    cursor.close()
+    conexao.close()
+
+    APROVACAO = 7.0
+    alunos = []
+    soma = 0
+    aprovados = 0
+    reprovados = 0
+    dist = {"0_5": 0, "6_7": 0, "8_10": 0}
+
+    for a in alunos_raw:
+        n1    = float(a["nota1"]) if a["nota1"] is not None else None
+        n2    = float(a["nota2"]) if a["nota2"] is not None else None
+        media = float(a["media"]) if a["media"] is not None else None
+
+        if media is not None:
+            soma += media
+            if media >= APROVACAO:
+                aprovados += 1
+            else:
+                reprovados += 1
+            if media < 6:
+                dist["0_5"] += 1
+            elif media < 8:
+                dist["6_7"] += 1
+            else:
+                dist["8_10"] += 1
+
+        alunos.append({
+            "nome":  a["nome"],
+            "nota1": round(n1, 1) if n1 is not None else None,
+            "nota2": round(n2, 1) if n2 is not None else None,
+            "media": round(media, 2) if media is not None else None,
+            "aprovado": media is not None and media >= APROVACAO,
+        })
+
+    total_com_nota = aprovados + reprovados
+    media_geral = round(soma / total_com_nota, 2) if total_com_nota else 0
+
+    return jsonify({
+        "turma_nome":  turma["turma_nome"] if turma else "—",
+        "curso_nome":  turma["curso_nome"] if turma else "—",
+        "periodo":     f"{turma['periodo']}º período" if turma else "—",
+        "materia_nome": materia["nome"] if materia else "—",
+        "professor":   professor,
+        "media_geral": media_geral,
+        "aprovados":   aprovados,
+        "reprovados":  reprovados,
+        "total":       len(alunos),
+        "distribuicao": dist,
+        "alunos":      alunos,
+    })
