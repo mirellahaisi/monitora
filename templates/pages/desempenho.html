@@ -229,11 +229,15 @@
       const r = await fetch("/api/usuario-logado", { headers: { "Authorization": `Bearer ${getToken()}` } });
       if (!r.ok) { limparSessao(); window.location.href = "/"; return; }
       const { usuario } = await r.json();
+
+      const papel = String(usuario.papel).toLowerCase();
+      if (papel === "aluno") { window.location.href = "/inicio"; return; }
+
       if (nomeUsuarioTopo) nomeUsuarioTopo.textContent = usuario.nome;
       if (papelUsuario)    papelUsuario.textContent    = formatarPapel(usuario.papel);
       if (avatarUsuario)   avatarUsuario.textContent   = usuario.nome.charAt(0).toUpperCase();
       const btnGestao = document.getElementById("btnGestaoUsuarios");
-      if (btnGestao && ["coordenador","admin","adm"].includes(usuario.papel.toLowerCase()))
+      if (btnGestao && ["coordenador","admin","adm"].includes(papel))
         btnGestao.style.display = "block";
     } catch { limparSessao(); window.location.href = "/"; }
   }
