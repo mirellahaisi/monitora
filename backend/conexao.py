@@ -9,7 +9,11 @@ def criar_conexao():
         user=os.getenv("DB_USER", "root"),
 
         password=os.getenv("DB_PASSWORD", "548921"),
+
+
+        password=os.getenv("DB_PASSWORD", "548921"),
         password=os.getenv("DB_PASSWORD", "Mimiteteu123@"),
+
 
         database=os.getenv("DB_NAME", "monitora"),
     )
