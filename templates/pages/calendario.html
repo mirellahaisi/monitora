@@ -472,10 +472,17 @@
           const mais = document.createElement("span");
           mais.style.cssText = "font-size:0.7rem;color:var(--muted);padding-left:4px;";
           mais.textContent = `+${evsDia.length - 3} mais`;
+            mais.addEventListener("click", (e) => {
+              e.stopPropagation();
+              abrirListaEventosDia(dataStr, evsDia);
+            });
           cell.appendChild(mais);
         }
 
-        cell.addEventListener("click", () => abrirModalCriar(dataStr));
+        cell.addEventListener("click", (e) => {
+          if (e.target.classList.contains("event-tag") || e.target.closest(".event-tag")) return;
+          abrirModalCriar(dataStr);
+        });
         row.appendChild(cell);
       }
     }
@@ -942,6 +949,103 @@
       document.getElementById("modalDetalhe").classList.add("open");
     }
 
+    function abrirListaEventosDia(dataStr, eventos) {
+  // Formata a data para exibição
+  const [ano, mes, dia] = dataStr.split("-");
+  const dataFormatada = `${dia}/${mes}/${ano}`;
+
+  // Cria o modal de lista se não existir
+  let modalLista = document.getElementById("modalListaDia");
+  if (!modalLista) {
+    modalLista = document.createElement("div");
+    modalLista.id = "modalListaDia";
+    modalLista.className = "modal-overlay";
+    modalLista.innerHTML = `
+      <div class="modal-box" style="max-width:420px">
+        <div class="modal-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span id="listaDiaTitulo">Eventos do dia</span>
+        </div>
+        <div id="listaDiaConteudo" style="display:flex;flex-direction:column;gap:8px;margin:16px 0;"></div>
+        <div class="modal-actions">
+          <button class="btn-cancelar" id="btnFecharListaDia" style="margin-left:auto">Fechar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modalLista);
+
+    document.getElementById("btnFecharListaDia").addEventListener("click", () => {
+      modalLista.classList.remove("open");
+    });
+
+    modalLista.addEventListener("click", (e) => {
+      if (e.target === modalLista) modalLista.classList.remove("open");
+    });
+  }
+
+  // Preenche o título e a lista
+  document.getElementById("listaDiaTitulo").textContent = `Eventos — ${dataFormatada}`;
+
+  const conteudo = document.getElementById("listaDiaConteudo");
+  conteudo.innerHTML = "";
+
+  eventos.forEach(ev => {
+    const item = document.createElement("div");
+    item.style.cssText = `
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(147,215,223,0.25);
+      background: var(--bg, #f5fafa);
+      cursor: pointer;
+      transition: background 0.15s;
+    `;
+
+    item.innerHTML = `
+      <span style="
+        width: 10px; height: 10px; border-radius: 50%;
+        background: ${ev.cor || '#4caebe'};
+        flex-shrink: 0;
+      "></span>
+      <div style="flex:1; min-width:0;">
+        <div style="font-weight:600; font-size:0.9rem; color:var(--mid, #34445c); 
+             white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${ev.titulo}
+        </div>
+        <div style="font-size:0.78rem; color:var(--muted, #7a96a8); margin-top:2px;">
+          ${TIPO_LABELS[ev.tipo] || ev.tipo || "Evento"}
+        </div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" 
+           style="width:14px;height:14px;color:var(--muted);flex-shrink:0;">
+        <polyline points="9 18 15 12 9 6"/>
+      </svg>
+    `;
+
+    item.addEventListener("mouseenter", () => {
+      item.style.background = "rgba(147,215,223,0.12)";
+    });
+    item.addEventListener("mouseleave", () => {
+      item.style.background = "var(--bg, #f5fafa)";
+    });
+
+    item.addEventListener("click", () => {
+      modalLista.classList.remove("open");
+      abrirDetalhe(ev);
+    });
+
+    conteudo.appendChild(item);
+  });
+
+  modalLista.classList.add("open");
+}
     // ══════════════════════════════════════
     // MONTH/YEAR PICKER
     // ══════════════════════════════════════

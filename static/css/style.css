@@ -8100,4 +8100,19 @@ body.inicio-body:not(.notas-page):not(.freq-page):not(.cal-page):not(.gestao-pag
       --muted: #7aa0b5;
       --dark: #c8dde8;
     }
+
+    .more-events {
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  display: inline-block;
+  margin-top: 2px;
+}
+
+.more-events:hover {
+  background: rgba(0,0,0,0.05);
+}
 }
