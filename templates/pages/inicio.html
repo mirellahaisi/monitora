@@ -249,7 +249,7 @@
         <div class="dv-hero-body">
           <div class="dv-hero-text">
             <span class="dv-turno" id="coordTurno">Painel de gestão</span>
-            <h1>Visão geral<br>da <em>instituição</em></h1>
+            <h1 id="coordHeroHeadline" data-i18n-ignore>Visão geral<br>da <em>instituição</em></h1>
             <p>Gestão completa de turmas, professores, alunos e desempenho acadêmico</p>
           </div>
           <div class="dv-hero-pills">
@@ -391,9 +391,11 @@
     return r.json();
   }
 
+  const localeAtual = () => window.MonitoraI18n?.getLocale?.() || "pt-BR";
+  const t = texto => window.MonitoraI18n?.t?.(texto) || texto;
   const fmtNota = v => {
     if (v===null||v===undefined) return "—";
-    return String(Number(Number(v).toFixed(2))).replace(".",",");
+    return window.MonitoraI18n?.formatGrade?.(v) || String(Number(Number(v).toFixed(2))).replace(".",",");
   };
 
   const isProfessor = p => { const s=String(p||"").toLowerCase(); return s==="professor"||Number(p)===2; };
@@ -404,6 +406,7 @@
   //  HELPERS DE DATA
   // ══════════════════════════════════════════════
   const DIAS_PT = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+  const nomeDiaSemana = idx => window.MonitoraI18n?.weekdayNames?.("short")?.[idx] || DIAS_PT[idx];
 
   function semanaAtual() {
     const hoje=new Date(), dow=hoje.getDay();
@@ -461,9 +464,9 @@
       const dStr=toLocalStr(d), isHoje=dStr===hojeStr;
       const evs=ordenarRecentes((eventos||[]).filter(ev=>{ const dt=parseEvDate(ev.data_inicio||ev.data_publicacao||""); return dt&&toLocalStr(dt)===dStr; })).slice(0,2);
       const evsHtml=evs.length
-        ? evs.map(ev=>{ const dt=parseEvDate(ev.data_inicio); const hora=dt?dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"}):""; const cor=ev.cor||"#0ea5e9"; return `<div class="dv-ev" style="border-left-color:${cor}"><div class="dv-ev-t">${ev.titulo}</div>${hora?`<div class="dv-ev-h">${hora}</div>`:""}</div>`; }).join("")
+        ? evs.map(ev=>{ const dt=parseEvDate(ev.data_inicio); const hora=dt?(window.MonitoraI18n?.formatTime?.(dt) || dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})):""; const cor=ev.cor||"#0ea5e9"; return `<div class="dv-ev" style="border-left-color:${cor}"><div class="dv-ev-t" data-i18n-dynamic>${ev.titulo}</div>${hora?`<div class="dv-ev-h">${hora}</div>`:""}</div>`; }).join("")
         : `<div class="dv-ag-empty">—</div>`;
-      return `<div class="dv-day${isHoje?" today":""}"><div class="dv-dayname">${DIAS_PT[i+1]}</div><div class="dv-daynum">${d.getDate()}/${String(d.getMonth()+1).padStart(2,"0")}</div>${evsHtml}</div>`;
+      return `<div class="dv-day${isHoje?" today":""}"><div class="dv-dayname">${nomeDiaSemana(i+1)}</div><div class="dv-daynum">${window.MonitoraI18n?.formatDate?.(d, { day:"2-digit", month:"2-digit" }) || `${d.getDate()}/${String(d.getMonth()+1).padStart(2,"0")}`}</div>${evsHtml}</div>`;
     }).join("");
   }
 
@@ -472,16 +475,16 @@
   // ══════════════════════════════════════════════
   function renderMensagens(msgs, id, limite=5) {
     const el=document.getElementById(id); if(!el)return;
-    if(!msgs||!msgs.length){ el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem recente.</div>`; return; }
+    if(!msgs||!msgs.length){ el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>${t("Nenhuma mensagem recente.")}</div>`; return; }
     const bgs=["#dbeafe","#dcfce7","#fef9c3","#fce7f3","#ede9fe"];
     const ics=["#1d4ed8","#166534","#854d0e","#9d174d","#5b21b6"];
     el.innerHTML=ordenarRecentes(msgs).slice(0,limite).map((m,i)=>{
       const ci=i%bgs.length;
-      const data=m.data_publicacao?new Date(m.data_publicacao).toLocaleDateString("pt-BR",{day:"2-digit",month:"short"}):"";
+      const data=m.data_publicacao?(window.MonitoraI18n?.formatDate?.(m.data_publicacao, { day:"2-digit", month:"short" }) || new Date(m.data_publicacao).toLocaleDateString("pt-BR",{day:"2-digit",month:"short"})):"";
       const lido=m.lido!==false;
       return `<div class="dv-msg${lido?"":" unread"}">
         <div class="dv-msg-dot" style="background:${bgs[ci]};color:${ics[ci]}"><i class="ph ph-bell"></i></div>
-        <div class="dv-msg-body"><div class="dv-msg-title">${m.titulo}</div><div class="dv-msg-meta">${m.remetente_nome?m.remetente_nome+" · ":""}${data}</div></div>
+        <div class="dv-msg-body"><div class="dv-msg-title" data-i18n-dynamic>${m.titulo}</div><div class="dv-msg-meta">${m.remetente_nome?`<span data-i18n-dynamic>${m.remetente_nome}</span> · `:""}${data}</div></div>
         ${!lido?`<div class="dv-msg-udot"></div>`:""}
       </div>`;
     }).join("");
@@ -530,8 +533,8 @@
   // ══════════════════════════════════════════════
   async function carregarAluno(usuario) {
     document.getElementById("viewAluno").classList.add("ativo");
-    const nome=usuario.nome.split(" ")[0], t=turnoAtual();
-    const dvTurno=document.getElementById("alunoTurno"); if(dvTurno) dvTurno.textContent=`${t}, ${nome}!`;
+    const nome=usuario.nome.split(" ")[0], turno=turnoAtual();
+    const dvTurno=document.getElementById("alunoTurno"); if(dvTurno) dvTurno.textContent=`${turno}, ${nome}!`;
 
     // Notas — ordenadas maior→menor média
     try {
@@ -551,12 +554,12 @@
         const mg=Number(mgVal.toFixed(2));
         ["alunoStatMed","alunoHeroMed","alunoMedBox","alunoNotasRodapeMed"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=fmtNota(mg);});
         const pill=document.getElementById("alunoMedPill");
-        if(pill){ if(mg>=7){pill.className="dv-pill dp-up";pill.textContent="✓ Aprovado";}else if(mg>=5){pill.className="dv-pill dp-warn";pill.textContent="⚠ Recuperação";}else{pill.className="dv-pill dp-bad";pill.textContent="✗ Reprovado";} }
+        if(pill){ if(mg>=7){pill.className="dv-pill dp-up";pill.textContent=`✓ ${t("Aprovado")}`;}else if(mg>=5){pill.className="dv-pill dp-warn";pill.textContent=`⚠ ${t("Recuperação")}`;}else{pill.className="dv-pill dp-bad";pill.textContent=`✗ ${t("Reprovado")}`;} }
       }
 
       const notasEl=document.getElementById("alunoNotas");
       if(!mats.length){
-        notasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-note"></i>Nenhuma nota lançada ainda.</div>`;
+        notasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-note"></i>${t("Nenhuma nota lançada ainda.")}</div>`;
         const rp=document.getElementById("alunoNotasRodapeMed");if(rp)rp.textContent="—";
       } else {
         notasEl.innerHTML=mats.slice(0,3).map(m=>{
@@ -576,7 +579,7 @@
       const desempenhoAluno=selecionarExtremosMedia(comMedia, "media", 1, 1);
       if(desempenhoAluno.length) renderBarChart(desempenhoAluno.map(m=>({val:Number(m.media),label:m.nome||m.materia_nome})),"alunoChartBars","alunoChartLbls");
     } catch(e){
-      const el=document.getElementById("alunoNotas"); if(el) el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>Erro ao carregar notas.</div>`;
+      const el=document.getElementById("alunoNotas"); if(el) el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>${t("Erro ao carregar notas.")}</div>`;
     }
 
     // Frequência — donut geral + barras por matéria
@@ -593,17 +596,17 @@
         const statusEl=document.getElementById("alunoFreqStatus");
         const detEl=document.getElementById("alunoFreqDetalhe");
         if(pct>=75){
-          if(pill){pill.className="dv-pill dp-up";pill.textContent="✓ Regular";}
-          if(statusEl){statusEl.textContent="✓ Frequência regular";statusEl.style.color="#166534";}
-          if(detEl) detEl.textContent=`${Math.round(pct)}% de presença nas aulas`;
+          if(pill){pill.className="dv-pill dp-up";pill.textContent=`✓ ${t("Regular")}`;}
+          if(statusEl){statusEl.textContent=`✓ ${t("Frequência regular")}`;statusEl.style.color="#166534";}
+          if(detEl) detEl.textContent=`${Math.round(pct)}% ${t("de presença nas aulas")}`;
         }else if(pct>=60){
-          if(pill){pill.className="dv-pill dp-warn";pill.textContent="⚠ Atenção";}
-          if(statusEl){statusEl.textContent="⚠ Atenção à frequência";statusEl.style.color="#92400e";}
-          if(detEl) detEl.textContent=`Faltam ${(75-pct).toFixed(0)}pp para o mínimo`;
+          if(pill){pill.className="dv-pill dp-warn";pill.textContent=`⚠ ${t("Atenção")}`;}
+          if(statusEl){statusEl.textContent=`⚠ ${t("Atenção à frequência")}`;statusEl.style.color="#92400e";}
+          if(detEl) detEl.textContent=`${t("Faltam")} ${(75-pct).toFixed(0)}pp ${t("para o mínimo")}`;
         }else{
-          if(pill){pill.className="dv-pill dp-bad";pill.textContent="✗ Crítica";}
-          if(statusEl){statusEl.textContent="✗ Frequência crítica";statusEl.style.color="#991b1b";}
-          if(detEl) detEl.textContent="Abaixo do mínimo exigido de 75%";
+          if(pill){pill.className="dv-pill dp-bad";pill.textContent=`✗ ${t("Crítica")}`;}
+          if(statusEl){statusEl.textContent=`✗ ${t("Frequência crítica")}`;statusEl.style.color="#991b1b";}
+          if(detEl) detEl.textContent=t("Abaixo do mínimo exigido de 75%");
         }
       }
       // Barras por matéria (ordenadas maior→menor)
@@ -624,13 +627,13 @@
           }).join("");
         }
       }
-    } catch(e){ const el=document.getElementById("alunoFreqStatus");if(el)el.textContent="Sem dados"; }
+    } catch(e){ const el=document.getElementById("alunoFreqStatus");if(el)el.textContent=t("Sem dados"); }
 
     try { const ev=await apiFetch("/api/calendario"); renderAgenda(ev.eventos||[],"alunoAgenda"); }
     catch(e){ renderAgenda([],"alunoAgenda"); }
 
     try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"alunoMensagens",3); }
-    catch(e){ const el=document.getElementById("alunoMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem.</div>`; }
+    catch(e){ const el=document.getElementById("alunoMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>${t("Nenhuma mensagem.")}</div>`; }
   }
 
   // ══════════════════════════════════════════════
@@ -638,8 +641,8 @@
   // ══════════════════════════════════════════════
   async function carregarProfessor(usuario) {
     document.getElementById("viewProfessor").classList.add("ativo");
-    const nome=usuario.nome.split(" ")[0], t=turnoAtual();
-    const el=document.getElementById("profTurno"); if(el)el.textContent=`${t}, ${nome}!`;
+    const nome=usuario.nome.split(" ")[0], turno=turnoAtual();
+    const el=document.getElementById("profTurno"); if(el)el.textContent=`${turno}, ${nome}!`;
 
     // Matérias + turmas — ordenadas maior→menor média
     try {
@@ -660,7 +663,7 @@
 
       const matsEl=document.getElementById("profMaterias");
       if(!mats.length){
-        matsEl.innerHTML=`<div class="dv-empty"><i class="ph ph-book"></i>Nenhuma matéria atribuída.</div>`;
+        matsEl.innerHTML=`<div class="dv-empty"><i class="ph ph-book"></i>${t("Nenhuma matéria atribuída.")}</div>`;
       } else {
         matsEl.innerHTML=mats.slice(0,3).map(m=>{
           const med=m.media_turma!==undefined&&m.media_turma!==null?Number(m.media_turma):null;
@@ -697,7 +700,7 @@
 
       const tcm=turmas.filter(t=>t.media_geral!==null&&t.media_geral!==undefined);
       if(!tcm.length){
-        desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>Ainda não há médias calculadas.</div>`;
+        desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>${t("Ainda não há médias calculadas.")}</div>`;
       } else {
         const turmasDesempenho=selecionarExtremosMedia(tcm, "media_geral", 1, 1);
         desempEl.innerHTML=`<div class="dv-col-chart">${
@@ -714,7 +717,7 @@
           }).join("")
         }</div><div class="dv-col-axis"></div>`;
       }
-    } catch(e){ const el=document.getElementById("profMaterias");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>Erro ao carregar matérias.</div>`; }
+    } catch(e){ const el=document.getElementById("profMaterias");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>${t("Erro ao carregar matérias.")}</div>`; }
 
     // Alertas
     try {
@@ -723,26 +726,40 @@
       document.getElementById("profHeroAlertas").textContent=alertas.length||"0";
       const el=document.getElementById("profAlertas");
       if(!alertas.length){
-        el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Nenhum aluno em alerta.</div>`;
+        el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>${t("Nenhum aluno em alerta.")}</div>`;
       } else {
-        el.innerHTML=ordenarCriticos(alertas).slice(0,2).map(a=>{ const pct=Math.round(a.percentual||0),cl=pct<60?"db-red":"db-yellow"; return `<div class="dv-row"><div class="dv-avatar" style="background:${pct<60?"#fee2e2":"#fef9c3"};color:${pct<60?"#991b1b":"#854d0e"}"><i class="ph ph-user"></i></div><div class="dv-info"><div class="dv-name">${a.nome}</div><div class="dv-sub"><span class="dv-tag">${a.turma||""}</span> · ${a.materia||""}</div></div><span class="dv-badge ${cl}">${pct}%</span></div>`; }).join("");
+        el.innerHTML=ordenarCriticos(alertas).slice(0,2).map(a=>{ const pct=Math.round(a.percentual||0),cl=pct<60?"db-red":"db-yellow"; return `<div class="dv-row"><div class="dv-avatar" style="background:${pct<60?"#fee2e2":"#fef9c3"};color:${pct<60?"#991b1b":"#854d0e"}"><i class="ph ph-user"></i></div><div class="dv-info"><div class="dv-name" data-i18n-dynamic>${a.nome}</div><div class="dv-sub"><span class="dv-tag" data-i18n-dynamic>${a.turma||""}</span> · <span data-i18n-dynamic>${a.materia||""}</span></div></div><span class="dv-badge ${cl}">${pct}%</span></div>`; }).join("");
       }
-    } catch(e){ const el=document.getElementById("profAlertas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Sem dados.</div>`; }
+    } catch(e){ const el=document.getElementById("profAlertas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>${t("Sem dados.")}</div>`; }
 
     try { const ev=await apiFetch("/api/calendario"); renderAgenda(ev.eventos||[],"profAgenda"); }
     catch(e){ renderAgenda([],"profAgenda"); }
 
     try { const msgs=await apiFetch("/api/mensagens/recebidos"); renderMensagens(msgs.mensagens||[],"profMensagens",2); }
-    catch(e){ const el=document.getElementById("profMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>Nenhuma mensagem.</div>`; }
+    catch(e){ const el=document.getElementById("profMensagens");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-bell-slash"></i>${t("Nenhuma mensagem.")}</div>`; }
   }
 
   // ══════════════════════════════════════════════
   //  VIEW: COORDENADOR
   // ══════════════════════════════════════════════
+  function renderizarTituloCoord() {
+    const el = document.getElementById("coordHeroHeadline");
+    if (!el) return;
+    const lang = window.MonitoraI18n?.getLanguage?.() || localStorage.getItem("monitoraIdioma") || localStorage.getItem("monitora.lang") || "pt";
+    const titulos = {
+      en: "Overview<br>of the <em>institution</em>",
+      es: "Resumen<br>de la <em>institución</em>",
+      pt: "Visão geral<br>da <em>instituição</em>"
+    };
+    el.innerHTML = titulos[lang] || titulos.pt;
+  }
+  document.addEventListener("monitora:languagechange", renderizarTituloCoord);
+
   async function carregarCoordenador(usuario) {
     document.getElementById("viewCoordenador").classList.add("ativo");
-    const nome=usuario.nome.split(" ")[0], t=turnoAtual();
-    const el=document.getElementById("coordTurno"); if(el)el.textContent=`${t}, ${nome} —`;
+    renderizarTituloCoord();
+    const nome=usuario.nome.split(" ")[0], turno=turnoAtual();
+    const el=document.getElementById("coordTurno"); if(el)el.textContent=`${turno}, ${nome} —`;
 
     try {
       const [tDados,aDados,pDados]=await Promise.all([apiFetch("/api/turmas"),apiFetch("/api/usuarios/alunos"),apiFetch("/api/usuarios/professores")]);
@@ -758,15 +775,15 @@
       // ordenar: com média primeiro (maior→menor), sem média depois
       const turmasOrdenadas=ordenarRecentes(turmas);
       if(!turmasOrdenadas.length){
-        turmasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-users"></i>Nenhuma turma.</div>`;
+        turmasEl.innerHTML=`<div class="dv-empty"><i class="ph ph-users"></i>${t("Nenhuma turma.")}</div>`;
       } else {
-        turmasEl.innerHTML=turmasOrdenadas.slice(0,2).map(t=>{
-          const med=t.media_geral, cl=med===null||med===undefined?"db-gray":Number(med)>=7?"db-green":Number(med)>=5?"db-yellow":"db-red";
+        turmasEl.innerHTML=turmasOrdenadas.slice(0,2).map(turma=>{
+          const med=turma.media_geral, cl=med===null||med===undefined?"db-gray":Number(med)>=7?"db-green":Number(med)>=5?"db-yellow":"db-red";
           return `<div class="dv-row">
-            <div class="dv-avatar" style="background:#ede9fe;color:#5b21b6;font-weight:900">${(t.nome||"T").charAt(0)}</div>
+            <div class="dv-avatar" style="background:#ede9fe;color:#5b21b6;font-weight:900">${(turma.nome||"T").charAt(0)}</div>
             <div class="dv-info" style="min-width:0">
-              <div class="dv-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.nome} <span style="font-size:.66rem;color:#64748b">· ${t.periodo||""}º per.</span></div>
-              <div class="dv-sub">${t.total_alunos||t.capacidade||"—"} alunos</div>
+              <div class="dv-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${turma.nome} <span style="font-size:.66rem;color:#64748b">· ${turma.periodo||""}º per.</span></div>
+              <div class="dv-sub">${turma.total_alunos||turma.capacidade||"—"} ${t("alunos")}</div>
             </div>
             ${med!==null&&med!==undefined?`<span class="dv-badge ${cl}" style="flex-shrink:0">${fmtNota(med)}</span>`:""}
           </div>`;
@@ -780,14 +797,14 @@
         const mgFmt=fmtNota(Number(mg.toFixed(2)));
         ["coordStatMed","coordHeroMed"].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=mgFmt;});
         const pill=document.getElementById("coordMedPill");
-        if(pill){ const n=Number(mg.toFixed(2));pill.className=`dv-pill ${n>=7?"dp-up":n>=5?"dp-warn":"dp-bad"}`;pill.textContent=n>=7?"✓ Boa":"⚠ Atenção"; }
+        if(pill){ const n=Number(mg.toFixed(2));pill.className=`dv-pill ${n>=7?"dp-up":n>=5?"dp-warn":"dp-bad"}`;pill.textContent=n>=7?`✓ ${t("Boa")}`:`⚠ ${t("Atenção")}`; }
       }
 
       // Desempenho por turma — gráfico de colunas
       const desempEl=document.getElementById("coordDesempenho");
       const tcm2=turmas.filter(t=>t.media_geral!==null&&t.media_geral!==undefined);
       if(!tcm2.length){
-        desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>Ainda não há médias calculadas.</div>`;
+        desempEl.innerHTML=`<div class="dv-empty"><i class="ph ph-chart-bar"></i>${t("Ainda não há médias calculadas.")}</div>`;
       } else {
         const turmasDesempenho=selecionarExtremosMedia(tcm2, "media_geral", 2, 2);
         const maxV=10; // always scale to 10 so bars are proportional to grade
@@ -805,7 +822,7 @@
           }).join("")
         }</div><div class="dv-col-axis"></div>`;
       }
-    } catch(e){ const el=document.getElementById("coordTurmas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>Erro ao carregar turmas.</div>`; }
+    } catch(e){ const el=document.getElementById("coordTurmas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-warning"></i>${t("Erro ao carregar turmas.")}</div>`; }
 
     // Alertas
     try {
@@ -817,15 +834,15 @@
       try {
         const tDados=await apiFetch("/api/turmas");
         const turmas=tDados.turmas||[];
-        for(const t of turmas){
-          if(t.media_geral!==null&&t.media_geral!==undefined&&Number(t.media_geral)<5){
+        for(const turma of turmas){
+          if(turma.media_geral!==null&&turma.media_geral!==undefined&&Number(turma.media_geral)<5){
             alertasNota.push({
               tipo: "nota",
-              nome: t.nome,
-              turma: t.nome,
-              materia: "Média geral da turma",
-              percentual: Number(t.media_geral),
-              mensagem: `${t.nome}: média ${fmtNota(t.media_geral)}`
+              nome: turma.nome,
+              turma: turma.nome,
+              materia: t("Média geral da turma"),
+              percentual: Number(turma.media_geral),
+              mensagem: `${turma.nome}: ${t("média")} ${fmtNota(turma.media_geral)}`
             });
           }
         }
@@ -836,35 +853,39 @@
 
       const el=document.getElementById("coordAlertas");
       if(!alertas.length){
-        el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>Nenhum alerta no momento.</div>`;
+        el.innerHTML=`<div class="dv-empty"><i class="ph ph-check-circle"></i>${t("Nenhum alerta no momento.")}</div>`;
       } else {
         el.innerHTML=ordenarCriticos(alertas).slice(0,2).map(a=>{
           if(a.tipo==="nota"){
             return `<div class="dv-row">
               <div class="dv-avatar" style="background:#ede9fe;color:#5b21b6"><i class="ph ph-chart-bar"></i></div>
               <div class="dv-info">
-                <div class="dv-name">${a.nome}</div>
-                <div class="dv-sub"><span class="dv-tag">${a.turma}</span> · Média abaixo de 5,0</div>
+                <div class="dv-name" data-i18n-dynamic>${a.nome}</div>
+                <div class="dv-sub"><span class="dv-tag" data-i18n-dynamic>${a.turma}</span> · ${t("Média abaixo de 5,0")}</div>
               </div>
               <span class="dv-badge db-red">${fmtNota(a.percentual)}</span>
             </div>`;
           }
-          return `<div class="dv-row"><div class="dv-avatar" style="background:#fff7ed;color:#c2410c"><i class="ph ph-warning"></i></div><div class="dv-info"><div class="dv-name">${a.nome}</div><div class="dv-sub"><span class="dv-tag">${a.turma||""}</span> · ${a.materia||""}</div></div><span class="dv-badge db-red">${Math.round(a.percentual)}%</span></div>`;
+          return `<div class="dv-row"><div class="dv-avatar" style="background:#fff7ed;color:#c2410c"><i class="ph ph-warning"></i></div><div class="dv-info"><div class="dv-name" data-i18n-dynamic>${a.nome}</div><div class="dv-sub"><span class="dv-tag" data-i18n-dynamic>${a.turma||""}</span> · <span data-i18n-dynamic>${a.materia||""}</span></div></div><span class="dv-badge db-red">${Math.round(a.percentual)}%</span></div>`;
         }).join("");
       }
       // Donut freq geral — fetch real value, fall back to alert avg or 95%
       try {
         const freqGeral=await apiFetch("/api/frequencia/coordenador/resumo").catch(()=>null);
-        const pctGeral=freqGeral&&freqGeral.percentual!==undefined?Number(freqGeral.percentual):
-          (alertas.length?alertas.reduce((s,a)=>s+a.percentual,0)/alertas.length:95);
+        const mediaAlertasFreq = presencaAlerts.length
+          ? presencaAlerts.reduce((s,a)=>s+Number(a.percentual||0),0)/presencaAlerts.length
+          : 95;
+        const pctGeral=freqGeral&&freqGeral.percentual!==undefined?Number(freqGeral.percentual):mediaAlertasFreq;
         renderDonut("coordFreqCircle","coordFreqPct",pctGeral);
         const meta=document.getElementById("coordFreqMeta");
-        if(meta) meta.textContent=presencaAlerts.length?`${presencaAlerts.length} aluno(s) abaixo de 75% de presença.`:"Frequência geral dentro do esperado.";
+        if(meta) meta.textContent=presencaAlerts.length?`${presencaAlerts.length} ${t("aluno(s) abaixo de 75% de presença.")}`:`${t("Frequência geral dentro do esperado.")}`;
       } catch(_){
-        const pctFb=alertas.length?alertas.reduce((s,a)=>s+a.percentual,0)/alertas.length:95;
+        const pctFb=presencaAlerts.length?presencaAlerts.reduce((s,a)=>s+Number(a.percentual||0),0)/presencaAlerts.length:95;
         renderDonut("coordFreqCircle","coordFreqPct",pctFb);
+        const meta=document.getElementById("coordFreqMeta");
+        if(meta) meta.textContent=presencaAlerts.length?`${presencaAlerts.length} ${t("aluno(s) abaixo de 75% de presença.")}`:`${t("Frequência geral dentro do esperado.")}`;
       }
-    } catch(e){ const el=document.getElementById("coordAlertas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-info"></i>Sem alertas disponíveis.</div>`; }
+    } catch(e){ const el=document.getElementById("coordAlertas");if(el)el.innerHTML=`<div class="dv-empty"><i class="ph ph-info"></i>${t("Sem alertas disponíveis.")}</div>`; }
 
     // Agenda semanal
     try {

@@ -184,6 +184,19 @@
       return papel;
     }
 
+    function localeAtual() {
+      return window.MonitoraI18n?.getLocale?.() || "pt-BR";
+    }
+
+    function t(texto) {
+      return window.MonitoraI18n?.t(texto) || texto;
+    }
+
+    function formatarNota(valor) {
+      if (valor === null || valor === undefined || valor === "") return "";
+      return window.MonitoraI18n?.formatGrade?.(valor) || String(valor).replace(".", ",");
+    }
+
     function isProfessor(p) {
       if (p === null || p === undefined) return false;
       const s = String(p).toLowerCase();
@@ -262,23 +275,23 @@
         if (usuarioCache) {
           const usuario = JSON.parse(usuarioCache);
           if (isAluno(usuario.papel)) {
-            document.getElementById("tituloNotas").textContent    = "Minhas Notas";
-            document.getElementById("subtituloNotas").textContent = "Suas notas e médias por matéria";
+            document.getElementById("tituloNotas").textContent    = t("Minhas Notas");
+            document.getElementById("subtituloNotas").textContent = t("Suas notas e médias por matéria");
             document.getElementById("secaoProfessor").style.display   = "none";
             document.getElementById("secaoAluno").style.display       = "block";
             document.getElementById("secaoCoordenador").style.display = "none";
             await carregarMinhasNotas();
           } else if (isCoordenador(usuario.papel)) {
-            document.getElementById("tituloNotas").textContent    = "Notas por Turma";
-            document.getElementById("subtituloNotas").textContent = "Selecione curso, professor, turma e matéria para visualizar as notas";
+            document.getElementById("tituloNotas").textContent    = t("Notas por Turma");
+            document.getElementById("subtituloNotas").textContent = t("Selecione curso, professor, turma e matéria para visualizar as notas");
             document.getElementById("secaoProfessor").style.display   = "none";
             document.getElementById("secaoAluno").style.display       = "none";
             document.getElementById("secaoCoordenador").style.display = "block";
             await coordCarregarCursos();
           } else {
             document.getElementById("secaoCoordenador").style.display = "none";
-            document.getElementById("tituloNotas").textContent = "Lançamento de notas";
-            document.getElementById("subtituloNotas").textContent = "Selecione curso, matéria e turma para registrar as notas";
+            document.getElementById("tituloNotas").textContent = t("Lançamento de notas");
+            document.getElementById("subtituloNotas").textContent = t("Selecione curso, matéria e turma para registrar as notas");
             await carregarCursosProfessor();
           }
         }
@@ -300,7 +313,7 @@
       const resumoDiv   = document.getElementById("alunoResumo");
       const materiasDiv = document.getElementById("alunoMaterias");
 
-      resumoDiv.innerHTML   = `<div class="notas-vazio" style="grid-column:1/-1">Carregando notas...</div>`;
+      resumoDiv.innerHTML   = `<div class="notas-vazio" style="grid-column:1/-1">${t("Carregando notas...")}</div>`;
       materiasDiv.innerHTML = "";
 
       try {
@@ -315,7 +328,7 @@
 
         const materias = dados.materias || [];
         if (!materias.length) {
-          resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">Nenhuma matéria encontrada para sua turma.</div>`;
+          resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">${t("Nenhuma matéria encontrada para sua turma.")}</div>`;
           return;
         }
 
@@ -329,21 +342,21 @@
 
         resumoDiv.innerHTML = `
           <div class="aluno-resumo-card">
-            <span class="aluno-resumo-label">Matérias</span>
+            <span class="aluno-resumo-label">${t("Matérias")}</span>
             <span class="aluno-resumo-valor">${materias.length}</span>
           </div>
           <div class="aluno-resumo-card">
-            <span class="aluno-resumo-label">Média geral</span>
+            <span class="aluno-resumo-label">${t("Média geral")}</span>
             <span class="aluno-resumo-valor ${mediaGeral !== null ? (Number(mediaGeral) >= 7 ? 'aprovado' : 'reprovado') : ''}">
-              ${mediaGeral !== null ? String(mediaGeral).replace(".", ",") : "—"}
+              ${mediaGeral !== null ? formatarNota(mediaGeral) : "—"}
             </span>
           </div>
           <div class="aluno-resumo-card">
-            <span class="aluno-resumo-label">Aprovado em</span>
+            <span class="aluno-resumo-label">${t("Aprovado em")}</span>
             <span class="aluno-resumo-valor aprovado">${aprovadas}</span>
           </div>
           <div class="aluno-resumo-card">
-            <span class="aluno-resumo-label">Em atenção</span>
+            <span class="aluno-resumo-label">${t("Em atenção")}</span>
             <span class="aluno-resumo-valor ${reprovadas > 0 ? 'reprovado' : ''}">${reprovadas}</span>
           </div>
         `;
@@ -354,8 +367,8 @@
           const n2     = m.nota2 !== null && m.nota2 !== undefined;
           const temMedia = m.media !== null && m.media !== undefined;
           const classeMedia = temMedia ? (m.media >= 7 ? "aprovado" : "reprovado") : "vazia";
-          const mediaLabel  = temMedia ? String(m.media).replace(".", ",") : "—";
-          const prof = m.professores || "Professor não informado";
+          const mediaLabel  = temMedia ? formatarNota(m.media) : "—";
+          const prof = m.professores || t("Professor não informado");
 
           return `
             <div class="aluno-materia-card">
@@ -365,29 +378,29 @@
                   <div class="aluno-materia-prof">${prof}</div>
                 </div>
                 <span class="aluno-media-badge ${temMedia ? (m.media >= 7 ? 'aprovado' : 'reprovado') : 'sem-nota'}">
-                  ${temMedia ? "Média " + mediaLabel : "Sem notas"}
+                  ${temMedia ? `${t("Média")} ${mediaLabel}` : t("Sem notas")}
                 </span>
               </div>
               <div class="aluno-materia-notas">
                 <div class="nota-bloco">
                   <span class="nota-bloco-label">Nota 1</span>
-                  <span class="nota-bloco-valor ${n1 ? '' : 'vazia'}">${n1 ? String(m.nota1).replace(".", ",") : "—"}</span>
+                  <span class="nota-bloco-valor ${n1 ? '' : 'vazia'}">${n1 ? formatarNota(m.nota1) : "—"}</span>
                 </div>
                 <div class="nota-bloco">
                   <span class="nota-bloco-label">Nota 2</span>
-                  <span class="nota-bloco-valor ${n2 ? '' : 'vazia'}">${n2 ? String(m.nota2).replace(".", ",") : "—"}</span>
+                  <span class="nota-bloco-valor ${n2 ? '' : 'vazia'}">${n2 ? formatarNota(m.nota2) : "—"}</span>
                 </div>
                 <div class="nota-bloco media-bloco">
                   <span class="nota-bloco-label">Média</span>
                   <span class="nota-bloco-valor ${classeMedia}">${mediaLabel}</span>
                 </div>
-                ${!n1 && !n2 ? `<span class="sem-nota-msg">Notas ainda não lançadas pelo professor.</span>` : ""}
+                ${!n1 && !n2 ? `<span class="sem-nota-msg">${t("Notas ainda não lançadas pelo professor.")}</span>` : ""}
               </div>
             </div>
           `;
         }).join("");
 
-      } catch { resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">Erro ao carregar suas notas.</div>`; }
+      } catch { resumoDiv.innerHTML = `<div class="notas-vazio" style="grid-column:1/-1">${t("Erro ao carregar suas notas.")}</div>`; }
     }
 
     async function carregarCursosProfessor() {
@@ -468,7 +481,7 @@
       const turmaId   = selectTurma.value;
       if (!materiaId || !turmaId) { limparTabela(); return; }
 
-      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Carregando alunos...</td></tr>`;
+      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">${t("Carregando alunos...")}</td></tr>`;
 
       try {
         const resposta = await fetch(`/api/notas/alunos?materia_id=${materiaId}&turma_id=${turmaId}`, {
@@ -477,17 +490,17 @@
         const dados = await resposta.json();
         if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao carregar alunos.", "error"); limparTabela(); return; }
         const alunosOrdenados = [...(dados.alunos || [])].sort((a, b) =>
-          String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", { sensitivity: "base" })
+          String(a.nome || "").localeCompare(String(b.nome || ""), localeAtual(), { sensitivity: "base" })
         );
         if (!alunosOrdenados.length) {
-          tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Nenhum aluno encontrado para essa turma.</td></tr>`;
+          tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">${t("Nenhum aluno encontrado para essa turma.")}</td></tr>`;
           return;
         }
         const rascunhoSalvo = JSON.parse(localStorage.getItem(chaveRascunhoAtual()) || "[]");
         tabelaNotas.innerHTML = alunosOrdenados.map(aluno => {
           const r = rascunhoSalvo.find(x => String(x.aluno_id) === String(aluno.id));
-          // Normaliza para exibição com vírgula
-          const fmtNota = v => (v !== null && v !== undefined && v !== "") ? String(v).replace(".", ",") : "";
+          // Normaliza para exibição conforme o idioma atual.
+          const fmtNota = v => formatarNota(v);
           const nota1 = fmtNota(r ? r.nota1 : aluno.nota1);
           const nota2 = fmtNota(r ? r.nota2 : aluno.nota2);
           let media = "-";
@@ -501,7 +514,7 @@
               <td>${aluno.nome}</td>
               <td><input type="text" class="nota-input nota1" placeholder="0 a 10" maxlength="5" inputmode="decimal" value="${nota1}"></td>
               <td><input type="text" class="nota-input nota2" placeholder="0 a 10" maxlength="5" inputmode="decimal" value="${nota2}"></td>
-              <td><span class="media-badge ${classeMedia(media)}">${media === "-" ? "-" : media.replace(".", ",")}</span></td>
+              <td><span class="media-badge ${classeMedia(media)}">${media === "-" ? "-" : formatarNota(media)}</span></td>
             </tr>`;
         }).join("");
         document.querySelectorAll(".nota-input").forEach(i => i.addEventListener("input", atualizarMediaLinha));
@@ -509,7 +522,7 @@
     }
 
     function limparTabela() {
-      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">Selecione um curso, uma matéria e uma turma para carregar os alunos.</td></tr>`;
+      tabelaNotas.innerHTML = `<tr><td colspan="4" class="notas-vazio">${t("Selecione um curso, uma matéria e uma turma para carregar os alunos.")}</td></tr>`;
     }
 
     function classeMedia(media) {
@@ -554,7 +567,7 @@
         mediaSpan.textContent = "-"; mediaSpan.className = "media-badge media-neutra"; return;
       }
       const media = ((n1 + n2) / 2).toFixed(2);
-      mediaSpan.textContent = media.replace(".", ",");
+      mediaSpan.textContent = formatarNota(media);
       mediaSpan.className = `media-badge ${classeMedia(media)}`;
     }
 
@@ -588,12 +601,14 @@
       }
 
       if (errosFormato.length) {
-        Swal.fire("Formato inválido", `Corrija as notas abaixo antes de continuar:<br><br><b>${errosFormato.join("<br>")}</b><br><br>Use: <b>7</b> ou <b>7,5</b> ou <b>7,50</b> (máx 2 casas decimais, de 0 a 10).`, "warning");
+        const exemploDecimal = window.MonitoraI18n?.getLanguage?.() === "en" ? "7.5" : "7,5";
+        const exemploDecimalCheio = window.MonitoraI18n?.getLanguage?.() === "en" ? "7.50" : "7,50";
+        Swal.fire(t("Formato inválido"), `${t("Corrija as notas abaixo antes de continuar:")}<br><br><b>${errosFormato.join("<br>")}</b><br><br>${t("Use:")} <b>7</b> ou <b>${exemploDecimal}</b> ou <b>${exemploDecimalCheio}</b> (${t("máx 2 casas decimais, de 0 a 10")}).`, "warning");
         return null;
       }
 
       if (modoPublicar && semNota.length) {
-        Swal.fire("Notas incompletas", `Para publicar, todos os alunos precisam ter as duas notas preenchidas.<br><br>Alunos sem nota:<br><b>${semNota.join("<br>")}</b>`, "warning");
+        Swal.fire(t("Notas incompletas"), `${t("Para publicar, todos os alunos precisam ter as duas notas preenchidas.")}<br><br>${t("Alunos sem nota:")}<br><b>${semNota.join("<br>")}</b>`, "warning");
         return null;
       }
 
@@ -602,7 +617,7 @@
 
     async function salvarNotas(tipo) {
       if (!selectMateria.value || !selectTurma.value) {
-        Swal.fire("Atenção", "Selecione a matéria e a turma.", "warning"); return;
+        Swal.fire(t("Atenção"), t("Selecione a matéria e a turma."), "warning"); return;
       }
       const modoPublicar = tipo === "publicar";
       const alunos = coletarNotas(modoPublicar);
@@ -610,7 +625,7 @@
 
       if (tipo === "rascunho") {
         localStorage.setItem(chaveRascunhoAtual(), JSON.stringify(alunos));
-        Swal.fire({ icon: "success", title: "Rascunho salvo", text: "As notas foram salvas apenas neste navegador. Use 'Publicar notas' para registrar no sistema." });
+        Swal.fire({ icon: "success", title: t("Rascunho salvo"), text: t("As notas foram salvas apenas neste navegador. Use 'Publicar notas' para registrar no sistema.") });
         return;
       }
 
@@ -620,11 +635,11 @@
       const totalAlunos = alunos.length;
       const confirmacao = await Swal.fire({
         icon: "question",
-        title: "Publicar notas?",
-        text: "As notas serão registradas e ficarão visíveis para os alunos.",
+        title: t("Publicar notas?"),
+        text: t("As notas serão registradas e ficarão visíveis para os alunos."),
         showCancelButton: true,
-        confirmButtonText: "Sim, publicar",
-        cancelButtonText: "Cancelar",
+        confirmButtonText: t("Sim, publicar"),
+        cancelButtonText: t("Cancelar"),
         confirmButtonColor: "#57dbbd",
         cancelButtonColor: "#aaa"
       });
@@ -639,14 +654,14 @@
         const dados = await resposta.json();
         if (!resposta.ok) { Swal.fire("Erro", dados.message || "Erro ao publicar notas.", "error"); return; }
         localStorage.removeItem(chaveRascunhoAtual());
-        Swal.fire({ icon: "success", title: "Notas publicadas!", text: `As notas de ${nomeMateria} – ${nomeTurma} foram registradas com sucesso.` });
+        Swal.fire({ icon: "success", title: t("Notas publicadas!"), text: `${t("As notas de")} ${nomeMateria} – ${nomeTurma} ${t("foram registradas com sucesso.")}` });
       } catch { Swal.fire("Erro", "Falha na conexão com o servidor.", "error"); }
     }
 
     async function sair() {
       const confirmacao = await Swal.fire({
-        icon: "question", title: "Deseja sair?", text: "Sua sessão será encerrada.",
-        showCancelButton: true, confirmButtonText: "Sim, sair", cancelButtonText: "Cancelar"
+        icon: "question", title: t("Deseja sair?"), text: t("Sua sessão será encerrada."),
+        showCancelButton: true, confirmButtonText: t("Sim, sair"), cancelButtonText: t("Cancelar")
       });
       if (!confirmacao.isConfirmed) return;
       limparSessao();
@@ -671,14 +686,14 @@
     const coordResultado       = document.getElementById("coordResultado");
 
     function coordMensagemPadrao() {
-      return "Selecione curso, professor, turma e matéria para visualizar as notas.";
+      return t("Selecione curso, professor, turma e matéria para visualizar as notas.");
     }
 
     function coordMostrarVazio(msg) {
       coordResultado.innerHTML = `
         <div class="coord-vazio">
           <i class="ph ph-magnifying-glass"></i>
-          <p>${msg || "Selecione professor, turma e matéria para visualizar as notas."}</p>
+          <p>${msg || t("Selecione professor, turma e matéria para visualizar as notas.")}</p>
         </div>`;
     }
 
@@ -686,7 +701,7 @@
       coordResultado.innerHTML = `
         <div class="coord-vazio">
           <i class="ph ph-circle-notch" style="animation:spin 1s linear infinite;"></i>
-          <p>Carregando notas…</p>
+          <p>${t("Carregando notas...")}</p>
         </div>
         <style>@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}</style>`;
     }
@@ -772,7 +787,7 @@
 
     function coordRenderizarTabela(alunos) {
       const alunosOrdenados = [...alunos].sort((a, b) =>
-        String(a.nome || "").localeCompare(String(b.nome || ""), "pt-BR", { sensitivity: "base" })
+        String(a.nome || "").localeCompare(String(b.nome || ""), localeAtual(), { sensitivity: "base" })
       );
       const nomeProfessor = coordSelectProfessor.options[coordSelectProfessor.selectedIndex].text;
       const nomeTurma     = coordSelectTurma.options[coordSelectTurma.selectedIndex].text;
@@ -789,7 +804,7 @@
               </tr></thead>
               <tbody><tr><td colspan="5" style="text-align:center;padding:50px 20px;color:var(--muted);">
                 <i class="ph ph-student" style="display:block;font-size:2.5rem;opacity:0.3;margin-bottom:10px;"></i>
-                Nenhum aluno encontrado para essa seleção.
+                ${t("Nenhum aluno encontrado para essa seleção.")}
               </td></tr></tbody>
             </table>
           </div>`;
@@ -819,17 +834,17 @@
             </td>
             <td class="td-center">
               <span class="coord-nota ${n1 ? 'coord-nota-ok' : 'coord-nota-vazia'}">
-                ${n1 ? String(aluno.nota1).replace(".", ",") : "—"}
+                ${n1 ? formatarNota(aluno.nota1) : "—"}
               </span>
             </td>
             <td class="td-center">
               <span class="coord-nota ${n2 ? 'coord-nota-ok' : 'coord-nota-vazia'}">
-                ${n2 ? String(aluno.nota2).replace(".", ",") : "—"}
+                ${n2 ? formatarNota(aluno.nota2) : "—"}
               </span>
             </td>
             <td class="td-center">
               <span class="media-badge ${coordClasseMedia(aluno.media)}">
-                ${temMedia ? String(aluno.media).replace(".", ",") : "—"}
+                ${temMedia ? formatarNota(aluno.media) : "—"}
               </span>
             </td>
           </tr>`;
@@ -837,10 +852,10 @@
 
       const rodape = `
         <div class="coord-rodape coord-rodape-clean">
-          <span>Total: <strong>${alunosOrdenados.length} aluno${alunosOrdenados.length !== 1 ? "s" : ""}</strong></span>
-          <span>Aprovados: <strong>${aprovados}</strong></span>
-          <span>Em atenção: <strong>${reprovados}</strong></span>
-          ${mediaGeral !== null ? `<span class="coord-rodape-media">Média da turma: <strong>${String(mediaGeral).replace(".", ",")}</strong></span>` : ""}
+          <span>${t("Total:")} <strong>${alunosOrdenados.length} ${alunosOrdenados.length !== 1 ? t("alunos") : t("aluno")}</strong></span>
+          <span>${t("Aprovados:")} <strong>${aprovados}</strong></span>
+          <span>${t("Em atenção:")} <strong>${reprovados}</strong></span>
+          ${mediaGeral !== null ? `<span class="coord-rodape-media">${t("Média da turma")}: <strong>${formatarNota(mediaGeral)}</strong></span>` : ""}
         </div>`;
 
       coordResultado.innerHTML = `

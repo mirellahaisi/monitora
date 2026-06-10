@@ -6,7 +6,11 @@
   <title>Monitora+ | Perfil</title>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 </head>
 
 <body class="inicio-body cal-page perfil-page">
@@ -91,6 +95,7 @@
     const novaSenhaInput     = document.getElementById("novaSenha");
     const btnCancelar        = document.getElementById("btnCancelar");
     let perfilOriginal       = null;
+    const t = (text) => window.MonitoraI18n?.t?.(text) ?? text;
 
     // Elementos do header/sidebar — injetados pelos includes; guards evitam erros
     // ── Helpers ────────────────────────────────────────────────────────
@@ -191,23 +196,23 @@
       const telefone = telefoneInput.value.trim();
 
       if (nome.length < 3) {
-        Swal.fire({ icon:"warning", title:"Nome inválido", text:"O nome deve ter pelo menos 3 letras." });
+        Swal.fire({ icon:"warning", title:t("Nome inválido"), text:t("O nome deve ter pelo menos 3 letras.") });
         return false;
       }
       if (!emailValido(email)) {
-        Swal.fire({ icon:"warning", title:"E-mail inválido", text:"Digite um e-mail válido, contendo @ e domínio." });
+        Swal.fire({ icon:"warning", title:t("E-mail inválido"), text:t("Digite um e-mail válido, contendo @ e domínio.") });
         return false;
       }
       if (!telefoneValido(telefone)) {
-        Swal.fire({ icon:"warning", title:"Telefone inválido", text:"Digite um telefone com DDD, no formato (xx)xxxxx-xxxx." });
+        Swal.fire({ icon:"warning", title:t("Telefone inválido"), text:t("Digite um telefone com DDD, no formato (xx)xxxxx-xxxx.") });
         return false;
       }
       if (!dataNascimentoInput.value) {
-        Swal.fire({ icon:"warning", title:"Data obrigatória", text:"Informe a data de nascimento." });
+        Swal.fire({ icon:"warning", title:t("Data obrigatória"), text:t("Informe a data de nascimento.") });
         return false;
       }
       if (!idadeMinimaValida(dataNascimentoInput.value)) {
-        Swal.fire({ icon:"warning", title:"Idade inválida", text:"A idade mínima permitida é de 12 anos." });
+        Swal.fire({ icon:"warning", title:t("Idade inválida"), text:t("A idade mínima permitida é de 12 anos.") });
         return false;
       }
       return true;
@@ -243,7 +248,7 @@
         emailInput.value          = usuario.email           || "";
         telefoneInput.value       = formatarTelefone(usuario.telefone || "");
         cpfInput.value            = formatarCpf(usuario.cpf || "");
-        dataNascimentoInput.value = usuario.data_nascimento || "";
+        (window.MonitoraI18n?.setDate || ((el, v) => { el.value = v || ""; }))(dataNascimentoInput, usuario.data_nascimento || null);
         novaSenhaInput.value      = "";
         perfilOriginal = normalizarPerfilParaComparacao({
           nome: usuario.nome,
@@ -254,7 +259,7 @@
 
       } catch (erro) {
         console.error("Erro ao carregar perfil:", erro);
-        Swal.fire({ icon:"error", title:"Erro", text:"Não foi possível carregar os dados do perfil." });
+        Swal.fire({ icon:"error", title:t("Erro"), text:t("Não foi possível carregar os dados do perfil.") });
       }
     }
 
@@ -268,21 +273,21 @@
       const novaSenha = novaSenhaInput.value.trim();
 
       if (!perfilFoiAlterado() && !novaSenha) {
-        Swal.fire({ icon:"info", title:"Nenhum dado foi atualizado", text:"Altere pelo menos um campo antes de salvar." });
+        Swal.fire({ icon:"info", title:t("Nenhum dado foi atualizado"), text:t("Altere pelo menos um campo antes de salvar.") });
         return;
       }
 
       if (novaSenha) {
         const res = await Swal.fire({
-          title: "Confirme sua senha atual",
-          text:  "Para alterar a senha, digite sua senha atual.",
+          title: t("Confirme sua senha atual"),
+          text:  t("Para alterar a senha, digite sua senha atual."),
           input: "password",
-          inputPlaceholder: "Senha atual",
+          inputPlaceholder: t("Senha atual"),
           inputAttributes: { autocapitalize:"off", autocorrect:"off" },
           showCancelButton: true,
-          confirmButtonText: "Confirmar",
-          cancelButtonText:  "Cancelar",
-          inputValidator: (v) => !v ? "Digite sua senha atual para continuar." : null
+          confirmButtonText: t("Confirmar"),
+          cancelButtonText:  t("Cancelar"),
+          inputValidator: (v) => !v ? t("Digite sua senha atual para continuar.") : null
         });
         if (!res.isConfirmed) return;
         senhaAtual = res.value;
@@ -290,11 +295,11 @@
 
       const confirmacao = await Swal.fire({
         icon: "question",
-        title: "Salvar alterações?",
-        text:  "Deseja realmente alterar os dados do perfil?",
+        title: t("Salvar alterações?"),
+        text:  t("Deseja realmente alterar os dados do perfil?"),
         showCancelButton: true,
-        confirmButtonText: "Sim, salvar",
-        cancelButtonText:  "Cancelar"
+        confirmButtonText: t("Sim, salvar"),
+        cancelButtonText:  t("Cancelar")
       });
       if (!confirmacao.isConfirmed) return;
 
@@ -321,7 +326,7 @@
         const dados = await resposta.json();
 
         if (!resposta.ok) {
-          Swal.fire({ icon:"error", title:"Erro", text: dados.message || "Não foi possível atualizar o perfil." });
+          Swal.fire({ icon:"error", title:t("Erro"), text: dados.message || t("Não foi possível atualizar o perfil.") });
           return;
         }
 
@@ -334,7 +339,7 @@
 
         Swal.fire({
           icon: "success",
-          title: "Perfil atualizado!",
+          title: t("Perfil atualizado!"),
           text:  dados.message,
           timer: 1500,
           showConfirmButton: false,
@@ -343,7 +348,7 @@
 
       } catch (erro) {
         console.error("Erro ao atualizar perfil:", erro);
-        Swal.fire({ icon:"error", title:"Erro inesperado", text:"Não foi possível conectar ao servidor." });
+        Swal.fire({ icon:"error", title:t("Erro inesperado"), text:t("Não foi possível conectar ao servidor.") });
       }
     });
 
@@ -351,11 +356,11 @@
     async function sair() {
       const confirmacao = await Swal.fire({
         icon: "question",
-        title: "Deseja sair?",
-        text: "Sua sessão será encerrada.",
+        title: t("Deseja sair?"),
+        text: t("Sua sessão será encerrada."),
         showCancelButton: true,
-        confirmButtonText: "Sim, sair",
-        cancelButtonText:  "Cancelar"
+        confirmButtonText: t("Sim, sair"),
+        cancelButtonText:  t("Cancelar")
       });
       if (!confirmacao.isConfirmed) return;
 

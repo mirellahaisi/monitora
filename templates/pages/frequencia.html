@@ -117,6 +117,7 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="/static/js/searchable-select.js"></script>
 <script>
+  const t = texto => window.MonitoraI18n?.t?.(texto) || texto;
   const selectCurso = document.getElementById("selectCurso");
   const selectMateria = document.getElementById("selectMateria");
   const selectTurma = document.getElementById("selectTurma");
@@ -285,8 +286,8 @@
 
   function getMensagemVazia() {
     return filtroCursoAtivo
-      ? "Selecione curso, materia, turma e aluno para visualizar a frequencia."
-      : "Selecione materia, turma e aluno para visualizar a frequencia.";
+      ? t("Selecione curso, materia, turma e aluno para visualizar a frequencia.")
+      : t("Selecione materia, turma e aluno para visualizar a frequencia.");
   }
 
   function mostrarVazio() {
@@ -302,8 +303,8 @@
     const statusClass = percentual >= 75 ? "freq-alert-ok" : "freq-alert-danger";
     const statusIcon = percentual >= 75 ? "ph-check-circle" : "ph-warning";
     const statusMsg = percentual >= 75
-      ? "Frequencia regular - acima do minimo exigido (75%)"
-      : "Frequencia insuficiente - abaixo do minimo exigido (75%)";
+      ? t("Frequencia regular - acima do minimo exigido (75%)")
+      : t("Frequencia insuficiente - abaixo do minimo exigido (75%)");
 
     freqResultArea.innerHTML = `
       <div class="freq-alert ${statusClass}">
@@ -315,25 +316,25 @@
           <h3 class="freq-nome">${dados.nome}</h3>
           <p class="freq-sub">${dados.materia} &mdash; ${dados.turma}</p>
           <div class="freq-stats">
-            <div class="freq-stat-row"><span>Total de Aulas</span><strong>${dados.total}</strong></div>
-            <div class="freq-stat-row"><span>Presencas</span><strong class="freq-val-green">${dados.presencas}</strong></div>
-            <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${dados.faltas}</strong></div>
-            <div class="freq-stat-row freq-stat-highlight"><span>Frequencia</span><strong>${dados.presenca}</strong></div>
+            <div class="freq-stat-row"><span>${t("Total de Aulas")}</span><strong>${dados.total}</strong></div>
+            <div class="freq-stat-row"><span>${t("Presencas")}</span><strong class="freq-val-green">${dados.presencas}</strong></div>
+            <div class="freq-stat-row"><span>${t("Faltas")}</span><strong class="freq-val-red">${dados.faltas}</strong></div>
+            <div class="freq-stat-row freq-stat-highlight"><span>${t("Frequencia")}</span><strong>${dados.presenca}</strong></div>
           </div>
         </div>
         <div class="freq-chart-col">
           <div class="freq-donut" style="--pct: ${percentual}">
             <div class="freq-donut-inner">
               <span class="freq-donut-pct">${dados.presenca}</span>
-              <span class="freq-donut-label">Frequencia</span>
+              <span class="freq-donut-label">${t("Frequencia")}</span>
             </div>
           </div>
           <div class="freq-legend">
-            <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presencas</div>
-            <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> Faltas</div>
+            <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> ${t("Presencas")}</div>
+            <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> ${t("Faltas")}</div>
           </div>
           <a class="btn-publicar" href="/frequencia/relatorio?aluno=${alunoId}&materia=${materiaId}&turma=${turmaId}">
-            <i class="ph ph-download-simple"></i> Baixar relatorio
+            <i class="ph ph-download-simple"></i> ${t("Baixar relatorio")}
           </a>
         </div>
       </div>`;
@@ -344,7 +345,7 @@
   }
 
   function compararMateriaAluno(a, b) {
-    return String(a.materia || "").localeCompare(String(b.materia || ""), "pt-BR", { sensitivity: "base" });
+    return String(a.materia || "").localeCompare(String(b.materia || ""), window.MonitoraI18n?.getLocale?.() || "pt-BR", { sensitivity: "base" });
   }
 
   function ordenarMateriasAluno(materias) {
@@ -403,7 +404,7 @@
       freqResultArea.innerHTML = `
         <div class="freq-empty">
           <i class="ph ph-books" style="font-size:3.5rem; opacity:0.3;"></i>
-          <p>Nenhuma materia encontrada para esse filtro.</p>
+          <p>${t("Nenhuma materia encontrada para esse filtro.")}</p>
         </div>`;
       return;
     }
@@ -414,8 +415,8 @@
       const statusClass = percentual >= 75 ? "freq-alert-ok" : "freq-alert-danger";
       const statusIcon = percentual >= 75 ? "ph-check-circle" : "ph-warning";
       const statusMsg = percentual >= 75
-        ? "Frequencia regular - acima do minimo exigido (75%)"
-        : "Frequencia insuficiente - abaixo do minimo exigido (75%)";
+        ? t("Frequencia regular - acima do minimo exigido (75%)")
+        : t("Frequencia insuficiente - abaixo do minimo exigido (75%)");
 
       html += `
         <div class="freq-alert ${statusClass}" style="margin-bottom:0;">
@@ -427,25 +428,25 @@
             <h3 class="freq-nome">${materia.materia}</h3>
             <p class="freq-sub">${materia.turma}</p>
             <div class="freq-stats">
-              <div class="freq-stat-row"><span>Total de Aulas</span><strong>${materia.total}</strong></div>
-              <div class="freq-stat-row"><span>Presencas</span><strong class="freq-val-green">${materia.presencas}</strong></div>
-              <div class="freq-stat-row"><span>Faltas</span><strong class="freq-val-red">${materia.faltas}</strong></div>
-              <div class="freq-stat-row freq-stat-highlight"><span>Frequencia</span><strong>${materia.presenca}</strong></div>
+              <div class="freq-stat-row"><span>${t("Total de Aulas")}</span><strong>${materia.total}</strong></div>
+              <div class="freq-stat-row"><span>${t("Presencas")}</span><strong class="freq-val-green">${materia.presencas}</strong></div>
+              <div class="freq-stat-row"><span>${t("Faltas")}</span><strong class="freq-val-red">${materia.faltas}</strong></div>
+              <div class="freq-stat-row freq-stat-highlight"><span>${t("Frequencia")}</span><strong>${materia.presenca}</strong></div>
             </div>
           </div>
           <div class="freq-chart-col">
             <div class="freq-donut" style="--pct: ${percentual}">
               <div class="freq-donut-inner">
                 <span class="freq-donut-pct">${materia.presenca}</span>
-                <span class="freq-donut-label">Frequencia</span>
+                <span class="freq-donut-label">${t("Frequencia")}</span>
               </div>
             </div>
             <div class="freq-legend">
-              <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> Presencas</div>
-              <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> Faltas</div>
+              <div class="freq-legend-item"><span class="freq-dot freq-dot-green"></span> ${t("Presencas")}</div>
+              <div class="freq-legend-item"><span class="freq-dot freq-dot-orange"></span> ${t("Faltas")}</div>
             </div>
             <a class="btn-publicar" href="/frequencia/relatorio?aluno=${frequenciaAlunoDados.aluno_id}&materia=${materia.materia_id}&turma=${materia.turma_id}">
-              <i class="ph ph-download-simple"></i> Baixar relatorio
+              <i class="ph ph-download-simple"></i> ${t("Baixar relatorio")}
             </a>
           </div>
         </div>`;
@@ -462,7 +463,7 @@
     freqResultArea.innerHTML = `
       <div class="freq-empty">
         <i class="ph ph-spinner" style="font-size:2.5rem; opacity:0.4;"></i>
-        <p>Carregando sua frequencia...</p>
+        <p>${t("Carregando sua frequencia...")}</p>
       </div>`;
 
     try {
@@ -477,7 +478,7 @@
       freqResultArea.innerHTML = `
         <div class="freq-empty">
           <i class="ph ph-warning" style="font-size:2.5rem; opacity:0.4;"></i>
-          <p>Nao foi possivel carregar sua frequencia. Tente novamente.</p>
+          <p>${t("Nao foi possivel carregar sua frequencia. Tente novamente.")}</p>
         </div>`;
     }
   }
@@ -648,11 +649,11 @@
   async function sair() {
     const confirmacao = await Swal.fire({
       icon: "question",
-      title: "Deseja sair?",
-      text: "Sua sessao sera encerrada.",
+      title: t("Deseja sair?"),
+      text: t("Sua sessao sera encerrada."),
       showCancelButton: true,
-      confirmButtonText: "Sim, sair",
-      cancelButtonText: "Cancelar"
+      confirmButtonText: t("Sim, sair"),
+      cancelButtonText: t("Cancelar")
     });
 
     if (!confirmacao.isConfirmed) return;
@@ -680,8 +681,8 @@
       if (isAluno(usuario)) {
         filtrosAdmin.classList.add("filtro-oculto");
         filtrosAlunoFreq.classList.remove("filtro-oculto");
-        if (heading) heading.textContent = "Minha Frequencia";
-        if (desc) desc.textContent = "Filtre suas materias e acompanhe da menor para a maior frequencia";
+        if (heading) heading.textContent = t("Minha Frequencia");
+        if (desc) desc.textContent = t("Filtre suas materias e acompanhe da menor para a maior frequencia");
         carregarPropriaFrequencia(usuario.id);
         return;
       }
@@ -693,13 +694,13 @@
       if (filtroCursoAtivo) {
         grupoCurso.style.display = "";
         filtrosAdmin.classList.add("notas-filtros--curso");
-        if (desc) desc.textContent = "Selecione curso, materia, turma e aluno para visualizar a frequencia";
+        if (desc) desc.textContent = t("Selecione curso, materia, turma e aluno para visualizar a frequencia");
         atualizarFiltrosPesquisaveis();
         await carregarCursos();
       } else {
         grupoCurso.style.display = "none";
         filtrosAdmin.classList.remove("notas-filtros--curso");
-        if (desc) desc.textContent = "Selecione a materia, turma e aluno para visualizar a frequencia";
+        if (desc) desc.textContent = t("Selecione a materia, turma e aluno para visualizar a frequencia");
         atualizarFiltrosPesquisaveis();
         await carregarMaterias();
       }
